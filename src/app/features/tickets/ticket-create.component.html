@@ -1,0 +1,24 @@
+<div class="create-page">
+  <form class="create-card" [formGroup]="form" (ngSubmit)="submit()">
+    <h1>File a new ticket</h1>
+    <p class="subtitle">This goes to your school's Administrative Officer.</p>
+
+    <label>
+      Title
+      <input formControlName="title" placeholder="Short summary of your request" />
+    </label>
+
+    <label>
+      Description
+      <textarea formControlName="description" rows="6" placeholder="Details the AO needs to act on this"></textarea>
+    </label>
+
+    @if (error) {
+      <p class="error">{{ error }}</p>
+    }
+
+    <button type="submit" [disabled]="form.invalid || submitting">
+      {{ submitting ? 'Submitting…' : 'Submit ticket' }}
+    </button>
+  </form>
+</div>

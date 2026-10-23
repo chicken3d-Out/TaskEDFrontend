@@ -1,0 +1,65 @@
+<div class="calendar-page">
+  <div class="header-row">
+    <h1>{{ heading }}</h1>
+    @if (canManage) {
+      <button class="new-btn" (click)="showForm = !showForm">
+        {{ showForm ? 'Cancel' : '+ New' }}
+      </button>
+    }
+  </div>
+
+  @if (showForm) {
+    <form class="event-form" [formGroup]="form" (ngSubmit)="submit()">
+      <input formControlName="title" placeholder="Title" />
+      <textarea formControlName="description" rows="3" placeholder="Description"></textarea>
+      <div class="row">
+        <label>
+          Date &amp; time
+          <input type="datetime-local" formControlName="eventDate" />
+        </label>
+        <label>
+          Zoom link (optional)
+          <input formControlName="zoomLink" placeholder="https://…" />
+        </label>
+      </div>
+      <label class="checkbox-row">
+        <input type="checkbox" formControlName="isAnnouncement" />
+        Also show in Announcements
+      </label>
+      @if (error) {
+        <p class="error">{{ error }}</p>
+      }
+      <button type="submit" [disabled]="form.invalid || submitting">
+        {{ submitting ? 'Saving…' : 'Save' }}
+      </button>
+    </form>
+  }
+
+  @if (loading) {
+    <app-loading [compact]="true" />
+  } @else if (events.length === 0) {
+    <p class="empty">Nothing here yet.</p>
+  } @else {
+    <div class="event-list">
+      @for (event of events; track event.id) {
+        <div class="event-row">
+          <div class="date-badge">
+            <span class="days">{{ daysUntil(event) }}</span>
+            <span class="label">days</span>
+          </div>
+          <div class="info">
+            <strong>{{ event.title }}</strong>
+            <span class="meta">{{ event.eventDate | date: 'medium' }} · posted by {{ event.createdBy.name }}</span>
+            <p>{{ event.description }}</p>
+            @if (event.zoomLink) {
+              <a [href]="event.zoomLink" target="_blank" class="zoom-link">Join Zoom</a>
+            }
+          </div>
+          @if (canManage) {
+            <button class="delete" (click)="remove(event)">Delete</button>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

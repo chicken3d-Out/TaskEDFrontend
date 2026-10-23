@@ -1,0 +1,42 @@
+@if (loading) {
+  <app-loading [compact]="true" />
+} @else if (question) {
+  <div class="question-page">
+    <div class="question-header">
+      <div class="vote-col">
+        <button (click)="voteQuestion(1)">▲</button>
+        <span class="score">{{ question.upvotes - question.downvotes }}</span>
+        <button (click)="voteQuestion(-1)">▼</button>
+      </div>
+      <div>
+        <h1>{{ question.title }}</h1>
+        <p class="meta">{{ question.author.name }} · {{ question.createdAt | date: 'medium' }}</p>
+        <p class="body">{{ question.body }}</p>
+      </div>
+    </div>
+
+    <section class="replies">
+      <h2>Replies</h2>
+      @if (replyTree.length === 0) {
+        <p class="empty">No replies yet.</p>
+      }
+      @for (node of replyTree; track node.id) {
+        <app-forum-reply-node [node]="node" (vote)="onVoteReply($event)" (replyTo)="onReplyTo($event)" />
+      }
+    </section>
+
+    <section class="reply-form-section">
+      @if (replyingTo) {
+        <p class="replying-note">
+          Replying to a comment. <a (click)="cancelReply()">Cancel</a>
+        </p>
+      }
+      <form [formGroup]="replyForm" (ngSubmit)="submitReply()">
+        <textarea formControlName="body" rows="3" placeholder="Write a reply…"></textarea>
+        <button type="submit" [disabled]="replyForm.invalid">Post reply</button>
+      </form>
+    </section>
+  </div>
+} @else {
+  <p class="empty">Question not found.</p>
+}

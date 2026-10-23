@@ -1,0 +1,95 @@
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+h1 {
+  font-size: 1.25rem;
+  color: #14532d;
+  margin: 0;
+}
+.new-btn {
+  background: #14532d;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.empty {
+  color: #888;
+}
+.ticket-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.ticket-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.9rem 1.1rem;
+  text-decoration: none;
+  color: inherit;
+}
+.ticket-row:hover {
+  border-color: #14532d;
+}
+.title-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.title-col strong {
+  color: #111;
+}
+.meta {
+  font-size: 0.78rem;
+  color: #888;
+}
+.mine-tag {
+  background: #ecfdf5;
+  color: #047857;
+  border-radius: 999px;
+  padding: 0.05rem 0.5rem;
+  margin-left: 0.4rem;
+  font-weight: 600;
+}
+.status {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.status-submitted {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+.status-acknowledged {
+  background: #fefce8;
+  color: #a16207;
+}
+.status-in_progress {
+  background: #fff7ed;
+  color: #c2410c;
+}
+.status-needs_attachment {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+.status-resolved {
+  background: #f0fdf4;
+  color: #15803d;
+}
+.status-closed {
+  background: #f3f4f6;
+  color: #6b7280;
+}

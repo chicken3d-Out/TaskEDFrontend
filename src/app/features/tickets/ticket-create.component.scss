@@ -1,0 +1,60 @@
+.create-page {
+  display: flex;
+  justify-content: center;
+}
+.create-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 2rem 2.5rem;
+  max-width: 560px;
+  width: 100%;
+  border: 1px solid #e5e7eb;
+}
+h1 {
+  margin: 0 0 0.25rem;
+  color: #14532d;
+  font-size: 1.25rem;
+}
+.subtitle {
+  color: #777;
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+label {
+  display: block;
+  margin-bottom: 1.1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #333;
+}
+input,
+textarea {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: normal;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.error {
+  color: #b91c1c;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+button {
+  padding: 0.7rem 1.5rem;
+  background: #14532d;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -1,0 +1,143 @@
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+h1 {
+  font-size: 1.25rem;
+  color: #14532d;
+  margin: 0;
+}
+.new-btn {
+  background: #14532d;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.event-form {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.event-form input,
+.event-form textarea {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+.row {
+  display: flex;
+  gap: 1rem;
+}
+.row label {
+  flex: 1;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #333;
+}
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: normal;
+}
+.error {
+  color: #b91c1c;
+  font-size: 0.85rem;
+}
+.event-form button {
+  align-self: flex-start;
+  padding: 0.55rem 1.2rem;
+  background: #14532d;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.empty {
+  color: #888;
+}
+.event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.event-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.9rem 1.1rem;
+}
+.date-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f0fdf4;
+  color: #15803d;
+  border-radius: 8px;
+  padding: 0.4rem 0.7rem;
+  min-width: 3rem;
+}
+.date-badge .days {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+.date-badge .label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+}
+.info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.info strong {
+  color: #111;
+}
+.meta {
+  font-size: 0.78rem;
+  color: #888;
+}
+.info p {
+  margin: 0.3rem 0 0;
+  font-size: 0.88rem;
+  color: #333;
+}
+.zoom-link {
+  font-size: 0.82rem;
+  color: #1d4ed8;
+  margin-top: 0.3rem;
+  display: inline-block;
+}
+.delete {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: none;
+  border-radius: 6px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}

@@ -1,0 +1,117 @@
+@if (loading) {
+  <app-loading [compact]="true" />
+} @else if (ticket) {
+  <div class="detail-page">
+    <div class="ticket-header">
+      <div>
+        <h1>{{ ticket.title }}</h1>
+        <p class="meta">
+          Filed by {{ ticket.requester.name }} ({{ ticket.school.name }}) · Assigned to
+          {{ ticket.assignedAo.name }}
+        </p>
+      </div>
+      <span class="status status-{{ ticket.status }}">{{ statusLabels[ticket.status] }}</span>
+    </div>
+
+    <p class="description">{{ ticket.description }}</p>
+
+    <section class="thread">
+      <h2>Updates</h2>
+      @if (!ticket.updates || ticket.updates.length === 0) {
+        <p class="empty">No updates yet.</p>
+      }
+      @for (update of ticket.updates; track update.id) {
+        <div class="update-item">
+          <div class="update-head">
+            <strong>{{ update.author.name }}</strong>
+            @if (update.attachmentRequest) {
+              <span class="tag">requested attachment</span>
+            }
+            <span class="time">{{ update.createdAt | date: 'medium' }}</span>
+          </div>
+          <p>{{ update.message }}</p>
+          @if (update.imageUrl) {
+            <img [src]="update.imageUrl" class="update-image" alt="attached image" />
+          }
+        </div>
+      }
+    </section>
+
+    @if (ticket.attachments && ticket.attachments.length > 0) {
+      <section class="attachments">
+        <h2>Attachments</h2>
+        @for (a of ticket.attachments; track a.id) {
+          <a [href]="a.fileUrl" target="_blank" class="attachment-link">
+            {{ a.fileName || a.fileUrl }} · uploaded by {{ a.uploadedBy.name }}
+          </a>
+        }
+      </section>
+    }
+
+    @if (canAct) {
+      <section class="actions">
+        <h2>Post an update</h2>
+        <form [formGroup]="updateForm" (ngSubmit)="postUpdate()">
+          <textarea formControlName="message" rows="3" placeholder="Write an update…"></textarea>
+
+          <label class="file-row">
+            Attach a picture (optional)
+            <input type="file" accept="image/jpeg" (change)="onUpdateImageSelected($event)" />
+          </label>
+
+          @if (isAssignedAo) {
+            <div class="ao-controls">
+              <label class="checkbox-row">
+                <input type="checkbox" formControlName="attachmentRequest" />
+                Request an attachment from the teacher
+              </label>
+
+              @if (availableNextStatuses.length > 0) {
+                <label class="status-select">
+                  Change status
+                  <select formControlName="newStatus">
+                    <option value="">No change</option>
+                    @for (s of availableNextStatuses; track s) {
+                      <option [value]="s">{{ statusLabels[s] }}</option>
+                    }
+                  </select>
+                </label>
+              }
+            </div>
+          }
+
+          @if (error) {
+            <p class="error">{{ error }}</p>
+          }
+
+          <button type="submit" [disabled]="updateForm.invalid || posting">
+            {{ uploadingImage ? 'Uploading image…' : posting ? 'Posting…' : 'Post update' }}
+          </button>
+        </form>
+      </section>
+
+      @if (isOwner) {
+        <section class="actions">
+          <h2>Upload an attachment</h2>
+          <p class="hint">
+            Requested by the AO? Attach the file here (JPG or PDF only) - it uploads
+            straight to storage.
+          </p>
+          <div class="upload-box">
+            <input type="file" accept="image/jpeg,application/pdf" (change)="onAttachmentSelected($event)" [disabled]="uploadingAttachment" />
+            @if (uploadingAttachment) {
+              <app-loading [compact]="true" label="Uploading…" />
+            }
+          </div>
+        </section>
+      }
+    } @else {
+      <p class="readonly-note">
+        You can view this ticket for transparency, but only the requesting teacher and the
+        assigned Administrative Officer can act on it.
+      </p>
+    }
+  </div>
+} @else {
+  <p class="empty">Ticket not found.</p>
+}

@@ -1,0 +1,41 @@
+<div class="forum-page">
+  <div class="header-row">
+    <h1>Ask-a-Question</h1>
+    <button class="new-btn" (click)="showForm = !showForm">
+      {{ showForm ? 'Cancel' : '+ Ask a question' }}
+    </button>
+  </div>
+
+  <div class="sort-tabs">
+    <button [class.active]="sort === 'recent'" (click)="setSort('recent')">Most recent</button>
+    <button [class.active]="sort === 'top'" (click)="setSort('top')">Top voted</button>
+  </div>
+
+  @if (showForm) {
+    <form class="question-form" [formGroup]="form" (ngSubmit)="submit()">
+      <input formControlName="title" placeholder="Question title" />
+      <textarea formControlName="body" rows="4" placeholder="Details…"></textarea>
+      <button type="submit" [disabled]="form.invalid || submitting">
+        {{ submitting ? 'Posting…' : 'Post question' }}
+      </button>
+    </form>
+  }
+
+  @if (loading) {
+    <app-loading [compact]="true" />
+  } @else if (questions.length === 0) {
+    <p class="empty">No questions yet - be the first to ask.</p>
+  } @else {
+    <div class="question-list">
+      @for (q of questions; track q.id) {
+        <a class="question-row" [routerLink]="['/forum', q.id]">
+          <div class="score">{{ q.upvotes - q.downvotes }}</div>
+          <div class="info">
+            <strong>{{ q.title }}</strong>
+            <span class="meta">{{ q.author.name }} · {{ q.createdAt | date: 'medium' }}</span>
+          </div>
+        </a>
+      }
+    </div>
+  }
+</div>

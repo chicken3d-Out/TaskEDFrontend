@@ -1,0 +1,33 @@
+<div class="approvals-page">
+  <h1>Pending approvals</h1>
+
+  @if (loading) {
+    <app-loading [compact]="true" />
+  } @else if (pending.length === 0) {
+    <p class="empty">No accounts waiting on your approval.</p>
+  } @else {
+    <div class="approval-list">
+      @for (user of pending; track user.id) {
+        <div class="approval-row">
+          <div class="info">
+            <strong>{{ user.name }}</strong>
+            <span class="meta">
+              {{ user.depedEmail }} · {{ user.role }} · {{ user.designation }}
+              @if (user.school) {
+                · {{ user.school.name }}
+              }
+            </span>
+          </div>
+          <div class="buttons">
+            <button class="approve" [disabled]="actingOn === user.id" (click)="approve(user)">
+              Approve
+            </button>
+            <button class="reject" [disabled]="actingOn === user.id" (click)="reject(user)">
+              Reject
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

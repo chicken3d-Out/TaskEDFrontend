@@ -1,0 +1,36 @@
+<div class="weather-page">
+  <h1>Your location &amp; weather</h1>
+
+  @if (state === 'requesting') {
+    <app-loading label="Requesting location permission…" [compact]="true" />
+  } @else if (state === 'loading') {
+    <app-loading label="Loading forecast…" [compact]="true" />
+  } @else if (state === 'error') {
+    <div class="error-card">
+      <p>{{ errorMessage }}</p>
+      <button (click)="requestLocation()">Try again</button>
+    </div>
+  } @else if (state === 'ready' && forecast) {
+    @if (mapUrl) {
+      <iframe [src]="mapUrl" class="map-frame" title="Your location"></iframe>
+    }
+
+    <div class="current-card">
+      <span class="temp">{{ forecast.current.temperature ?? '–' }}°C</span>
+      <span class="rain">
+        {{ forecast.current.precipitationProbability ?? 0 }}% chance of rain right now
+      </span>
+    </div>
+
+    <h2>Next 12 hours</h2>
+    <div class="bucket-row">
+      @for (bucket of forecast.hourlyBuckets; track bucket.startTime) {
+        <div class="bucket">
+          <span class="time">{{ bucket.startTime | date: 'shortTime' }}</span>
+          <span class="rain-chance">{{ bucket.precipitationProbability ?? 0 }}%</span>
+          <span class="temp-small">{{ bucket.temperature ?? '–' }}°</span>
+        </div>
+      }
+    </div>
+  }
+</div>
