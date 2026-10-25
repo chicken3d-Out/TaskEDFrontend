@@ -1,74 +1,79 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
-import { SchoolsService } from '../../core/services/schools.service';
-import { Role, School } from '../../core/models/user.model';
+import { ProfileFormComponent } from '../../shared/profile-form/profile-form.component';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './register.component.html',
-  styleUrl: './register.component.scss',
+  imports: [ProfileFormComponent],
+  template: `
+    <div class="page">
+      <div class="card box">
+        <div class="head">
+          <img src="/sdo-leyte-seal.png" alt="" />
+          <div>
+            <h1>Set up your TaskEd profile</h1>
+            <p>
+              Signed in as <b>{{ auth.currentUser()?.depedEmail }}</b
+              >. An administrator will review it and assign your role.
+            </p>
+          </div>
+        </div>
+        <app-profile-form mode="register" (saved)="done()" />
+        <button class="link" (click)="auth.logout()">Sign out</button>
+      </div>
+    </div>
+  `,
+  styles: [
+    `
+      .page {
+        min-height: 100vh;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 2rem 1rem;
+        background: radial-gradient(1200px 500px at 50% -10%, #dcfce7, transparent), var(--bg);
+      }
+      .box {
+        width: 100%;
+        max-width: 720px;
+        padding: 1.75rem;
+      }
+      .head {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        margin-bottom: 1.5rem;
+      }
+      .head img {
+        width: 56px;
+        height: 56px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.35rem;
+      }
+      p {
+        margin: 0.2rem 0 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .link {
+        margin-top: 1rem;
+        border: none;
+        background: none;
+        color: var(--muted);
+        text-decoration: underline;
+      }
+    `,
+  ],
 })
-export class RegisterComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private schoolsService = inject(SchoolsService);
-  private router = inject(Router);
+export class RegisterComponent {
   public auth = inject(AuthService);
+  private router = inject(Router);
 
-  Role = Role;
-  schools: School[] = [];
-  submitting = false;
-  error: string | null = null;
-
-  form = this.fb.group({
-    role: [Role.TEACHER, Validators.required],
-    designation: ['', Validators.required],
-    district: ['', Validators.required],
-    schoolId: [''],
-    assignedSchoolIds: [[] as string[]],
-  });
-
-  ngOnInit() {
-    this.schoolsService.findAll().subscribe((schools) => (this.schools = schools));
-  }
-
-  get isTeacher() {
-    return this.form.value.role === Role.TEACHER;
-  }
-  get isAo() {
-    return this.form.value.role === Role.ADMIN_OFFICER;
-  }
-
-  toggleAssignedSchool(schoolId: string, checked: boolean) {
-    const current = this.form.value.assignedSchoolIds ?? [];
-    this.form.patchValue({
-      assignedSchoolIds: checked
-        ? [...current, schoolId]
-        : current.filter((id) => id !== schoolId),
-    });
-  }
-
-  async submit() {
-    if (this.form.invalid) return;
-    this.submitting = true;
-    this.error = null;
-    try {
-      await this.auth.register({
-        role: this.form.value.role!,
-        designation: this.form.value.designation!,
-        district: this.form.value.district!,
-        schoolId: this.isTeacher ? this.form.value.schoolId! : undefined,
-        assignedSchoolIds: this.isAo ? this.form.value.assignedSchoolIds! : undefined,
-      });
-      this.router.navigateByUrl(this.auth.routeForCurrentState());
-    } catch (e: any) {
-      this.error = e?.error?.message ?? 'Registration failed. Please try again.';
-    } finally {
-      this.submitting = false;
-    }
+  done() {
+    this.router.navigateByUrl(this.auth.routeForCurrentState());
   }
 }

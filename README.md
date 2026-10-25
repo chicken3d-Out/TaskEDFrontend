@@ -68,7 +68,7 @@ which uses `@capacitor/geolocation` (works the same in-browser too).
   grounds every request with a system prompt + a live ticket summary,
   so this component is just chat UI - no client-side context building).
 - `core/services/upload.service.ts` - two-step upload used by the
-  ticket attachment/image flows: ask the backend for a presigned MinIO
+  ticket attachment/image flows: ask the backend to sign a Cloudinary
   URL, then PUT the file straight there (never through our API).
 - `shared/loading/` - `<app-loading>`, the branded pulsing-seal
   loading indicator used everywhere a view fetches data instead of a
@@ -93,8 +93,8 @@ return shape) and nothing else in the app needs to change.
 ## Known gaps (matches the backend README)
 
 - Attachments and update images upload for real now (straight to
-  MinIO via `UploadService`), but there's no client-side file-size or
-  type validation yet - whatever the backend/MinIO will accept goes
+  Cloudinary via `UploadService`), but there's no client-side file-size or
+  type validation yet - whatever the backend/Cloudinary will accept goes
   through.
 - No AO picker for schools with more than one AO - ticket creation will
   surface the backend's error asking to disambiguate, but there's no

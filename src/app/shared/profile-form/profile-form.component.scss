@@ -1,0 +1,44 @@
+.pf {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #374151;
+}
+.wide {
+  grid-column: 1 / -1;
+}
+.req {
+  color: var(--danger);
+}
+.opt {
+  color: var(--muted);
+  font-weight: 500;
+}
+input:disabled {
+  background: var(--surface-2);
+  color: var(--muted);
+}
+.submit {
+  align-self: flex-start;
+  min-width: 180px;
+}
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .submit {
+    align-self: stretch;
+  }
+}

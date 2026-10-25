@@ -10,11 +10,15 @@ import { AccountStatus, User } from '../models/user.model';
 const TOKEN_KEY = 'tasked_token';
 
 export interface RegisterDto {
-  role: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  contactNumber: string;
   designation: string;
+  schoolId: string;
   district: string;
-  schoolId?: string;
-  assignedSchoolIds?: string[];
+  area: string;
+  avatarUrl?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -26,7 +30,7 @@ export class AuthService {
   readonly loading = this.loadingSig.asReadonly();
 
   readonly isAuthenticated = computed(() => !!this.currentUserSig());
-  readonly isRegistered = computed(() => !!this.currentUserSig()?.role);
+  readonly isRegistered = computed(() => !!this.currentUserSig()?.profileComplete);
   readonly isApproved = computed(
     () => this.currentUserSig()?.status === AccountStatus.APPROVED,
   );
@@ -123,8 +127,8 @@ export class AuthService {
   routeForCurrentState(): string {
     const user = this.currentUserSig();
     if (!user) return '/login';
-    if (!user.role) return '/register';
-    if (user.status !== AccountStatus.APPROVED) return '/pending';
-    return '/tickets';
+    if (user.status === AccountStatus.APPROVED) return '/dashboard';
+    if (!user.profileComplete) return '/register';
+    return '/pending';
   }
 }

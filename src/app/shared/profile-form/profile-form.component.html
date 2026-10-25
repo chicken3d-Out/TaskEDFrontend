@@ -1,0 +1,61 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="pf">
+  <app-avatar-picker [url]="avatarUrl" [name]="user?.name" (uploaded)="avatarUrl = $event" />
+
+  <div class="grid">
+    <label>
+      First name <span class="req">*</span>
+      <input formControlName="firstName" autocomplete="given-name" />
+    </label>
+    <label>
+      Middle name <span class="opt">(optional)</span>
+      <input formControlName="middleName" autocomplete="additional-name" />
+    </label>
+    <label>
+      Last name <span class="req">*</span>
+      <input formControlName="lastName" autocomplete="family-name" />
+    </label>
+    <label>
+      Contact number <span class="req">*</span>
+      <input formControlName="contactNumber" inputmode="tel" placeholder="09XX XXX XXXX" autocomplete="tel" />
+      @if (form.controls.contactNumber.touched && form.controls.contactNumber.invalid) {
+        <small class="error">Enter a valid contact number.</small>
+      }
+    </label>
+    <label>
+      Designation <span class="req">*</span>
+      <input formControlName="designation" placeholder="e.g. Teacher I, Administrative Officer II" />
+    </label>
+    <label>
+      DepEd email
+      <input [value]="user?.depedEmail ?? ''" disabled />
+    </label>
+    <label class="wide">
+      School name <span class="req">*</span>
+      <select formControlName="schoolId" (change)="onSchoolChange()">
+        <option value="" disabled>Select your school</option>
+        @for (school of schools; track school.id) {
+          <option [value]="school.id">{{ school.name }} ({{ school.district }})</option>
+        }
+      </select>
+    </label>
+    <label>
+      District <span class="req">*</span>
+      <input formControlName="district" placeholder="e.g. Santa Fe District" />
+    </label>
+    <label>
+      Area <span class="req">*</span>
+      <input formControlName="area" placeholder="e.g. Area 2A" />
+    </label>
+  </div>
+
+  @if (error) {
+    <p class="error">{{ error }}</p>
+  }
+  @if (done && mode === 'edit') {
+    <p class="success">Profile saved.</p>
+  }
+
+  <button class="btn submit" type="submit" [disabled]="saving">
+    {{ saving ? 'Saving…' : mode === 'register' ? 'Submit for approval' : 'Save changes' }}
+  </button>
+</form>

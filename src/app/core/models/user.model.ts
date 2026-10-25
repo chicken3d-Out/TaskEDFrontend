@@ -15,6 +15,14 @@ export enum AccountStatus {
 export interface School {
   id: string;
   name: string;
+  firstName: string | null;
+  middleName: string | null;
+  lastName: string | null;
+  contactNumber: string | null;
+  area: string | null;
+  avatarUrl: string | null;
+  // true once name, contact, designation, school, district and area are filled in
+  profileComplete: boolean;
   district: string;
 }
 
@@ -23,6 +31,14 @@ export interface User {
   googleId: string;
   depedEmail: string;
   name: string;
+  firstName: string | null;
+  middleName: string | null;
+  lastName: string | null;
+  contactNumber: string | null;
+  area: string | null;
+  avatarUrl: string | null;
+  // true once name, contact, designation, school, district and area are filled in
+  profileComplete: boolean;
   district: string | null;
   designation: string | null;
   role: Role | null;
@@ -30,4 +46,24 @@ export interface User {
   school: School | null;
   assignedSchools: School[];
   createdAt: string;
+}
+
+export const ROLE_LABELS: Record<Role, string> = {
+  [Role.TEACHER]: 'Teacher',
+  [Role.ADMIN_OFFICER]: 'Administrative Officer',
+  [Role.ADMIN_OFFICE_ACCOUNT]: 'Administrative Office',
+  [Role.ADMINISTRATOR]: 'Administrator',
+};
+
+export function roleLabel(role: Role | string | null | undefined): string {
+  if (!role) return 'No role yet';
+  return ROLE_LABELS[role as Role] ?? String(role);
+}
+
+export function initialsOf(user: Pick<User, 'name'> | null | undefined): string {
+  const parts = (user?.name ?? '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  const first = parts[0][0] ?? '';
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
+  return (first + last).toUpperCase();
 }

@@ -1,0 +1,172 @@
+<div class="dash">
+  <section class="hero">
+    <div>
+      <p class="eyebrow">{{ greeting }}</p>
+      <h1>Welcome, {{ firstName }}!</h1>
+      <p class="sub">
+        {{ today | date: 'EEEE, MMMM d, y' }} · {{ roleLabel(auth.currentUser()?.role) }}
+        @if (auth.currentUser()?.school) {
+          · {{ auth.currentUser()?.school?.name }}
+        }
+      </p>
+    </div>
+    <div class="hero-actions">
+      @if (auth.currentUser()?.role === Role.TEACHER) {
+        <a class="btn hero-btn" routerLink="/tickets/new"><app-icon name="plus" [size]="18" /> New ticket</a>
+      }
+      <a class="btn hero-btn ghost" routerLink="/calendar"><app-icon name="calendar" [size]="18" /> Calendar</a>
+    </div>
+  </section>
+
+  @if (profileIncomplete) {
+    <a class="nudge" routerLink="/profile">
+      <app-icon name="user" [size]="18" />
+      Complete your profile (name, contact number, school, area and photo) so others can recognise you.
+    </a>
+  }
+
+  @if (loading) {
+    <app-loading [compact]="true" />
+  } @else {
+    <section class="stats">
+      @if (summary?.tickets; as t) {
+        <div class="stat">
+          <span class="ico blue"><app-icon name="ticket" [size]="22" /></span>
+          <div>
+            <strong>{{ t.total }}</strong>
+            <small>{{ auth.currentUser()?.role === Role.ADMIN_OFFICER ? 'Tickets assigned' : 'Tickets' }}</small>
+          </div>
+        </div>
+        <div class="stat">
+          <span class="ico amber"><app-icon name="clock" [size]="22" /></span>
+          <div>
+            <strong>{{ t.open }}</strong>
+            <small>Open</small>
+          </div>
+        </div>
+        @if (auth.currentUser()?.role === Role.TEACHER) {
+          <div class="stat">
+            <span class="ico green"><app-icon name="user" [size]="22" /></span>
+            <div>
+              <strong>{{ t.mine }}</strong>
+              <small>Filed by you</small>
+            </div>
+          </div>
+        }
+      }
+      @if (summary?.admin; as a) {
+        <a class="stat link" routerLink="/users">
+          <span class="ico red"><app-icon name="shield" [size]="22" /></span>
+          <div>
+            <strong>{{ a.pendingUsers }}</strong>
+            <small>Accounts to review</small>
+          </div>
+        </a>
+        <div class="stat">
+          <span class="ico green"><app-icon name="users" [size]="22" /></span>
+          <div>
+            <strong>{{ a.totalUsers }}</strong>
+            <small>Total users</small>
+          </div>
+        </div>
+        <div class="stat">
+          <span class="ico blue"><app-icon name="school" [size]="22" /></span>
+          <div>
+            <strong>{{ a.schools }}</strong>
+            <small>Schools</small>
+          </div>
+        </div>
+      }
+      <div class="stat">
+        <span class="ico purple"><app-icon name="calendar" [size]="22" /></span>
+        <div>
+          <strong>{{ summary?.upcomingEvents?.length ?? 0 }}</strong>
+          <small>Upcoming events</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card cal-card">
+        <h2><app-icon name="calendar" [size]="18" /> Calendar</h2>
+        <app-month-calendar [events]="events" [compact]="true" />
+        <a class="more-link" routerLink="/calendar">Open full calendar</a>
+      </div>
+
+      <div class="card">
+        <h2><app-icon name="megaphone" [size]="18" /> Upcoming</h2>
+        @if (!summary?.upcomingEvents?.length) {
+          <p class="empty">No upcoming events or announcements.</p>
+        }
+        <ul class="events">
+          @for (e of summary?.upcomingEvents; track e.id) {
+            <li>
+              <div class="date">
+                <b>{{ e.eventDate | date: 'd' }}</b>
+                <span>{{ e.eventDate | date: 'MMM' }}</span>
+              </div>
+              <div class="evt">
+                <strong>{{ e.title }}</strong>
+                <small>{{ e.eventDate | date: 'EEE h:mm a' }}</small>
+              </div>
+              @if (e.zoomLink) {
+                <a [href]="e.zoomLink" target="_blank" rel="noopener" class="zoom" aria-label="Join Zoom">
+                  <app-icon name="video" [size]="18" />
+                </a>
+              }
+            </li>
+          }
+        </ul>
+      </div>
+
+      @if (summary?.tickets; as t) {
+        <div class="card">
+          <h2><app-icon name="ticket" [size]="18" /> Tickets by status</h2>
+          @if (t.total === 0) {
+            <p class="empty">No tickets yet.</p>
+          }
+          @for (s of statuses; track s) {
+            @if (t.byStatus[s]) {
+              <div class="bar-row">
+                <span class="label">{{ statusLabel(s) }}</span>
+                <div class="bar"><i [class]="statusClass(s)" [style.width.%]="barWidth(s)"></i></div>
+                <span class="count">{{ t.byStatus[s] }}</span>
+              </div>
+            }
+          }
+        </div>
+
+        <div class="card">
+          <h2><app-icon name="inbox" [size]="18" /> Recent tickets</h2>
+          @if (t.recent.length === 0) {
+            <p class="empty">Nothing to show yet.</p>
+          }
+          <ul class="recent">
+            @for (r of t.recent; track r.id) {
+              <li>
+                <a [routerLink]="['/tickets', r.id]">
+                  <strong>{{ r.title }}</strong>
+                  <small>{{ r.requesterName }} · {{ r.createdAt | date: 'MMM d' }}</small>
+                </a>
+                <span class="chip" [class]="statusClass(r.status)">{{ statusLabel(r.status) }}</span>
+              </li>
+            }
+          </ul>
+          <a class="more-link" routerLink="/tickets">View all tickets</a>
+        </div>
+      }
+
+      @if (summary?.admin; as a) {
+        <div class="card">
+          <h2><app-icon name="users" [size]="18" /> People by role</h2>
+          @for (r of roleEntries(); track r.role) {
+            <div class="role-row">
+              <span>{{ r.role }}</span>
+              <b>{{ r.count }}</b>
+            </div>
+          }
+        </div>
+      }
+    </section>
+  }
+</div>

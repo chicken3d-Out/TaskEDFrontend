@@ -1,0 +1,153 @@
+.head {
+  margin-bottom: 1rem;
+  .page-title {
+    margin-bottom: 0.8rem;
+  }
+}
+.tools {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.tabs {
+  display: inline-flex;
+  background: #e8ecf0;
+  padding: 3px;
+  border-radius: 12px;
+  button {
+    border: none;
+    background: transparent;
+    padding: 0.45rem 0.9rem;
+    border-radius: 9px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: #374151;
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+    &.on {
+      background: #fff;
+      box-shadow: var(--shadow);
+      color: var(--primary-strong);
+    }
+  }
+}
+.count {
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.68rem;
+  border-radius: 999px;
+  padding: 0 0.4rem;
+}
+.search {
+  flex: 1;
+  min-width: 220px;
+  max-width: 340px;
+}
+.empty {
+  color: var(--muted);
+  text-align: center;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.top {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+.who {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  strong {
+    font-size: 1rem;
+  }
+  span {
+    color: var(--muted);
+    font-size: 0.82rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+.status {
+  padding: 0.15rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  background: #e5e7eb;
+  &.s-approved {
+    background: #dcfce7;
+    color: #15803d;
+  }
+  &.s-pending {
+    background: #fef3c7;
+    color: #b45309;
+  }
+  &.s-rejected,
+  &.s-suspended {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+}
+.details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.2rem;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+  color: #374151;
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+}
+.assign {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    max-width: 320px;
+  }
+}
+fieldset {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+  legend {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--muted);
+    padding: 0 0.3rem;
+  }
+}
+.schools {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 0.2rem 1rem;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.check {
+  flex-direction: row !important;
+  align-items: center;
+  font-weight: 500 !important;
+  max-width: none !important;
+}
+.actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+  flex-wrap: wrap;
+}

@@ -1,0 +1,135 @@
+.cal {
+  width: 100%;
+}
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  strong {
+    font-size: 1.05rem;
+  }
+}
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  button {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text);
+    &:hover {
+      background: var(--surface-2);
+    }
+  }
+  .today {
+    width: auto;
+    padding: 0 0.7rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.weekdays span {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  padding-bottom: 0.25rem;
+}
+.day {
+  position: relative;
+  min-height: 78px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 0.35rem 0.4rem;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  overflow: hidden;
+  font: inherit;
+  color: var(--text);
+  &:hover {
+    border-color: var(--primary);
+  }
+  &.out {
+    background: var(--surface-2);
+    color: var(--muted);
+    opacity: 0.7;
+  }
+  &.today .num {
+    background: var(--primary);
+    color: #fff;
+  }
+  &.selected {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-soft);
+  }
+}
+.num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.dots {
+  display: flex;
+  gap: 3px;
+  i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+}
+.first {
+  font-size: 0.7rem;
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+  border-radius: 5px;
+  padding: 0.1rem 0.3rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.more {
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+.compact .day {
+  min-height: 40px;
+  align-items: center;
+  padding: 0.2rem;
+}
+.compact .head strong {
+  font-size: 0.95rem;
+}
+@media (max-width: 640px) {
+  .day {
+    min-height: 52px;
+  }
+  .first,
+  .more {
+    display: none;
+  }
+}

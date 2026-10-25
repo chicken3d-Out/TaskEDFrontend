@@ -1,73 +1,97 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { AccountStatus } from '../../core/models/user.model';
+import { IconComponent } from '../../shared/icon/icon.component';
 
 @Component({
   selector: 'app-pending-approval',
   standalone: true,
+  imports: [IconComponent],
   template: `
-    <div class="pending-page">
-      <div class="card">
-        @if (auth.currentUser()?.status === Status.REJECTED) {
+    <div class="page">
+      <div class="card box">
+        <span class="ico"><app-icon [name]="rejected ? 'x' : 'clock'" [size]="30" /></span>
+        @if (rejected) {
           <h1>Account not approved</h1>
           <p>
-            Your TaskEd account request was not approved. Please contact your
-            Administrative Officer or the Division ICT Unit for details.
+            Your TaskEd account request was not approved. Please contact the Division ICT Unit for details.
           </p>
         } @else {
           <h1>Waiting for approval</h1>
           <p>
-            Thanks, {{ auth.currentUser()?.name }} — your registration is in.
-            @if (auth.currentUser()?.role === 'teacher') {
-              Your school's Administrative Officer needs to approve your account
-              before you can file tickets.
-            } @else {
-              A Division Administrator needs to approve your account before you
-              can sign in.
-            }
+            Thanks, {{ auth.currentUser()?.firstName || auth.currentUser()?.name }}. Your profile is in. An
+            administrator will review it and assign your role, then you can start using TaskEd.
           </p>
         }
-        <button (click)="auth.logout()">Sign out</button>
+        <div class="actions">
+          @if (!rejected) {
+            <button class="btn" (click)="check()" [disabled]="checking()">
+              {{ checking() ? 'Checking…' : 'Check again' }}
+            </button>
+          }
+          <button class="btn secondary" (click)="auth.logout()">Sign out</button>
+        </div>
       </div>
     </div>
   `,
   styles: [
     `
-      .pending-page {
+      .page {
         min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #f3f5f7;
+        padding: 1rem;
+        background: radial-gradient(1000px 500px at 50% -10%, #dcfce7, transparent), var(--bg);
       }
-      .card {
-        background: #fff;
-        border-radius: 12px;
-        padding: 2.5rem;
-        max-width: 420px;
+      .box {
+        max-width: 440px;
         text-align: center;
-        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+        padding: 2.2rem 2rem;
+      }
+      .ico {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: var(--primary-soft);
+        color: var(--primary-strong);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
       }
       h1 {
-        color: #14532d;
-        font-size: 1.3rem;
+        font-size: 1.35rem;
+        margin: 1rem 0 0.4rem;
       }
       p {
-        color: #555;
-        line-height: 1.5;
-        margin-bottom: 1.5rem;
+        color: var(--muted);
+        margin: 0 0 1.5rem;
       }
-      button {
-        padding: 0.6rem 1.5rem;
-        border-radius: 8px;
-        border: 1px solid #d0d5dd;
-        background: #fff;
-        cursor: pointer;
+      .actions {
+        display: flex;
+        gap: 0.6rem;
+        justify-content: center;
+        flex-wrap: wrap;
       }
     `,
   ],
 })
 export class PendingApprovalComponent {
-  Status = AccountStatus;
-  constructor(public auth: AuthService) {}
+  checking = signal(false);
+  constructor(
+    public auth: AuthService,
+    private router: Router,
+  ) {}
+
+  get rejected() {
+    return this.auth.currentUser()?.status === AccountStatus.REJECTED;
+  }
+
+  async check() {
+    this.checking.set(true);
+    await this.auth.loadCurrentUser();
+    this.checking.set(false);
+    this.router.navigateByUrl(this.auth.routeForCurrentState());
+  }
 }

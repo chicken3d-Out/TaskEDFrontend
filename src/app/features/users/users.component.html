@@ -1,0 +1,89 @@
+<div class="head">
+  <h1 class="page-title">Users</h1>
+  <div class="tools">
+    <div class="tabs">
+      <button [class.on]="filter === 'pending'" (click)="filter = 'pending'">
+        Needs review
+        @if (pendingCount > 0) {
+          <span class="count">{{ pendingCount }}</span>
+        }
+      </button>
+      <button [class.on]="filter === 'all'" (click)="filter = 'all'">All users</button>
+    </div>
+    <input class="search" [(ngModel)]="search" placeholder="Search name, email, school…" />
+  </div>
+</div>
+
+@if (loading) {
+  <app-loading [compact]="true" />
+} @else if (visible.length === 0) {
+  <div class="card empty">
+    {{ filter === 'pending' ? 'No accounts are waiting for review.' : 'No users match.' }}
+  </div>
+} @else {
+  <div class="list">
+    @for (row of visible; track row.user.id) {
+      <div class="card user">
+        <div class="top">
+          <app-avatar [url]="row.user.avatarUrl" [name]="row.user.name" [size]="48" />
+          <div class="who">
+            <strong>{{ row.user.name }}</strong>
+            <span>{{ row.user.depedEmail }}</span>
+            <span>{{ row.user.contactNumber }}</span>
+          </div>
+          <span class="status" [class]="'s-' + row.user.status">{{ row.user.status }}</span>
+        </div>
+
+        <div class="details">
+          <span><app-icon name="school" [size]="15" /> {{ row.user.school?.name || 'No school' }}</span>
+          <span>{{ row.user.designation }}</span>
+          <span>{{ row.user.district }} · {{ row.user.area }}</span>
+        </div>
+
+        <div class="assign">
+          <label>
+            Role
+            <select [(ngModel)]="row.role">
+              <option value="" disabled>Assign a role…</option>
+              @for (r of roles; track r.value) {
+                <option [value]="r.value">{{ r.label }}</option>
+              }
+            </select>
+          </label>
+
+          @if (row.role === Role.ADMIN_OFFICER) {
+            <fieldset>
+              <legend>Schools this AO handles (one AO per school)</legend>
+              <div class="schools">
+                @for (s of schools; track s.id) {
+                  <label class="check">
+                    <input
+                      type="checkbox"
+                      [checked]="row.schoolIds.has(s.id)"
+                      (change)="toggleSchool(row, s.id, $any($event.target).checked)"
+                    />
+                    {{ s.name }}
+                  </label>
+                }
+              </div>
+            </fieldset>
+          }
+        </div>
+
+        @if (row.error) {
+          <p class="error">{{ row.error }}</p>
+        }
+
+        <div class="actions">
+          <button class="btn" [disabled]="!canSave(row) || row.busy" (click)="save(row)">
+            <app-icon name="check" [size]="17" />
+            {{ row.user.status === AccountStatus.APPROVED ? 'Save role' : 'Assign role & approve' }}
+          </button>
+          @if (row.user.status !== AccountStatus.REJECTED && row.user.id !== auth.currentUser()?.id) {
+            <button class="btn danger" [disabled]="row.busy" (click)="reject(row)">Reject</button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+}

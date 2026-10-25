@@ -1,34 +1,24 @@
-<div class="shell">
+<div class="shell" [class.collapsed]="!sidebarOpen()">
   <header class="topbar">
-    <div class="brand">
+    <button class="icon-btn burger" (click)="toggleSidebar()" aria-label="Toggle menu" [attr.aria-expanded]="sidebarOpen()">
+      <app-icon [name]="sidebarOpen() ? 'x' : 'menu'" [size]="22" />
+    </button>
+    <a class="brand" routerLink="/dashboard">
       <img src="/sdo-leyte-seal.png" alt="" class="seal" />
-      <span>TaskEd</span>
-    </div>
-    <nav>
-      <a routerLink="/tickets" routerLinkActive="active">Tickets</a>
-      @if (isTeacher) {
-        <a routerLink="/tickets/new" routerLinkActive="active">New Ticket</a>
-      }
-      @if (canApprove) {
-        <a routerLink="/approvals" routerLinkActive="active">Approvals</a>
-      }
-      @if (isAo) {
-        <a routerLink="/forum" routerLinkActive="active">Forum</a>
-      }
-      <a routerLink="/calendar" routerLinkActive="active">Calendar</a>
-      <a routerLink="/announcements" routerLinkActive="active">Announcements</a>
-      <a routerLink="/weather" routerLinkActive="active">Weather</a>
-      <a routerLink="/chat" routerLinkActive="active">Assistant</a>
-    </nav>
-    <div class="right">
-      <button class="bell" (click)="showNotifications = !showNotifications">
-        🔔
+      <span>Task<b>Ed</b></span>
+    </a>
+    <span class="spacer"></span>
+
+    <div class="menu-wrap">
+      <button class="icon-btn" (click)="showNotifications = !showNotifications; showUserMenu = false" aria-label="Notifications">
+        <app-icon name="bell" [size]="21" />
         @if (notifications.unreadCount() > 0) {
           <span class="badge">{{ notifications.unreadCount() }}</span>
         }
       </button>
       @if (showNotifications) {
-        <div class="notif-panel">
+        <div class="popover notif-panel">
+          <div class="pop-title">Notifications</div>
           @if (notifications.notifications().length === 0) {
             <p class="empty">No notifications yet.</p>
           }
@@ -39,10 +29,53 @@
           }
         </div>
       }
-      <span class="user"><a routerLink="/profile" class="user-link">{{ auth.currentUser()?.name }}</a></span>
-      <button class="logout" (click)="auth.logout()">Sign out</button>
+    </div>
+
+    <div class="menu-wrap">
+      <button class="user-btn" (click)="showUserMenu = !showUserMenu; showNotifications = false">
+        <app-avatar [url]="auth.currentUser()?.avatarUrl" [name]="auth.currentUser()?.name" [size]="34" />
+        <span class="user-text">
+          <strong>{{ auth.currentUser()?.firstName || auth.currentUser()?.name }}</strong>
+          <small>{{ roleLabel(role) }}</small>
+        </span>
+      </button>
+      @if (showUserMenu) {
+        <div class="popover user-menu">
+          <a routerLink="/profile" class="menu-row"><app-icon name="user" [size]="18" /> My profile</a>
+          <button class="menu-row" (click)="auth.logout()"><app-icon name="logout" [size]="18" /> Sign out</button>
+        </div>
+      }
     </div>
   </header>
+
+  <aside class="sidebar" [class.open]="sidebarOpen()">
+    <nav>
+      @for (item of navItems; track item.link) {
+        <a
+          [routerLink]="item.link"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: item.link === '/tickets' }"
+          (click)="closeSidebarOnMobile()"
+        >
+          <app-icon [name]="item.icon" [size]="20" />
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+    <div class="side-foot">
+      <a routerLink="/profile" (click)="closeSidebarOnMobile()" class="profile-chip">
+        <app-avatar [url]="auth.currentUser()?.avatarUrl" [name]="auth.currentUser()?.name" [size]="36" />
+        <span>
+          <strong>{{ auth.currentUser()?.name }}</strong>
+          <small>{{ auth.currentUser()?.depedEmail }}</small>
+        </span>
+      </a>
+    </div>
+  </aside>
+  @if (sidebarOpen()) {
+    <div class="backdrop" (click)="toggleSidebar()"></div>
+  }
+
   <main>
     <router-outlet></router-outlet>
   </main>

@@ -1,48 +1,117 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationsService } from '../../core/services/notifications.service';
 import { PushNotificationsService } from '../../core/services/push-notifications.service';
-import { Role } from '../../core/models/user.model';
+import { Role, roleLabel } from '../../core/models/user.model';
+import { IconComponent } from '../icon/icon.component';
+import { AvatarComponent } from '../avatar/avatar.component';
+
+const SIDEBAR_KEY = 'tasked_sidebar_open';
+const DESKTOP_MIN = 900;
+
+interface NavItem {
+  label: string;
+  icon: string;
+  link: string;
+  show: boolean;
+}
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
 })
 export class ShellComponent implements OnInit {
   Role = Role;
+  roleLabel = roleLabel;
   showNotifications = false;
+  showUserMenu = false;
+  sidebarOpen = signal(true);
 
   constructor(
     public auth: AuthService,
     public notifications: NotificationsService,
     private pushNotifications: PushNotificationsService,
-  ) {}
+    private router: Router,
+  ) {
+    // On phones the panel is an overlay: close it after navigating.
+    this.router.events
+      .pipe(filter((e) => e instanceof NavigationEnd))
+      .subscribe(() => {
+        this.showNotifications = false;
+        this.showUserMenu = false;
+        if (!this.isDesktop()) this.sidebarOpen.set(false);
+      });
+  }
 
   ngOnInit() {
     const user = this.auth.currentUser();
     if (user) {
       this.notifications.loadAndConnect(user.id);
-      // No-ops on web; on the native Ionic/Capacitor build this asks for
-      // permission and registers the device for FCM push.
+      // No-ops on web; on the native build this registers the device for push.
       this.pushNotifications.register();
+    }
+    this.sidebarOpen.set(this.initialSidebarState());
+  }
+
+  private isDesktop(): boolean {
+    return typeof window !== 'undefined' && window.innerWidth >= DESKTOP_MIN;
+  }
+
+  private initialSidebarState(): boolean {
+    if (!this.isDesktop()) return false;
+    try {
+      const saved = localStorage.getItem(SIDEBAR_KEY);
+      return saved === null ? true : saved === '1';
+    } catch {
+      return true;
     }
   }
 
-  get canApprove() {
-    const role = this.auth.currentUser()?.role;
-    return role === Role.ADMINISTRATOR || role === Role.ADMIN_OFFICER;
+  toggleSidebar() {
+    const next = !this.sidebarOpen();
+    this.sidebarOpen.set(next);
+    if (this.isDesktop()) {
+      try {
+        localStorage.setItem(SIDEBAR_KEY, next ? '1' : '0');
+      } catch {
+        /* storage unavailable: fine */
+      }
+    }
   }
 
-  get isTeacher() {
-    return this.auth.currentUser()?.role === Role.TEACHER;
+  closeSidebarOnMobile() {
+    if (!this.isDesktop()) this.sidebarOpen.set(false);
   }
 
-  get isAo() {
-    return this.auth.currentUser()?.role === Role.ADMIN_OFFICER;
+  @HostListener('document:keydown.escape')
+  onEscape() {
+    this.showNotifications = false;
+    this.showUserMenu = false;
+  }
+
+  get role() {
+    return this.auth.currentUser()?.role;
+  }
+
+  get navItems(): NavItem[] {
+    const r = this.role;
+    const hasTickets = r === Role.TEACHER || r === Role.ADMIN_OFFICER || r === Role.ADMINISTRATOR;
+    return [
+      { label: 'Dashboard', icon: 'dashboard', link: '/dashboard', show: true },
+      { label: 'Tickets', icon: 'ticket', link: '/tickets', show: hasTickets },
+      { label: 'New Ticket', icon: 'plus', link: '/tickets/new', show: r === Role.TEACHER },
+      { label: 'Users', icon: 'users', link: '/users', show: r === Role.ADMINISTRATOR },
+      { label: 'Calendar', icon: 'calendar', link: '/calendar', show: true },
+      { label: 'Announcements', icon: 'megaphone', link: '/announcements', show: true },
+      { label: 'Forum', icon: 'forum', link: '/forum', show: r === Role.ADMIN_OFFICER },
+      { label: 'Weather', icon: 'weather', link: '/weather', show: true },
+      { label: 'Assistant', icon: 'bot', link: '/chat', show: true },
+    ].filter((i) => i.show);
   }
 }

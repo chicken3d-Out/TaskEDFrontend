@@ -30,7 +30,9 @@ export const needsRegistrationGuard: CanActivateFn = async () => {
   const router = inject(Router);
   const user = await ensureUserLoaded(auth);
   if (!user) return router.createUrlTree(['/login']);
-  if (user.role) return router.createUrlTree([auth.routeForCurrentState()]);
+  if (user.status === AccountStatus.APPROVED || user.profileComplete) {
+    return router.createUrlTree([auth.routeForCurrentState()]);
+  }
   return true;
 };
 
@@ -39,25 +41,23 @@ export const approvedGuard: CanActivateFn = async () => {
   const router = inject(Router);
   const user = await ensureUserLoaded(auth);
   if (!user) return router.createUrlTree(['/login']);
-  if (!user.role) return router.createUrlTree(['/register']);
-  if (user.status !== AccountStatus.APPROVED) return router.createUrlTree(['/pending']);
-  return true;
+  if (user.status === AccountStatus.APPROVED) return true;
+  return router.createUrlTree([auth.routeForCurrentState()]);
 };
 
-export const approverOnlyGuard: CanActivateFn = async () => {
+export const adminOnlyGuard: CanActivateFn = async () => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const user = await ensureUserLoaded(auth);
   if (!user) return router.createUrlTree(['/login']);
-  const canApprove = user.role === Role.ADMINISTRATOR || user.role === Role.ADMIN_OFFICER;
-  return canApprove ? true : router.createUrlTree(['/tickets']);
+  return user.role === Role.ADMINISTRATOR ? true : router.createUrlTree(['/dashboard']);
 };
 
 export const teacherOnlyGuard: CanActivateFn = async () => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const user = await ensureUserLoaded(auth);
-  return user?.role === Role.TEACHER ? true : router.createUrlTree(['/tickets']);
+  return user?.role === Role.TEACHER ? true : router.createUrlTree(['/dashboard']);
 };
 
 // The Ask-a-Question forum is AO-only end to end per the spec decision.
@@ -65,5 +65,5 @@ export const aoOnlyGuard: CanActivateFn = async () => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const user = await ensureUserLoaded(auth);
-  return user?.role === Role.ADMIN_OFFICER ? true : router.createUrlTree(['/tickets']);
+  return user?.role === Role.ADMIN_OFFICER ? true : router.createUrlTree(['/dashboard']);
 };

@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { User } from '../models/user.model';
+import { Role, User } from '../models/user.model';
+import { RegisterDto } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class UsersService {
@@ -14,15 +15,19 @@ export class UsersService {
     return this.http.get<User[]>(`${this.base}/pending-approvals`);
   }
 
-  approve(id: string): Observable<User> {
-    return this.http.post<User>(`${this.base}/${id}/approve`, {});
+  all(): Observable<User[]> {
+    return this.http.get<User[]>(this.base);
+  }
+
+  assignRole(id: string, role: Role, assignedSchoolIds?: string[]): Observable<User> {
+    return this.http.post<User>(`${this.base}/${id}/assign-role`, { role, assignedSchoolIds });
   }
 
   reject(id: string): Observable<User> {
     return this.http.post<User>(`${this.base}/${id}/reject`, {});
   }
 
-  updateProfile(fields: Partial<Pick<User, 'name' | 'district' | 'designation'>> & { schoolId?: string }) {
+  updateProfile(fields: Partial<RegisterDto>): Observable<User> {
     return this.http.patch<User>(`${this.base}/me`, fields);
   }
 }
