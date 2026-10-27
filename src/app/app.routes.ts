@@ -7,7 +7,8 @@ import { ShellComponent } from './shared/layout/shell.component';
 import { TicketListComponent } from './features/tickets/ticket-list.component';
 import { TicketCreateComponent } from './features/tickets/ticket-create.component';
 import { TicketDetailComponent } from './features/tickets/ticket-detail.component';
-import { ApprovalsComponent } from './features/approvals/approvals.component';
+import { UsersComponent } from './features/users/users.component';
+import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { CalendarComponent } from './features/calendar/calendar.component';
 import { ForumListComponent } from './features/forum/forum-list.component';
 import { ForumQuestionComponent } from './features/forum/forum-question.component';
@@ -16,7 +17,7 @@ import { ProfileComponent } from './features/profile/profile.component';
 import { ChatbotComponent } from './features/chatbot/chatbot.component';
 import {
   approvedGuard,
-  approverOnlyGuard,
+  adminOnlyGuard,
   needsRegistrationGuard,
   teacherOnlyGuard,
   aoOnlyGuard,
@@ -32,10 +33,12 @@ export const routes: Routes = [
     component: ShellComponent,
     canActivate: [approvedGuard],
     children: [
+      { path: 'dashboard', component: DashboardComponent },
       { path: 'tickets', component: TicketListComponent },
       { path: 'tickets/new', component: TicketCreateComponent, canActivate: [teacherOnlyGuard] },
       { path: 'tickets/:id', component: TicketDetailComponent },
-      { path: 'approvals', component: ApprovalsComponent, canActivate: [approverOnlyGuard] },
+      { path: 'users', component: UsersComponent, canActivate: [adminOnlyGuard] },
+      { path: 'approvals', redirectTo: 'users', pathMatch: 'full' },
       { path: 'calendar', component: CalendarComponent, data: { mode: 'calendar' } },
       {
         path: 'announcements',
@@ -47,8 +50,8 @@ export const routes: Routes = [
       { path: 'weather', component: WeatherComponent },
       { path: 'profile', component: ProfileComponent },
       { path: 'chat', component: ChatbotComponent },
-      { path: '', redirectTo: 'tickets', pathMatch: 'full' },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
-  { path: '**', redirectTo: 'tickets' },
+  { path: '**', redirectTo: 'dashboard' },
 ];
