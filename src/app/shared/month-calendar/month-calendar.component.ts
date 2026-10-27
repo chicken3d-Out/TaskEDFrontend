@@ -61,7 +61,13 @@ const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
                 }
               </span>
               @if (!compact) {
-                <span class="first" [title]="cell.events[0].title">{{ cell.events[0].title }}</span>
+                <span
+                  class="first"
+                  role="button"
+                  [title]="cell.events[0].title"
+                  (click)="pickEvent($event, cell, cell.events[0].id)"
+                  >{{ cell.events[0].title }}</span
+                >
                 @if (cell.events.length > 1) {
                   <span class="more">+{{ cell.events.length - 1 }} more</span>
                 }
@@ -81,6 +87,7 @@ export class MonthCalendarComponent {
   @Input() compact = false;
   @Input() selectedDate: Date | null = null;
   @Output() daySelected = new EventEmitter<Date>();
+  @Output() eventSelected = new EventEmitter<string>();
 
   weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -130,6 +137,12 @@ export class MonthCalendarComponent {
     const t = new Date();
     this.cursor.set(new Date(t.getFullYear(), t.getMonth(), 1));
     this.daySelected.emit(t);
+  }
+
+  pickEvent(domEvent: Event, cell: DayCell, id: string) {
+    domEvent.stopPropagation();
+    this.daySelected.emit(cell.date);
+    this.eventSelected.emit(id);
   }
 
   pick(cell: DayCell) {

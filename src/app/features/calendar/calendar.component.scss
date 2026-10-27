@@ -166,3 +166,46 @@ label {
     grid-template-columns: 1fr;
   }
 }
+
+.side h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  &.today {
+    background: var(--primary);
+  }
+  &.soon {
+    background: #f59e0b;
+  }
+}
+.card.selected {
+  border-color: var(--primary);
+}
+.up {
+  border-bottom: 1px solid #f1f5f9;
+  &:last-child {
+    border-bottom: none;
+  }
+}
+.up-row .in {
+  flex: none;
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.up-row .t {
+  flex: 1;
+  min-width: 0;
+}
+.expanded {
+  padding: 0 0.2rem 0.4rem 0.2rem;
+  border-left: 3px solid var(--primary-soft);
+  margin: 0 0 0.4rem 0.3rem;
+  padding-left: 0.7rem;
+}

@@ -1,6 +1,26 @@
+<ng-template #details let-event>
+  <div class="event-item">
+    <div class="info">
+      <strong>{{ event.title }}</strong>
+      <span class="meta">{{ event.eventDate | date: 'EEE, MMM d · h:mm a' }} · posted by {{ event.createdBy.name }}</span>
+      <p>{{ event.description }}</p>
+      @if (event.zoomLink) {
+        <a [href]="event.zoomLink" target="_blank" rel="noopener" class="zoom-link">
+          <app-icon name="video" [size]="16" /> Join Zoom
+        </a>
+      }
+    </div>
+    @if (canManage) {
+      <button class="del" (click)="remove(event)" aria-label="Delete event">
+        <app-icon name="trash" [size]="17" />
+      </button>
+    }
+  </div>
+</ng-template>
+
 <div class="calendar-page">
   <div class="header-row">
-    <h1 class="page-title">{{ heading }}</h1>
+    <h1 class="page-title">Calendar &amp; Announcements</h1>
     @if (canManage) {
       <button class="btn" (click)="showForm = !showForm">
         <app-icon [name]="showForm ? 'x' : 'plus'" [size]="18" />
@@ -12,7 +32,7 @@
   @if (showForm) {
     <form class="card event-form" [formGroup]="form" (ngSubmit)="submit()">
       <input formControlName="title" placeholder="Title" />
-      <textarea formControlName="description" rows="3" placeholder="Description"></textarea>
+      <textarea formControlName="description" rows="3" placeholder="Details"></textarea>
       <div class="row">
         <label>
           Date &amp; time
@@ -23,10 +43,6 @@
           <input formControlName="zoomLink" placeholder="https://…" />
         </label>
       </div>
-      <label class="checkbox-row">
-        <input type="checkbox" formControlName="isAnnouncement" />
-        Also show in Announcements
-      </label>
       @if (error) {
         <p class="error">{{ error }}</p>
       }
@@ -38,81 +54,61 @@
 
   @if (loading) {
     <app-loading [compact]="true" />
-  } @else if (mode === 'calendar') {
+  } @else {
     <div class="layout">
       <div class="card month">
-        <app-month-calendar [events]="events" [selectedDate]="selectedDate" (daySelected)="selectDay($event)" />
+        <app-month-calendar
+          [events]="events"
+          [selectedDate]="selectedDate"
+          (daySelected)="selectDay($event)"
+          (eventSelected)="openEvent($event)"
+        />
       </div>
 
       <aside class="side">
         <div class="card">
-          <h2>{{ selectedDate | date: 'EEEE, MMM d' }}</h2>
-          @if (dayEvents.length === 0) {
-            <p class="empty">No events on this day.</p>
+          <h2><span class="dot today"></span> Today · {{ today | date: 'MMM d' }}</h2>
+          @if (todayEvents.length === 0) {
+            <p class="empty">Nothing scheduled today.</p>
           }
-          @for (event of dayEvents; track event.id) {
-            <div class="event-item">
-              <div class="info">
-                <strong>{{ event.title }}</strong>
-                <span class="meta">{{ event.eventDate | date: 'h:mm a' }} · {{ event.createdBy.name }}</span>
-                <p>{{ event.description }}</p>
-                @if (event.zoomLink) {
-                  <a [href]="event.zoomLink" target="_blank" rel="noopener" class="zoom-link">
-                    <app-icon name="video" [size]="16" /> Join Zoom
-                  </a>
-                }
-              </div>
-              @if (canManage) {
-                <button class="del" (click)="remove(event)" aria-label="Delete event">
-                  <app-icon name="trash" [size]="17" />
-                </button>
+          @for (event of todayEvents; track event.id) {
+            <ng-container [ngTemplateOutlet]="details" [ngTemplateOutletContext]="{ $implicit: event }" />
+          }
+        </div>
+
+        @if (!selectedIsToday) {
+          <div class="card selected">
+            <h2><span class="dot"></span> {{ selectedDate | date: 'EEEE, MMM d' }}</h2>
+            @if (dayEvents.length === 0) {
+              <p class="empty">No events on this day.</p>
+            }
+            @for (event of dayEvents; track event.id) {
+              <ng-container [ngTemplateOutlet]="details" [ngTemplateOutletContext]="{ $implicit: event }" />
+            }
+          </div>
+        }
+
+        <div class="card">
+          <h2><span class="dot soon"></span> Coming up</h2>
+          @if (upcoming.length === 0) {
+            <p class="empty">Nothing coming up.</p>
+          }
+          @for (event of upcoming; track event.id) {
+            <div class="up">
+              <button class="up-row" (click)="toggle(event.id); selectEventDay(event)">
+                <span class="d">{{ event.eventDate | date: 'MMM d' }}</span>
+                <span class="t">{{ event.title }}</span>
+                <span class="in">{{ daysUntil(event) === 1 ? 'tomorrow' : 'in ' + daysUntil(event) + ' days' }}</span>
+              </button>
+              @if (expandedId === event.id) {
+                <div class="expanded">
+                  <ng-container [ngTemplateOutlet]="details" [ngTemplateOutletContext]="{ $implicit: event }" />
+                </div>
               }
             </div>
           }
         </div>
-
-        <div class="card">
-          <h2>Coming up</h2>
-          @if (upcoming.length === 0) {
-            <p class="empty">Nothing scheduled.</p>
-          }
-          @for (event of upcoming; track event.id) {
-            <button class="up-row" (click)="selectDay(toDate(event))">
-              <span class="d">{{ event.eventDate | date: 'MMM d' }}</span>
-              <span class="t">{{ event.title }}</span>
-            </button>
-          }
-        </div>
       </aside>
-    </div>
-  } @else {
-    @if (events.length === 0) {
-      <div class="card"><p class="empty">No announcements yet.</p></div>
-    }
-    <div class="event-list">
-      @for (event of events; track event.id) {
-        <div class="card event-row">
-          <div class="date-badge">
-            <span class="days">{{ daysUntil(event) }}</span>
-            <span class="label">days</span>
-          </div>
-          <div class="info">
-            <strong>{{ event.title }}</strong>
-            <span class="meta">{{ event.eventDate | date: 'medium' }} · posted by {{ event.createdBy.name }}</span>
-            <p>{{ event.description }}</p>
-            @if (event.zoomLink) {
-              <a [href]="event.zoomLink" target="_blank" rel="noopener" class="zoom-link">
-                <app-icon name="video" [size]="16" /> Join Zoom
-              </a>
-            }
-          </div>
-          @if (canManage) {
-            <button class="del" (click)="remove(event)" aria-label="Delete event">
-              <app-icon name="trash" [size]="17" />
-            </button>
-          }
-        </div>
-      }
     </div>
   }
 </div>
