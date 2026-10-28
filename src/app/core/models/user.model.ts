@@ -28,8 +28,10 @@ export interface School {
 
 export interface User {
   id: string;
-  googleId: string;
-  depedEmail: string;
+  googleId: string | null;
+  depedEmail: string | null;
+  // set only for Administrator accounts, which sign in with username + password
+  username: string | null;
   name: string;
   firstName: string | null;
   middleName: string | null;

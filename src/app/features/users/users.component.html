@@ -1,5 +1,96 @@
 <div class="head">
-  <h1 class="page-title">Users</h1>
+  <div class="title-row">
+    <h1 class="page-title">Users</h1>
+    <button class="btn" (click)="showAdd = !showAdd">
+      <app-icon [name]="showAdd ? 'x' : 'plus'" [size]="18" />
+      {{ showAdd ? 'Cancel' : 'Add user' }}
+    </button>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><b>{{ totalUsers }}</b><span>Total users</span></div>
+    <button class="stat link" (click)="filter = 'pending'">
+      <b [class.alert]="pendingCount > 0">{{ pendingCount }}</b><span>Pending approval</span>
+    </button>
+    <div class="stat"><b>{{ activeCount }}</b><span>Active</span></div>
+    <div class="stat"><b>{{ suspendedCount }}</b><span>Suspended</span></div>
+  </div>
+
+  @if (showAdd) {
+    <form class="card add" [formGroup]="addForm" (ngSubmit)="addUser()">
+      <div class="kind">
+        <button type="button" [class.on]="addKind === 'staff'" (click)="addKind = 'staff'">
+          Staff (DepEd email)
+        </button>
+        <button type="button" [class.on]="addKind === 'admin'" (click)="addKind = 'admin'">
+          Administrator (username and password)
+        </button>
+      </div>
+      <p class="note">
+        @if (addKind === 'staff') {
+          They sign in with their DepEd Google account. The role you pick here is applied right away, so no approval is needed.
+        } @else {
+          Administrators sign in with the username and password you set here. Share the password with them securely.
+        }
+      </p>
+
+      <div class="grid">
+        <label>First name *<input formControlName="firstName" /></label>
+        <label>Middle name<input formControlName="middleName" /></label>
+        <label>Last name *<input formControlName="lastName" /></label>
+        <label>Contact number<input formControlName="contactNumber" /></label>
+
+        @if (addKind === 'staff') {
+          <label class="wide">DepEd email *<input formControlName="depedEmail" placeholder="name&#64;deped.gov.ph" /></label>
+          <label>
+            Role *
+            <select formControlName="role">
+              @for (r of roles; track r.value) {
+                <option [value]="r.value">{{ r.label }}</option>
+              }
+            </select>
+          </label>
+          <label>Designation<input formControlName="designation" /></label>
+          <label class="wide">
+            School {{ addForm.value.role === Role.TEACHER ? '*' : '' }}
+            <select formControlName="schoolId">
+              <option value="">No school</option>
+              @for (s of schools; track s.id) {
+                <option [value]="s.id">{{ s.name }} ({{ s.district }})</option>
+              }
+            </select>
+          </label>
+          <label>District<input formControlName="district" /></label>
+          <label>Area<input formControlName="area" /></label>
+        } @else {
+          <label>Username *<input formControlName="username" autocomplete="off" /></label>
+          <label>Password * <small>(10+ characters)</small><input type="password" formControlName="password" autocomplete="new-password" /></label>
+        }
+      </div>
+
+      @if (addKind === 'staff' && addForm.value.role === Role.ADMIN_OFFICER) {
+        <fieldset>
+          <legend>Schools this AO handles * (one AO per school)</legend>
+          <div class="schools">
+            @for (s of schools; track s.id) {
+              <label class="check">
+                <input type="checkbox" [checked]="addSchoolIds.has(s.id)" (change)="toggleAddSchool(s.id, $any($event.target).checked)" />
+                {{ s.name }}
+              </label>
+            }
+          </div>
+        </fieldset>
+      }
+
+      @if (addError) {
+        <p class="error">{{ addError }}</p>
+      }
+      <button class="btn" type="submit" [disabled]="!addValid || adding">
+        {{ adding ? 'Adding…' : 'Add user' }}
+      </button>
+    </form>
+  }
+
   <div class="tools">
     <div class="tabs">
       <button [class.on]="filter === 'pending'" (click)="filter = 'pending'">
@@ -10,7 +101,7 @@
       </button>
       <button [class.on]="filter === 'all'" (click)="filter = 'all'">All users</button>
     </div>
-    <input class="search" [(ngModel)]="search" placeholder="Search name, email, school…" />
+    <input class="search" [(ngModel)]="search" [ngModelOptions]="{ standalone: true }" placeholder="Search name, email, school…" />
   </div>
 </div>
 
@@ -28,59 +119,109 @@
           <app-avatar [url]="row.user.avatarUrl" [name]="row.user.name" [size]="48" />
           <div class="who">
             <strong>{{ row.user.name }}</strong>
-            <span>{{ row.user.depedEmail }}</span>
+            <span>{{ row.user.username ? 'Username: ' + row.user.username : row.user.depedEmail }}</span>
             <span>{{ row.user.contactNumber }}</span>
           </div>
           <span class="status" [class]="'s-' + row.user.status">{{ row.user.status }}</span>
         </div>
 
         <div class="details">
-          <span><app-icon name="school" [size]="15" /> {{ row.user.school?.name || 'No school' }}</span>
-          <span>{{ row.user.designation }}</span>
-          <span>{{ row.user.district }} · {{ row.user.area }}</span>
-        </div>
-
-        <div class="assign">
-          <label>
-            Role
-            <select [(ngModel)]="row.role">
-              <option value="" disabled>Assign a role…</option>
-              @for (r of roles; track r.value) {
-                <option [value]="r.value">{{ r.label }}</option>
-              }
-            </select>
-          </label>
-
-          @if (row.role === Role.ADMIN_OFFICER) {
-            <fieldset>
-              <legend>Schools this AO handles (one AO per school)</legend>
-              <div class="schools">
-                @for (s of schools; track s.id) {
-                  <label class="check">
-                    <input
-                      type="checkbox"
-                      [checked]="row.schoolIds.has(s.id)"
-                      (change)="toggleSchool(row, s.id, $any($event.target).checked)"
-                    />
-                    {{ s.name }}
-                  </label>
-                }
-              </div>
-            </fieldset>
+          @if (isPasswordAccount(row.user)) {
+            <span><app-icon name="shield" [size]="15" /> Administrator account</span>
+          } @else {
+            <span><app-icon name="school" [size]="15" /> {{ row.user.school?.name || 'No school' }}</span>
+            <span>{{ row.user.designation }}</span>
+            <span>{{ row.user.district }} · {{ row.user.area }}</span>
           }
         </div>
+
+        @if (!isPasswordAccount(row.user)) {
+          <div class="assign">
+            <label>
+              Role
+              <select [(ngModel)]="row.role" [ngModelOptions]="{ standalone: true }">
+                <option value="" disabled>Assign a role…</option>
+                @for (r of roles; track r.value) {
+                  <option [value]="r.value">{{ r.label }}</option>
+                }
+              </select>
+            </label>
+
+            @if (row.role === Role.ADMIN_OFFICER) {
+              <fieldset>
+                <legend>Schools this AO handles (one AO per school)</legend>
+                <div class="schools">
+                  @for (s of schools; track s.id) {
+                    <label class="check">
+                      <input type="checkbox" [checked]="row.schoolIds.has(s.id)" (change)="toggleSchool(row, s.id, $any($event.target).checked)" />
+                      {{ s.name }}
+                    </label>
+                  }
+                </div>
+              </fieldset>
+            }
+          </div>
+        }
+
+        @if (row.editing) {
+          <div class="edit">
+            <div class="grid">
+              <label>First name<input [(ngModel)]="row.edit.firstName" [ngModelOptions]="{ standalone: true }" /></label>
+              <label>Middle name<input [(ngModel)]="row.edit.middleName" [ngModelOptions]="{ standalone: true }" /></label>
+              <label>Last name<input [(ngModel)]="row.edit.lastName" [ngModelOptions]="{ standalone: true }" /></label>
+              <label>Contact number<input [(ngModel)]="row.edit.contactNumber" [ngModelOptions]="{ standalone: true }" /></label>
+              @if (!isPasswordAccount(row.user)) {
+                <label class="wide">DepEd email<input [(ngModel)]="row.edit.depedEmail" [ngModelOptions]="{ standalone: true }" /></label>
+                <label>Designation<input [(ngModel)]="row.edit.designation" [ngModelOptions]="{ standalone: true }" /></label>
+                <label>
+                  School
+                  <select [(ngModel)]="row.edit.schoolId" [ngModelOptions]="{ standalone: true }">
+                    <option value="">No school</option>
+                    @for (s of schools; track s.id) {
+                      <option [value]="s.id">{{ s.name }}</option>
+                    }
+                  </select>
+                </label>
+                <label>District<input [(ngModel)]="row.edit.district" [ngModelOptions]="{ standalone: true }" /></label>
+                <label>Area<input [(ngModel)]="row.edit.area" [ngModelOptions]="{ standalone: true }" /></label>
+              }
+            </div>
+            <button class="btn" [disabled]="row.busy" (click)="saveEdit(row)">Save details</button>
+
+            @if (isPasswordAccount(row.user)) {
+              <div class="pw-reset">
+                <label>
+                  Set a new password <small>(10+ characters)</small>
+                  <input type="password" [(ngModel)]="row.newPassword" [ngModelOptions]="{ standalone: true }" autocomplete="new-password" />
+                </label>
+                <button class="btn secondary" [disabled]="row.busy" (click)="resetPassword(row)">Reset password</button>
+              </div>
+            }
+          </div>
+        }
 
         @if (row.error) {
           <p class="error">{{ row.error }}</p>
         }
 
         <div class="actions">
-          <button class="btn" [disabled]="!canSave(row) || row.busy" (click)="save(row)">
-            <app-icon name="check" [size]="17" />
-            {{ row.user.status === AccountStatus.APPROVED ? 'Save role' : 'Assign role & approve' }}
+          @if (!isPasswordAccount(row.user)) {
+            <button class="btn" [disabled]="!canSave(row) || row.busy" (click)="save(row)">
+              <app-icon name="check" [size]="17" />
+              {{ row.user.status === AccountStatus.APPROVED ? 'Save role' : 'Assign role & approve' }}
+            </button>
+          }
+          <button class="btn secondary" (click)="row.editing = !row.editing">
+            {{ row.editing ? 'Close' : 'Edit details' }}
           </button>
-          @if (row.user.status !== AccountStatus.REJECTED && row.user.id !== auth.currentUser()?.id) {
-            <button class="btn danger" [disabled]="row.busy" (click)="reject(row)">Reject</button>
+          @if (!isSelf(row.user)) {
+            @if (row.user.status === AccountStatus.SUSPENDED) {
+              <button class="btn secondary" [disabled]="row.busy" (click)="reactivate(row)">Reactivate</button>
+            } @else if (row.user.status === AccountStatus.APPROVED) {
+              <button class="btn danger" [disabled]="row.busy" (click)="suspend(row)">Suspend</button>
+            } @else if (row.user.status === AccountStatus.PENDING) {
+              <button class="btn danger" [disabled]="row.busy" (click)="reject(row)">Reject</button>
+            }
           }
         </div>
       </div>

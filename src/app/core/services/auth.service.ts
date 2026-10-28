@@ -15,7 +15,7 @@ export interface RegisterDto {
   lastName: string;
   contactNumber: string;
   designation: string;
-  schoolId: string;
+  schoolId?: string;
   district: string;
   area: string;
   avatarUrl?: string | null;
@@ -72,6 +72,16 @@ export class AuthService {
     try {
       const u = new URL(url);
       if (u.hostname !== 'auth') return;
+      const error = u.searchParams.get('error');
+      if (error) {
+        try {
+          await Browser.close();
+        } catch {
+          /* not supported on every platform */
+        }
+        this.router.navigate(['/login'], { queryParams: { error } });
+        return;
+      }
       token = u.searchParams.get('token');
     } catch {
       return;
@@ -85,6 +95,22 @@ export class AuthService {
     this.setToken(token);
     await this.loadCurrentUser();
     this.router.navigateByUrl(this.routeForCurrentState());
+  }
+
+  // Administrator sign-in (username + password). Throws with the server's message.
+  async adminLogin(username: string, password: string): Promise<void> {
+    const res = await firstValueFrom(
+      this.http.post<{ token: string }>(`${environment.apiUrl}/auth/admin-login`, { username, password }),
+    );
+    this.setToken(res.token);
+    await this.loadCurrentUser();
+    this.router.navigateByUrl(this.routeForCurrentState());
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${environment.apiUrl}/auth/change-password`, { currentPassword, newPassword }),
+    );
   }
 
   async loadCurrentUser(): Promise<User | null> {

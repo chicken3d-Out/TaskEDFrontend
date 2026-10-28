@@ -41,6 +41,10 @@ export class ProfileFormComponent implements OnInit {
     area: ['', Validators.required],
   });
 
+  get isPasswordAccount() {
+    return !!this.user?.username;
+  }
+
   get user() {
     return this.auth.currentUser();
   }
@@ -59,6 +63,13 @@ export class ProfileFormComponent implements OnInit {
         district: u.district ?? '',
         area: u.area ?? '',
       });
+    }
+    // Administrator accounts have no school/district/area; only names are needed.
+    if (u?.username) {
+      for (const k of ['contactNumber', 'designation', 'schoolId', 'district', 'area'] as const) {
+        this.form.controls[k].clearValidators();
+        this.form.controls[k].updateValueAndValidity();
+      }
     }
     this.schoolsService.findAll().subscribe((schools) => (this.schools = schools));
   }
@@ -84,11 +95,11 @@ export class ProfileFormComponent implements OnInit {
       firstName: v.firstName!,
       middleName: v.middleName || undefined,
       lastName: v.lastName!,
-      contactNumber: v.contactNumber!,
-      designation: v.designation!,
-      schoolId: v.schoolId!,
-      district: v.district!,
-      area: v.area!,
+      contactNumber: v.contactNumber ?? '',
+      designation: v.designation ?? '',
+      schoolId: v.schoolId || undefined,
+      district: v.district ?? '',
+      area: v.area ?? '',
       avatarUrl: this.avatarUrl,
     };
     try {

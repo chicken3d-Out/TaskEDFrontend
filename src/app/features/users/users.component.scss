@@ -151,3 +151,137 @@ fieldset {
   margin-top: 0.9rem;
   flex-wrap: wrap;
 }
+
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  .page-title {
+    margin-bottom: 0;
+  }
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.8rem;
+  margin: 1rem 0;
+}
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.8rem 1rem;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  b {
+    font-size: 1.5rem;
+    line-height: 1.1;
+    &.alert {
+      color: var(--danger);
+    }
+  }
+  span {
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  &.link {
+    cursor: pointer;
+    &:hover {
+      border-color: var(--primary);
+    }
+  }
+}
+.add {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-bottom: 1rem;
+}
+.kind {
+  display: inline-flex;
+  background: #e8ecf0;
+  padding: 3px;
+  border-radius: 12px;
+  align-self: flex-start;
+  flex-wrap: wrap;
+  button {
+    border: none;
+    background: transparent;
+    padding: 0.45rem 0.9rem;
+    border-radius: 9px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #374151;
+    &.on {
+      background: #fff;
+      box-shadow: var(--shadow);
+      color: var(--primary-strong);
+    }
+  }
+}
+.note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  small {
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .wide {
+    grid-column: 1 / -1;
+  }
+}
+.edit {
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  .btn {
+    align-self: flex-start;
+  }
+}
+.pw-reset {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    min-width: 240px;
+  }
+  small {
+    font-weight: 500;
+    color: var(--muted);
+  }
+}
+.tools {
+  margin-top: 0.4rem;
+}
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

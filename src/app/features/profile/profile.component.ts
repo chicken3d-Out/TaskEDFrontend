@@ -1,4 +1,5 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { roleLabel } from '../../core/models/user.model';
 import { ProfileFormComponent } from '../../shared/profile-form/profile-form.component';
@@ -6,7 +7,7 @@ import { ProfileFormComponent } from '../../shared/profile-form/profile-form.com
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [ProfileFormComponent],
+  imports: [ProfileFormComponent, ReactiveFormsModule],
   template: `
     <h1 class="page-title">My profile</h1>
     <div class="card box">
@@ -24,12 +25,64 @@ import { ProfileFormComponent } from '../../shared/profile-form/profile-form.com
       </div>
       <app-profile-form mode="edit" />
     </div>
+
+    @if (auth.currentUser()?.username) {
+      <div class="card box pw">
+        <h2>Change password</h2>
+        <form [formGroup]="pwForm" (ngSubmit)="changePassword()">
+          <label>
+            Current password
+            <input type="password" formControlName="current" autocomplete="current-password" />
+          </label>
+          <label>
+            New password <small>(at least 10 characters)</small>
+            <input type="password" formControlName="next" autocomplete="new-password" />
+          </label>
+          @if (pwError()) {
+            <p class="error">{{ pwError() }}</p>
+          }
+          @if (pwDone()) {
+            <p class="success">Password changed.</p>
+          }
+          <button class="btn" type="submit" [disabled]="pwForm.invalid || pwBusy()">
+            {{ pwBusy() ? 'Saving…' : 'Change password' }}
+          </button>
+        </form>
+      </div>
+    }
   `,
   styles: [
     `
       .box {
         max-width: 760px;
         padding: 1.75rem;
+      }
+      .pw {
+        margin-top: 1rem;
+        h2 {
+          margin: 0 0 1rem;
+          font-size: 1.05rem;
+        }
+        form {
+          display: flex;
+          flex-direction: column;
+          gap: 0.9rem;
+          max-width: 360px;
+        }
+        label {
+          display: flex;
+          flex-direction: column;
+          gap: 0.3rem;
+          font-size: 0.82rem;
+          font-weight: 600;
+        }
+        small {
+          font-weight: 500;
+          color: var(--muted);
+        }
+        .btn {
+          align-self: flex-start;
+        }
       }
       .meta {
         display: flex;
@@ -50,5 +103,30 @@ import { ProfileFormComponent } from '../../shared/profile-form/profile-form.com
 })
 export class ProfileComponent {
   public auth = inject(AuthService);
+  private fb = inject(FormBuilder);
   roleLabel = roleLabel;
+
+  pwForm = this.fb.group({
+    current: ['', Validators.required],
+    next: ['', [Validators.required, Validators.minLength(10)]],
+  });
+  pwBusy = signal(false);
+  pwError = signal<string | null>(null);
+  pwDone = signal(false);
+
+  async changePassword() {
+    if (this.pwForm.invalid) return;
+    this.pwBusy.set(true);
+    this.pwError.set(null);
+    this.pwDone.set(false);
+    try {
+      await this.auth.changePassword(this.pwForm.value.current!, this.pwForm.value.next!);
+      this.pwForm.reset();
+      this.pwDone.set(true);
+    } catch (e: any) {
+      this.pwError.set(e?.error?.message ?? 'Could not change the password.');
+    } finally {
+      this.pwBusy.set(false);
+    }
+  }
 }

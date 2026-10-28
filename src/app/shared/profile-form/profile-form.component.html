@@ -15,37 +15,46 @@
       <input formControlName="lastName" autocomplete="family-name" />
     </label>
     <label>
-      Contact number <span class="req">*</span>
+      Contact number @if (!isPasswordAccount) { <span class="req">*</span> }
       <input formControlName="contactNumber" inputmode="tel" placeholder="09XX XXX XXXX" autocomplete="tel" />
       @if (form.controls.contactNumber.touched && form.controls.contactNumber.invalid) {
         <small class="error">Enter a valid contact number.</small>
       }
     </label>
     <label>
-      Designation <span class="req">*</span>
+      Designation @if (!isPasswordAccount) { <span class="req">*</span> }
       <input formControlName="designation" placeholder="e.g. Teacher I, Administrative Officer II" />
     </label>
-    <label>
-      DepEd email
-      <input [value]="user?.depedEmail ?? ''" disabled />
-    </label>
-    <label class="wide">
-      School name <span class="req">*</span>
-      <select formControlName="schoolId" (change)="onSchoolChange()">
-        <option value="" disabled>Select your school</option>
-        @for (school of schools; track school.id) {
-          <option [value]="school.id">{{ school.name }} ({{ school.district }})</option>
-        }
-      </select>
-    </label>
-    <label>
-      District <span class="req">*</span>
-      <input formControlName="district" placeholder="e.g. Santa Fe District" />
-    </label>
-    <label>
-      Area <span class="req">*</span>
-      <input formControlName="area" placeholder="e.g. Area 2A" />
-    </label>
+    @if (isPasswordAccount) {
+      <label>
+        Username
+        <input [value]="user?.username ?? ''" disabled />
+      </label>
+    } @else {
+      <label>
+        DepEd email
+        <input [value]="user?.depedEmail ?? ''" disabled />
+      </label>
+    }
+    @if (!isPasswordAccount) {
+      <label class="wide">
+        School name <span class="req">*</span>
+        <select formControlName="schoolId" (change)="onSchoolChange()">
+          <option value="" disabled>Select your school</option>
+          @for (school of schools; track school.id) {
+            <option [value]="school.id">{{ school.name }} ({{ school.district }})</option>
+          }
+        </select>
+      </label>
+      <label>
+        District <span class="req">*</span>
+        <input formControlName="district" placeholder="e.g. Santa Fe District" />
+      </label>
+      <label>
+        Area <span class="req">*</span>
+        <input formControlName="area" placeholder="e.g. Area 2A" />
+      </label>
+    }
   </div>
 
   @if (error) {
