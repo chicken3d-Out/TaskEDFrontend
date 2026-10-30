@@ -15,12 +15,16 @@ import { ForumQuestionComponent } from './features/forum/forum-question.componen
 import { WeatherComponent } from './features/weather/weather.component';
 import { ProfileComponent } from './features/profile/profile.component';
 import { ChatbotComponent } from './features/chatbot/chatbot.component';
+import { SchoolComponent } from './features/school/school.component';
+import { SchoolsAdminComponent } from './features/schools-admin/schools-admin.component';
+import { DocumentTypesComponent } from './features/document-types/document-types.component';
 import {
   approvedGuard,
   adminOnlyGuard,
   needsRegistrationGuard,
   teacherOnlyGuard,
-  aoOnlyGuard,
+  forumGuard,
+  schoolStaffGuard,
 } from './core/guards/auth.guards';
 
 export const routes: Routes = [
@@ -34,15 +38,23 @@ export const routes: Routes = [
     canActivate: [approvedGuard],
     children: [
       { path: 'dashboard', component: DashboardComponent },
-      { path: 'tickets', component: TicketListComponent },
-      { path: 'tickets/new', component: TicketCreateComponent, canActivate: [teacherOnlyGuard] },
-      { path: 'tickets/:id', component: TicketDetailComponent },
+      { path: 'tasks', component: TicketListComponent },
+      { path: 'tasks/new', component: TicketCreateComponent, canActivate: [teacherOnlyGuard] },
+      { path: 'tasks/:id', component: TicketDetailComponent },
+      // old links
+      { path: 'tickets', redirectTo: 'tasks', pathMatch: 'full' },
+      { path: 'tickets/new', redirectTo: 'tasks/new', pathMatch: 'full' },
+      { path: 'tickets/:id', redirectTo: 'tasks/:id' },
       { path: 'users', component: UsersComponent, canActivate: [adminOnlyGuard] },
       { path: 'approvals', redirectTo: 'users', pathMatch: 'full' },
       { path: 'calendar', component: CalendarComponent },
       { path: 'announcements', redirectTo: 'calendar', pathMatch: 'full' },
-      { path: 'forum', component: ForumListComponent, canActivate: [aoOnlyGuard] },
-      { path: 'forum/:id', component: ForumQuestionComponent, canActivate: [aoOnlyGuard] },
+      { path: 'forum', component: ForumListComponent, canActivate: [forumGuard] },
+      { path: 'forum/:id', component: ForumQuestionComponent, canActivate: [forumGuard] },
+      { path: 'school', component: SchoolComponent, canActivate: [schoolStaffGuard] },
+      { path: 'schools', component: SchoolsAdminComponent, canActivate: [adminOnlyGuard] },
+      { path: 'schools/:id', component: SchoolComponent, canActivate: [adminOnlyGuard] },
+      { path: 'document-types', component: DocumentTypesComponent, canActivate: [adminOnlyGuard] },
       { path: 'weather', component: WeatherComponent },
       { path: 'profile', component: ProfileComponent },
       { path: 'chat', component: ChatbotComponent },

@@ -72,7 +72,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   get profileIncomplete(): boolean {
-    return !this.auth.currentUser()?.profileComplete;
+    const u = this.auth.currentUser();
+    return !!u && !u.profileComplete && !u.username && u.role !== Role.SCHOOL;
   }
 
   barWidth(status: string): number {

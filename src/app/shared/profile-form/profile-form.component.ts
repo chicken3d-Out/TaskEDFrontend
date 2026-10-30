@@ -71,14 +71,17 @@ export class ProfileFormComponent implements OnInit {
         this.form.controls[k].updateValueAndValidity();
       }
     }
-    this.schoolsService.findAll().subscribe((schools) => (this.schools = schools));
+    this.schoolsService.findAll().subscribe((schools) => {
+      this.schools = schools;
+      if (this.form.value.schoolId) this.onSchoolChange();
+    });
   }
 
-  // Picking a school suggests its district (still editable).
+  // District and area come from the school (Sta. Fe District, Area 1).
   onSchoolChange() {
     const school = this.schools.find((s) => s.id === this.form.value.schoolId);
-    if (school && !this.form.value.district) {
-      this.form.patchValue({ district: school.district });
+    if (school) {
+      this.form.patchValue({ district: school.district, area: school.area ?? '1' });
     }
   }
 

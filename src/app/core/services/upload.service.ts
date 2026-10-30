@@ -36,6 +36,20 @@ export class UploadService {
     return this.sendToCloudinary(signed, file, file.name);
   }
 
+  // School files: the backend signs per kind (soft copy: PDF/Office, scanned: PDF/JPG/PNG).
+  async uploadSchoolFile(schoolId: string, file: File, kind: 'soft' | 'scanned'): Promise<string> {
+    if (file.size > MAX_BYTES) {
+      throw new Error('That file is too large (10 MB maximum).');
+    }
+    const signed = await firstValueFrom(
+      this.http.post<SignedUpload>(`${environment.apiUrl}/school-portal/schools/${schoolId}/files/sign`, {
+        fileName: file.name,
+        kind,
+      }),
+    );
+    return this.sendToCloudinary(signed, file, file.name);
+  }
+
   // Profile picture: a small JPEG blob made by the avatar picker.
   async uploadAvatar(blob: Blob): Promise<string> {
     const signed = await firstValueFrom(

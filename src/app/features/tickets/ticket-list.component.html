@@ -2,26 +2,26 @@
   <div class="header-row">
     <h1>
       @if (auth.currentUser()?.role === Role.ADMIN_OFFICER) {
-        Tickets assigned to you
+        Tasks assigned to you
       } @else if (auth.currentUser()?.role === Role.TEACHER) {
-        Your school's tickets
+        Your school's tasks
       } @else {
-        All tickets
+        All tasks
       }
     </h1>
     @if (auth.currentUser()?.role === Role.TEACHER) {
-      <a routerLink="/tickets/new" class="new-btn">+ New Ticket</a>
+      <a routerLink="/tasks/new" class="new-btn">+ New Task</a>
     }
   </div>
 
   @if (loading) {
     <app-loading [compact]="true" />
   } @else if (tickets.length === 0) {
-    <p class="empty">No tickets yet.</p>
+    <p class="empty">No tasks yet.</p>
   } @else {
     <div class="ticket-table">
       @for (ticket of tickets; track ticket.id) {
-        <a class="ticket-row" [routerLink]="['/tickets', ticket.id]">
+        <a class="ticket-row" [routerLink]="['/tasks', ticket.id]">
           <div class="title-col">
             <strong>{{ ticket.title }}</strong>
             <span class="meta">

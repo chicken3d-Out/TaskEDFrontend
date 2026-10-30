@@ -34,9 +34,9 @@ export class TicketCreateComponent {
         description: this.form.value.description!,
       })
       .subscribe({
-        next: (ticket) => this.router.navigate(['/tickets', ticket.id]),
+        next: (ticket) => this.router.navigate(['/tasks', ticket.id]),
         error: (e) => {
-          this.error = e?.error?.message ?? 'Could not create the ticket.';
+          this.error = e?.error?.message ?? 'Could not create the task.';
           this.submitting = false;
         },
       });

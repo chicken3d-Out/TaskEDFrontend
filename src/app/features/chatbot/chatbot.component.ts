@@ -25,7 +25,7 @@ export class ChatbotComponent {
     {
       role: 'assistant',
       content:
-        "Hi! I'm the TaskEd Assistant. Ask me how something in TaskEd works, or ask about your own tickets.",
+        "Hi! I'm the TaskEd Assistant. Ask me how something in TaskEd works, or ask about your own tasks.",
     },
   ];
   sending = false;

@@ -1,16 +1,20 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { CommonModule, DatePipe } from '@angular/common';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ForumService } from '../../core/services/forum.service';
 import { RealtimeService } from '../../core/services/realtime.service';
+import { AuthService } from '../../core/services/auth.service';
 import { ForumQuestion } from '../../core/models/forum.model';
+import { Role } from '../../core/models/user.model';
 import { LoadingComponent } from '../../shared/loading/loading.component';
+import { IconComponent } from '../../shared/icon/icon.component';
+import { ForumAuthorComponent } from './forum-author.component';
 
 @Component({
   selector: 'app-forum-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, LoadingComponent],
+  imports: [CommonModule, DatePipe, FormsModule, ReactiveFormsModule, RouterLink, LoadingComponent, IconComponent, ForumAuthorComponent],
   templateUrl: './forum-list.component.html',
   styleUrl: './forum-list.component.scss',
 })
@@ -18,12 +22,18 @@ export class ForumListComponent implements OnInit, OnDestroy {
   private forumService = inject(ForumService);
   private fb = inject(FormBuilder);
   private realtime = inject(RealtimeService);
+  private auth = inject(AuthService);
 
   questions: ForumQuestion[] = [];
   loading = true;
   sort: 'top' | 'recent' = 'recent';
+  view: 'pending' | 'all' = 'all';
   showForm = false;
   submitting = false;
+  notice: string | null = null;
+  rejectingId: string | null = null;
+  rejectReason = '';
+  error: string | null = null;
 
   private unsubscribeRealtime?: () => void;
 
@@ -32,10 +42,23 @@ export class ForumListComponent implements OnInit, OnDestroy {
     body: ['', Validators.required],
   });
 
+  get isAdmin() {
+    return this.auth.currentUser()?.role === Role.ADMINISTRATOR;
+  }
+
+  get pendingCount() {
+    return this.questions.filter((q) => q.status === 'pending').length;
+  }
+
+  get visible() {
+    if (this.isAdmin && this.view === 'pending') return this.questions.filter((q) => q.status === 'pending');
+    return this.questions;
+  }
+
   ngOnInit() {
+    if (this.isAdmin) this.view = 'pending';
     this.load(true);
-    // A new question anywhere affects this list - re-fetch quietly (no
-    // loading flash) so it shows up without a manual refresh.
+    // Any forum change re-fetches quietly so it shows up without a refresh.
     this.unsubscribeRealtime = this.realtime.on('forum:changed', () => this.load(false));
   }
 
@@ -50,20 +73,54 @@ export class ForumListComponent implements OnInit, OnDestroy {
 
   private load(showLoading: boolean) {
     if (showLoading) this.loading = true;
-    this.forumService.listQuestions(this.sort).subscribe((questions) => {
-      this.questions = questions;
-      this.loading = false;
+    this.forumService.listQuestions(this.sort).subscribe({
+      next: (questions) => {
+        this.questions = questions;
+        this.loading = false;
+      },
+      error: () => (this.loading = false),
     });
   }
 
   submit() {
     if (this.form.invalid) return;
     this.submitting = true;
-    this.forumService.createQuestion(this.form.value.title!, this.form.value.body!).subscribe(() => {
-      this.form.reset({ title: '', body: '' });
-      this.showForm = false;
-      this.submitting = false;
-      this.load(false);
+    this.forumService.createQuestion(this.form.value.title!, this.form.value.body!).subscribe({
+      next: () => {
+        this.form.reset({ title: '', body: '' });
+        this.showForm = false;
+        this.submitting = false;
+        this.notice = 'Your question was sent. It will appear for everyone once an Administrator approves it.';
+        this.load(false);
+      },
+      error: (e) => {
+        this.error = e?.error?.message ?? 'Could not post your question.';
+        this.submitting = false;
+      },
     });
+  }
+
+  approve(q: ForumQuestion) {
+    this.forumService.approve(q.id).subscribe({ next: () => this.load(false), error: (e) => (this.error = e?.error?.message ?? 'Failed.') });
+  }
+
+  startReject(q: ForumQuestion) {
+    this.rejectingId = q.id;
+    this.rejectReason = '';
+  }
+
+  confirmReject(q: ForumQuestion) {
+    this.forumService.reject(q.id, this.rejectReason).subscribe({
+      next: () => {
+        this.rejectingId = null;
+        this.load(false);
+      },
+      error: (e) => (this.error = e?.error?.message ?? 'Failed.'),
+    });
+  }
+
+  remove(q: ForumQuestion) {
+    if (!confirm(`Remove "${q.title}" and all its replies?`)) return;
+    this.forumService.remove(q.id).subscribe(() => this.load(false));
   }
 }

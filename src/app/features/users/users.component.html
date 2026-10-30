@@ -35,9 +35,9 @@
       </p>
 
       <div class="grid">
-        <label>First name *<input formControlName="firstName" /></label>
+        <label>First name {{ addForm.value.role === Role.SCHOOL && addKind === 'staff' ? '' : '*' }}<input formControlName="firstName" /></label>
         <label>Middle name<input formControlName="middleName" /></label>
-        <label>Last name *<input formControlName="lastName" /></label>
+        <label>Last name {{ addForm.value.role === Role.SCHOOL && addKind === 'staff' ? '' : '*' }}<input formControlName="lastName" /></label>
         <label>Contact number<input formControlName="contactNumber" /></label>
 
         @if (addKind === 'staff') {
@@ -52,16 +52,14 @@
           </label>
           <label>Designation<input formControlName="designation" /></label>
           <label class="wide">
-            School {{ addForm.value.role === Role.TEACHER ? '*' : '' }}
+            School {{ addForm.value.role === Role.TEACHER || addForm.value.role === Role.SCHOOL ? '*' : '' }}
             <select formControlName="schoolId">
               <option value="">No school</option>
               @for (s of schools; track s.id) {
-                <option [value]="s.id">{{ s.name }} ({{ s.district }})</option>
+                <option [value]="s.id">{{ s.name }}</option>
               }
             </select>
           </label>
-          <label>District<input formControlName="district" /></label>
-          <label>Area<input formControlName="area" /></label>
         } @else {
           <label>Username *<input formControlName="username" autocomplete="off" /></label>
           <label>Password * <small>(10+ characters)</small><input type="password" formControlName="password" autocomplete="new-password" /></label>
@@ -182,8 +180,6 @@
                     }
                   </select>
                 </label>
-                <label>District<input [(ngModel)]="row.edit.district" [ngModelOptions]="{ standalone: true }" /></label>
-                <label>Area<input [(ngModel)]="row.edit.area" [ngModelOptions]="{ standalone: true }" /></label>
               }
             </div>
             <button class="btn" [disabled]="row.busy" (click)="saveEdit(row)">Save details</button>

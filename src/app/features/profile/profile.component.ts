@@ -15,7 +15,7 @@ import { ProfileFormComponent } from '../../shared/profile-form/profile-form.com
         <span class="badge-pill">{{ roleLabel(auth.currentUser()?.role) }}</span>
         @if (auth.currentUser()?.assignedSchools?.length) {
           <span class="assigned">
-            Handles tickets for:
+            Handles tasks for:
             @for (s of auth.currentUser()?.assignedSchools; track s.id; let last = $last) {
               {{ s.name }}{{ last ? '' : ', ' }}
             }

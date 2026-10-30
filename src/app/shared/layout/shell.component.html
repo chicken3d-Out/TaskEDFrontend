@@ -54,7 +54,7 @@
         <a
           [routerLink]="item.link"
           routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: item.link === '/tickets' }"
+          [routerLinkActiveOptions]="{ exact: item.link === '/tasks' }"
           (click)="closeSidebarOnMobile()"
         >
           <app-icon [name]="item.icon" [size]="20" />
@@ -67,7 +67,7 @@
         <app-avatar [url]="auth.currentUser()?.avatarUrl" [name]="auth.currentUser()?.name" [size]="36" />
         <span>
           <strong>{{ auth.currentUser()?.name }}</strong>
-          <small>{{ auth.currentUser()?.depedEmail }}</small>
+          <small>{{ auth.currentUser()?.depedEmail || auth.currentUser()?.username }}</small>
         </span>
       </a>
     </div>

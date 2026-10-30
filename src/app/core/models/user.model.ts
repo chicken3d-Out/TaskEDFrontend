@@ -1,7 +1,8 @@
 export enum Role {
   TEACHER = 'teacher',
   ADMIN_OFFICER = 'admin_officer',
-  ADMIN_OFFICE_ACCOUNT = 'admin_office_account',
+  PUBLISHER = 'publisher',
+  SCHOOL = 'school',
   ADMINISTRATOR = 'administrator',
 }
 
@@ -24,6 +25,19 @@ export interface School {
   // true once name, contact, designation, school, district and area are filled in
   profileComplete: boolean;
   district: string;
+}
+
+export interface SchoolInfo {
+  id: string;
+  name: string;
+  district: string;
+  area: string;
+  schoolCode: string | null;
+  address: string | null;
+  contactNumber: string | null;
+  email: string | null;
+  schoolHeadName: string | null;
+  schoolHeadContact: string | null;
 }
 
 export interface User {
@@ -53,7 +67,8 @@ export interface User {
 export const ROLE_LABELS: Record<Role, string> = {
   [Role.TEACHER]: 'Teacher',
   [Role.ADMIN_OFFICER]: 'Administrative Officer',
-  [Role.ADMIN_OFFICE_ACCOUNT]: 'Administrative Office',
+  [Role.PUBLISHER]: 'Publisher',
+  [Role.SCHOOL]: 'School',
   [Role.ADMINISTRATOR]: 'Administrator',
 };
 

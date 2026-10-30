@@ -4,38 +4,67 @@
   <div class="question-page">
     <div class="question-header">
       <div class="vote-col">
-        <button (click)="voteQuestion(1)">▲</button>
-        <span class="score">{{ question.upvotes - question.downvotes }}</span>
-        <button (click)="voteQuestion(-1)">▼</button>
+        <button [class.on-up]="question.myVote === 1" [disabled]="!canInteract" (click)="voteQuestion(1)" aria-label="Upvote">
+          <app-icon name="thumbs-up" [size]="18" />
+        </button>
+        <span class="count up">{{ question.upvotes }}</span>
+        <button [class.on-down]="question.myVote === -1" [disabled]="!canInteract" (click)="voteQuestion(-1)" aria-label="Downvote">
+          <app-icon name="thumbs-down" [size]="18" />
+        </button>
+        <span class="count down">{{ question.downvotes }}</span>
       </div>
-      <div>
+      <div class="q-body">
+        <app-forum-author [profile]="question.author" [size]="46" />
         <h1>{{ question.title }}</h1>
-        <p class="meta">{{ question.author.name }} · {{ question.createdAt | date: 'medium' }}</p>
+        <p class="meta">
+          {{ question.createdAt | date: 'medium' }}
+          <span class="badge" [class]="'b-' + question.status">{{ question.status === 'approved' ? 'Posted' : question.status === 'pending' ? 'Waiting for approval' : 'Not approved' }}</span>
+        </p>
         <p class="body">{{ question.body }}</p>
+        @if (question.status === 'rejected' && question.rejectReason) {
+          <p class="reason">Reason: {{ question.rejectReason }}</p>
+        }
       </div>
     </div>
 
-    <section class="replies">
-      <h2>Replies</h2>
-      @if (replyTree.length === 0) {
-        <p class="empty">No replies yet.</p>
-      }
-      @for (node of replyTree; track node.id) {
-        <app-forum-reply-node [node]="node" (vote)="onVoteReply($event)" (replyTo)="onReplyTo($event)" />
-      }
-    </section>
+    @if (error) { <p class="error">{{ error }}</p> }
 
-    <section class="reply-form-section">
-      @if (replyingTo) {
-        <p class="replying-note">
-          Replying to a comment. <a (click)="cancelReply()">Cancel</a>
-        </p>
+    @if (isAdmin) {
+      <div class="mod">
+        <strong>Administrator</strong>
+        @if (question.status !== 'approved') { <button class="ok" (click)="approve()">Approve</button> }
+        @if (question.status === 'pending') { <button class="bad" (click)="reject()">Reject</button> }
+        <button (click)="removeQuestion()"><app-icon name="trash" [size]="14" /> Remove</button>
+      </div>
+    }
+
+    @if (question.status === 'approved') {
+      <section class="replies">
+        <h2>Replies ({{ question.replyCount ?? 0 }})</h2>
+        @if (replyTree.length === 0) {
+          <p class="empty">No replies yet.</p>
+        }
+        @for (node of replyTree; track node.id) {
+          <app-forum-reply-node [node]="node" [canInteract]="canInteract" (vote)="onVoteReply($event)" (replyTo)="onReplyTo($event)" />
+        }
+      </section>
+
+      @if (canInteract) {
+        <section class="reply-form-section">
+          @if (replyingTo) {
+            <p class="replying-note">
+              Replying to a comment. <a (click)="cancelReply()">Cancel</a>
+            </p>
+          }
+          <form [formGroup]="replyForm" (ngSubmit)="submitReply()">
+            <textarea formControlName="body" rows="3" placeholder="Write a reply… (no approval needed)"></textarea>
+            <button type="submit" [disabled]="replyForm.invalid">Post reply</button>
+          </form>
+        </section>
       }
-      <form [formGroup]="replyForm" (ngSubmit)="submitReply()">
-        <textarea formControlName="body" rows="3" placeholder="Write a reply…"></textarea>
-        <button type="submit" [disabled]="replyForm.invalid">Post reply</button>
-      </form>
-    </section>
+    } @else {
+      <p class="empty">Replies open once this question is approved.</p>
+    }
   </div>
 } @else {
   <p class="empty">Question not found.</p>

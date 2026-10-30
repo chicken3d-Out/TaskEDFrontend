@@ -60,10 +60,20 @@ export const teacherOnlyGuard: CanActivateFn = async () => {
   return user?.role === Role.TEACHER ? true : router.createUrlTree(['/dashboard']);
 };
 
-// The Ask-a-Question forum is AO-only end to end per the spec decision.
-export const aoOnlyGuard: CanActivateFn = async () => {
+// The Ask-a-Question forum: AOs use it, Administrators moderate it.
+export const forumGuard: CanActivateFn = async () => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const user = await ensureUserLoaded(auth);
-  return user?.role === Role.ADMIN_OFFICER ? true : router.createUrlTree(['/dashboard']);
+  const ok = user?.role === Role.ADMIN_OFFICER || user?.role === Role.ADMINISTRATOR;
+  return ok ? true : router.createUrlTree(['/dashboard']);
+};
+
+// "My school" page: School accounts and AOs (Administrators reach schools by id).
+export const schoolStaffGuard: CanActivateFn = async () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  const user = await ensureUserLoaded(auth);
+  const ok = user?.role === Role.SCHOOL || user?.role === Role.ADMIN_OFFICER || user?.role === Role.ADMINISTRATOR;
+  return ok ? true : router.createUrlTree(['/dashboard']);
 };

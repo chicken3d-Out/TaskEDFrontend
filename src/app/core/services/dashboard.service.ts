@@ -22,8 +22,17 @@ export interface DashboardSummary {
     pendingUsers: number;
     totalUsers: number;
     schools: number;
+    pendingQuestions: number;
     byRole: Record<string, number>;
   };
+  schools: null | {
+    id: string;
+    name: string;
+    teachers: number;
+    pendingTeachers: number;
+    documentsUploaded: number;
+    documentsTotal: number;
+  }[];
 }
 
 @Injectable({ providedIn: 'root' })

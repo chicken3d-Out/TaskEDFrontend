@@ -12,7 +12,7 @@
     </div>
     <div class="hero-actions">
       @if (auth.currentUser()?.role === Role.TEACHER) {
-        <a class="btn hero-btn" routerLink="/tickets/new"><app-icon name="plus" [size]="18" /> New ticket</a>
+        <a class="btn hero-btn" routerLink="/tasks/new"><app-icon name="plus" [size]="18" /> New task</a>
       }
       <a class="btn hero-btn ghost" routerLink="/calendar"><app-icon name="calendar" [size]="18" /> Calendar</a>
     </div>
@@ -34,7 +34,7 @@
           <span class="ico blue"><app-icon name="ticket" [size]="22" /></span>
           <div>
             <strong>{{ t.total }}</strong>
-            <small>{{ auth.currentUser()?.role === Role.ADMIN_OFFICER ? 'Tickets assigned' : 'Tickets' }}</small>
+            <small>{{ auth.currentUser()?.role === Role.ADMIN_OFFICER ? 'Tasks assigned' : 'Tasks' }}</small>
           </div>
         </div>
         <div class="stat">
@@ -76,6 +76,13 @@
             <small>Schools</small>
           </div>
         </div>
+        <a class="stat link" routerLink="/forum">
+          <span class="ico amber"><app-icon name="forum" [size]="22" /></span>
+          <div>
+            <strong>{{ a.pendingQuestions }}</strong>
+            <small>Forum questions to approve</small>
+          </div>
+        </a>
       }
       <div class="stat">
         <span class="ico purple"><app-icon name="calendar" [size]="22" /></span>
@@ -121,9 +128,9 @@
 
       @if (summary?.tickets; as t) {
         <div class="card">
-          <h2><app-icon name="ticket" [size]="18" /> Tickets by status</h2>
+          <h2><app-icon name="ticket" [size]="18" /> Tasks by status</h2>
           @if (t.total === 0) {
-            <p class="empty">No tickets yet.</p>
+            <p class="empty">No tasks yet.</p>
           }
           @for (s of statuses; track s) {
             @if (t.byStatus[s]) {
@@ -137,14 +144,14 @@
         </div>
 
         <div class="card">
-          <h2><app-icon name="inbox" [size]="18" /> Recent tickets</h2>
+          <h2><app-icon name="inbox" [size]="18" /> Recent tasks</h2>
           @if (t.recent.length === 0) {
             <p class="empty">Nothing to show yet.</p>
           }
           <ul class="recent">
             @for (r of t.recent; track r.id) {
               <li>
-                <a [routerLink]="['/tickets', r.id]">
+                <a [routerLink]="['/tasks', r.id]">
                   <strong>{{ r.title }}</strong>
                   <small>{{ r.requesterName }} · {{ r.createdAt | date: 'MMM d' }}</small>
                 </a>
@@ -152,7 +159,23 @@
               </li>
             }
           </ul>
-          <a class="more-link" routerLink="/tickets">View all tickets</a>
+          <a class="more-link" routerLink="/tasks">View all tasks</a>
+        </div>
+      }
+
+      @if (summary?.schools; as list) {
+        <div class="card">
+          <h2><app-icon name="school" [size]="18" /> {{ auth.currentUser()?.role === Role.SCHOOL ? 'My school' : 'My schools' }}</h2>
+          @for (s of list; track s.id) {
+            <div class="role-row">
+              <span>
+                <strong>{{ s.name }}</strong><br />
+                <small>{{ s.teachers }} teachers · files {{ s.documentsUploaded }}/{{ s.documentsTotal }}</small>
+                @if (s.pendingTeachers) { <br /><small>{{ s.pendingTeachers }} teacher(s) waiting for approval</small> }
+              </span>
+              <a class="more-link" routerLink="/school">Open</a>
+            </div>
+          }
         </div>
       }
 

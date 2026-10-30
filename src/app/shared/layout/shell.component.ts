@@ -104,11 +104,14 @@ export class ShellComponent implements OnInit {
     const hasTickets = r === Role.TEACHER || r === Role.ADMIN_OFFICER || r === Role.ADMINISTRATOR;
     return [
       { label: 'Dashboard', icon: 'dashboard', link: '/dashboard', show: true },
-      { label: 'Tickets', icon: 'ticket', link: '/tickets', show: hasTickets },
-      { label: 'New Ticket', icon: 'plus', link: '/tickets/new', show: r === Role.TEACHER },
+      { label: 'Tasks', icon: 'ticket', link: '/tasks', show: hasTickets },
+      { label: 'New Task', icon: 'plus', link: '/tasks/new', show: r === Role.TEACHER },
+      { label: r === Role.ADMIN_OFFICER ? 'My Schools' : 'My School', icon: 'school', link: '/school', show: r === Role.SCHOOL || r === Role.ADMIN_OFFICER },
       { label: 'Users', icon: 'users', link: '/users', show: r === Role.ADMINISTRATOR },
+      { label: 'Schools', icon: 'school', link: '/schools', show: r === Role.ADMINISTRATOR },
+      { label: 'School documents', icon: 'folder', link: '/document-types', show: r === Role.ADMINISTRATOR },
       { label: 'Calendar & Announcements', icon: 'calendar', link: '/calendar', show: true },
-      { label: 'Forum', icon: 'forum', link: '/forum', show: r === Role.ADMIN_OFFICER },
+      { label: 'Forum', icon: 'forum', link: '/forum', show: r === Role.ADMIN_OFFICER || r === Role.ADMINISTRATOR },
       { label: 'Weather', icon: 'weather', link: '/weather', show: true },
       { label: 'Assistant', icon: 'bot', link: '/chat', show: true },
     ].filter((i) => i.show);

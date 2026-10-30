@@ -48,7 +48,7 @@ export class UsersComponent implements OnInit {
   AccountStatus = AccountStatus;
   // Administrator is not offered here: administrators are created with
   // "Add user" and sign in with a username and password.
-  roles = [Role.TEACHER, Role.ADMIN_OFFICER, Role.ADMIN_OFFICE_ACCOUNT].map((r) => ({
+  roles = [Role.TEACHER, Role.ADMIN_OFFICER, Role.SCHOOL, Role.PUBLISHER].map((r) => ({
     value: r,
     label: ROLE_LABELS[r],
   }));
@@ -217,8 +217,6 @@ export class UsersComponent implements OnInit {
         contactNumber: e.contactNumber,
         designation: e.designation,
         schoolId: e.schoolId || undefined,
-        district: e.district,
-        area: e.area,
         ...(this.isPasswordAccount(row.user) ? {} : { depedEmail: e.depedEmail }),
       })
       .subscribe({
@@ -258,10 +256,11 @@ export class UsersComponent implements OnInit {
 
   get addValid(): boolean {
     const v = this.addForm.value;
-    if (!v.firstName?.trim() || !v.lastName?.trim()) return false;
+    const isSchool = this.addKind === 'staff' && v.role === Role.SCHOOL;
+    if (!isSchool && (!v.firstName?.trim() || !v.lastName?.trim())) return false;
     if (this.addKind === 'admin') return !!v.username?.trim() && (v.password?.length ?? 0) >= 10;
     if (!v.depedEmail?.trim()) return false;
-    if (v.role === Role.TEACHER && !v.schoolId) return false;
+    if ((v.role === Role.TEACHER || v.role === Role.SCHOOL) && !v.schoolId) return false;
     if (v.role === Role.ADMIN_OFFICER && this.addSchoolIds.size === 0) return false;
     return true;
   }
@@ -274,13 +273,11 @@ export class UsersComponent implements OnInit {
     this.usersService
       .create({
         kind: this.addKind,
-        firstName: v.firstName!,
+        firstName: v.firstName || '',
         middleName: v.middleName || undefined,
-        lastName: v.lastName!,
+        lastName: v.lastName || '',
         contactNumber: v.contactNumber || undefined,
         designation: v.designation || undefined,
-        district: v.district || undefined,
-        area: v.area || undefined,
         schoolId: v.schoolId || undefined,
         depedEmail: v.depedEmail || undefined,
         ...(this.addKind === 'staff'
