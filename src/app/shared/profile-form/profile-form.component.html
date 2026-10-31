@@ -45,6 +45,9 @@
             <option [value]="school.id">{{ school.name }}</option>
           }
         </select>
+        @if (schoolLocked) {
+          <small class="hint">Only an Administrator can change your school.</small>
+        }
       </label>
       <label>
         District <span class="req">*</span>

@@ -27,6 +27,7 @@ export class ProfileFormComponent implements OnInit {
   schools: School[] = [];
   avatarUrl: string | null = null;
   saving = false;
+  schoolLocked = false;
   done = false;
   error: string | null = null;
 
@@ -64,6 +65,9 @@ export class ProfileFormComponent implements OnInit {
         area: u.area ?? '',
       });
     }
+    // After registration only an Administrator can change the school.
+    this.schoolLocked = this.mode === 'edit' && !!u?.school;
+    if (this.schoolLocked) this.form.controls.schoolId.disable();
     // Administrator accounts have no school/district/area; only names are needed.
     if (u?.username) {
       for (const k of ['contactNumber', 'designation', 'schoolId', 'district', 'area'] as const) {

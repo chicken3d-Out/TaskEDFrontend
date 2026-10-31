@@ -30,3 +30,17 @@ h1 { font-size: 1.35rem; color: var(--primary-strong); margin: 0; }
   &.ok { background: var(--primary); color: #fff; border-color: var(--primary); }
   &.bad { color: var(--danger); } }
 .reject-box { display: flex; gap: 0.5rem; flex-wrap: wrap; input { flex: 1; min-width: 200px; } }
+
+.act { border: 1px solid transparent; background: transparent; border-radius: 8px; padding: 0.25rem 0.55rem; font-size: 0.82rem; color: var(--muted); cursor: pointer; display: inline-flex; gap: 0.3rem; align-items: center;
+  &:hover:not(:disabled) { background: var(--surface-2); border-color: var(--border); }
+  &:disabled { cursor: default; }
+  &.up { color: var(--primary); } &.down { color: var(--danger); }
+  &.up.on { background: var(--primary-soft); border-color: var(--primary); }
+  &.down.on { background: #fee2e2; border-color: var(--danger); }
+  &:not(.up):not(.down).on { background: var(--surface-2); border-color: var(--border); color: var(--text); } }
+.thread { border-top: 1px solid var(--border); padding-top: 0.7rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.muted { color: var(--muted); font-size: 0.85rem; margin: 0; }
+.reply { background: var(--surface-2); border-radius: 10px; padding: 0.6rem 0.8rem; &.nested { margin-left: 1.2rem; }
+  p { margin: 0.35rem 0; font-size: 0.88rem; white-space: pre-wrap; } }
+.rfoot { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; .time { color: #999; font-size: 0.72rem; margin-left: auto; } }
+.compose { display: flex; gap: 0.6rem; align-items: flex-end; textarea { flex: 1; } }

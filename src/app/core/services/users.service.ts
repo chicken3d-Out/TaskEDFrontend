@@ -14,10 +14,9 @@ export interface CreateUserDto {
   designation?: string;
   district?: string;
   area?: string;
-  schoolId?: string;
+  schoolId?: string; // '' clears the school (Administrator only)
   depedEmail?: string;
   role?: Role;
-  assignedSchoolIds?: string[];
   username?: string;
   password?: string;
 }
@@ -36,8 +35,8 @@ export class UsersService {
     return this.http.get<User[]>(this.base);
   }
 
-  assignRole(id: string, role: Role, assignedSchoolIds?: string[]): Observable<User> {
-    return this.http.post<User>(`${this.base}/${id}/assign-role`, { role, assignedSchoolIds });
+  assignRole(id: string, role: Role): Observable<User> {
+    return this.http.post<User>(`${this.base}/${id}/assign-role`, { role });
   }
 
   reject(id: string): Observable<User> {

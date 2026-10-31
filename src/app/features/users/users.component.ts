@@ -159,7 +159,7 @@ export class UsersComponent implements OnInit {
 
   canSave(row: Row): boolean {
     if (!row.role) return false;
-    if (row.role === Role.ADMIN_OFFICER && row.schoolIds.size === 0) return false;
+    if ((row.role === Role.ADMIN_OFFICER || row.role === Role.SCHOOL || row.role === Role.TEACHER) && !row.user.school) return false;
     return true;
   }
 
@@ -168,7 +168,7 @@ export class UsersComponent implements OnInit {
     row.busy = true;
     row.error = null;
     this.usersService
-      .assignRole(row.user.id, row.role as Role, row.role === Role.ADMIN_OFFICER ? [...row.schoolIds] : undefined)
+      .assignRole(row.user.id, row.role as Role)
       .subscribe({
         next: () => this.load(),
         error: (e) => {
@@ -216,7 +216,7 @@ export class UsersComponent implements OnInit {
         lastName: e.lastName,
         contactNumber: e.contactNumber,
         designation: e.designation,
-        schoolId: e.schoolId || undefined,
+        schoolId: e.schoolId, // empty string clears the school
         ...(this.isPasswordAccount(row.user) ? {} : { depedEmail: e.depedEmail }),
       })
       .subscribe({
@@ -260,8 +260,7 @@ export class UsersComponent implements OnInit {
     if (!isSchool && (!v.firstName?.trim() || !v.lastName?.trim())) return false;
     if (this.addKind === 'admin') return !!v.username?.trim() && (v.password?.length ?? 0) >= 10;
     if (!v.depedEmail?.trim()) return false;
-    if ((v.role === Role.TEACHER || v.role === Role.SCHOOL) && !v.schoolId) return false;
-    if (v.role === Role.ADMIN_OFFICER && this.addSchoolIds.size === 0) return false;
+    if ((v.role === Role.TEACHER || v.role === Role.SCHOOL || v.role === Role.ADMIN_OFFICER) && !v.schoolId) return false;
     return true;
   }
 
@@ -283,7 +282,6 @@ export class UsersComponent implements OnInit {
         ...(this.addKind === 'staff'
           ? {
               role: v.role as Role,
-              assignedSchoolIds: v.role === Role.ADMIN_OFFICER ? [...this.addSchoolIds] : undefined,
             }
           : { username: v.username!, password: v.password! }),
       })

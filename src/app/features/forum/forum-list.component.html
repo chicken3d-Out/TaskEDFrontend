@@ -65,9 +65,17 @@
             <p class="reason">Reason: {{ q.rejectReason }}</p>
           }
           <div class="q-foot">
-            <span class="stat up"><app-icon name="thumbs-up" [size]="15" /> {{ q.upvotes }}</span>
-            <span class="stat down"><app-icon name="thumbs-down" [size]="15" /> {{ q.downvotes }}</span>
-            <span class="stat"><app-icon name="forum" [size]="15" /> {{ q.replyCount ?? 0 }}</span>
+            <button class="act up" [class.on]="q.myVote === 1" [disabled]="!canInteract || q.status !== 'approved'" (click)="vote(q, 1)" aria-label="Upvote">
+              <app-icon name="thumbs-up" [size]="15" /> {{ q.upvotes }}
+            </button>
+            <button class="act down" [class.on]="q.myVote === -1" [disabled]="!canInteract || q.status !== 'approved'" (click)="vote(q, -1)" aria-label="Downvote">
+              <app-icon name="thumbs-down" [size]="15" /> {{ q.downvotes }}
+            </button>
+            @if (q.status === 'approved') {
+              <button class="act" [class.on]="openId === q.id" (click)="toggleComments(q)">
+                <app-icon name="forum" [size]="15" /> {{ q.replyCount ?? 0 }} {{ q.replyCount === 1 ? 'comment' : 'comments' }}
+              </button>
+            }
             <span class="time">{{ q.createdAt | date: 'medium' }}</span>
 
             @if (isAdmin) {
@@ -81,6 +89,38 @@
               <button class="mini" (click)="remove(q)"><app-icon name="trash" [size]="14" /></button>
             }
           </div>
+          @if (openId === q.id) {
+            <div class="thread">
+              @if (repliesLoading) {
+                <p class="muted">Loading…</p>
+              }
+              @for (r of openReplies; track r.id) {
+                <div class="reply" [class.nested]="r.parentReply">
+                  <app-forum-author [profile]="r.author" [size]="30" />
+                  <p>{{ r.body }}</p>
+                  <div class="rfoot">
+                    <button class="act up" [class.on]="r.myVote === 1" [disabled]="!canInteract" (click)="voteReply(r, 1)">
+                      <app-icon name="thumbs-up" [size]="13" /> {{ r.upvotes }}
+                    </button>
+                    <button class="act down" [class.on]="r.myVote === -1" [disabled]="!canInteract" (click)="voteReply(r, -1)">
+                      <app-icon name="thumbs-down" [size]="13" /> {{ r.downvotes }}
+                    </button>
+                    <span class="time">{{ r.createdAt | date: 'medium' }}</span>
+                  </div>
+                </div>
+              } @empty {
+                @if (!repliesLoading) { <p class="muted">No comments yet.</p> }
+              }
+              @if (canInteract) {
+                <div class="compose">
+                  <textarea [(ngModel)]="replyText" rows="2" placeholder="Write a comment… (no approval needed)"></textarea>
+                  <button class="mini ok" [disabled]="!replyText.trim() || replying" (click)="sendReply(q)">
+                    {{ replying ? 'Posting…' : 'Comment' }}
+                  </button>
+                </div>
+              }
+            </div>
+          }
           @if (rejectingId === q.id) {
             <div class="reject-box">
               <input [(ngModel)]="rejectReason" placeholder="Reason (optional)" />

@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import { ForumService } from '../../core/services/forum.service';
 import { RealtimeService } from '../../core/services/realtime.service';
 import { AuthService } from '../../core/services/auth.service';
-import { ForumQuestion } from '../../core/models/forum.model';
+import { ForumQuestion, ForumReply } from '../../core/models/forum.model';
 import { Role } from '../../core/models/user.model';
 import { LoadingComponent } from '../../shared/loading/loading.component';
 import { IconComponent } from '../../shared/icon/icon.component';
@@ -35,6 +35,13 @@ export class ForumListComponent implements OnInit, OnDestroy {
   rejectReason = '';
   error: string | null = null;
 
+  // Inline discussion: vote and comment straight from the list.
+  openId: string | null = null;
+  openReplies: ForumReply[] = [];
+  repliesLoading = false;
+  replyText = '';
+  replying = false;
+
   private unsubscribeRealtime?: () => void;
 
   form = this.fb.group({
@@ -44,6 +51,63 @@ export class ForumListComponent implements OnInit, OnDestroy {
 
   get isAdmin() {
     return this.auth.currentUser()?.role === Role.ADMINISTRATOR;
+  }
+
+  get canInteract() {
+    return this.auth.currentUser()?.role === Role.ADMIN_OFFICER;
+  }
+
+  vote(q: ForumQuestion, value: 1 | -1) {
+    if (!this.canInteract || q.status !== 'approved') return;
+    this.forumService.voteQuestion(q.id, value).subscribe({
+      next: (r) => Object.assign(q, r),
+      error: (e) => (this.error = e?.error?.message ?? 'Could not vote.'),
+    });
+  }
+
+  voteReply(r: ForumReply, value: 1 | -1) {
+    this.forumService.voteReply(r.id, value).subscribe({
+      next: (res) => Object.assign(r, res),
+      error: (e) => (this.error = e?.error?.message ?? 'Could not vote.'),
+    });
+  }
+
+  toggleComments(q: ForumQuestion) {
+    if (this.openId === q.id) {
+      this.openId = null;
+      return;
+    }
+    this.openId = q.id;
+    this.replyText = '';
+    this.loadReplies(q.id, true);
+  }
+
+  private loadReplies(id: string, showLoading: boolean) {
+    if (showLoading) this.repliesLoading = true;
+    this.forumService.getQuestion(id).subscribe({
+      next: ({ replies }) => {
+        this.openReplies = replies;
+        this.repliesLoading = false;
+      },
+      error: () => (this.repliesLoading = false),
+    });
+  }
+
+  sendReply(q: ForumQuestion) {
+    if (!this.replyText.trim()) return;
+    this.replying = true;
+    this.forumService.createReply(q.id, this.replyText.trim()).subscribe({
+      next: () => {
+        this.replyText = '';
+        this.replying = false;
+        this.loadReplies(q.id, false);
+        this.load(false);
+      },
+      error: (e) => {
+        this.error = e?.error?.message ?? 'Could not post your reply.';
+        this.replying = false;
+      },
+    });
   }
 
   get pendingCount() {
@@ -59,7 +123,10 @@ export class ForumListComponent implements OnInit, OnDestroy {
     if (this.isAdmin) this.view = 'pending';
     this.load(true);
     // Any forum change re-fetches quietly so it shows up without a refresh.
-    this.unsubscribeRealtime = this.realtime.on('forum:changed', () => this.load(false));
+    this.unsubscribeRealtime = this.realtime.on('forum:changed', () => {
+      this.load(false);
+      if (this.openId) this.loadReplies(this.openId, false);
+    });
   }
 
   ngOnDestroy() {

@@ -285,3 +285,6 @@ fieldset {
     grid-template-columns: 1fr;
   }
 }
+
+.warn { color: var(--danger); font-size: 0.8rem; }
+.hint { color: var(--muted); font-size: 0.8rem; }
