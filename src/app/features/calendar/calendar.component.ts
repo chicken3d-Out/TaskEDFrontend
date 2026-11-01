@@ -1,14 +1,17 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CalendarService } from '../../core/services/calendar.service';
+import { CalendarService, PersonalEvent } from '../../core/services/calendar.service';
 import { AuthService } from '../../core/services/auth.service';
 import { RealtimeService } from '../../core/services/realtime.service';
 import { CalendarEvent } from '../../core/models/calendar-event.model';
 import { Role } from '../../core/models/user.model';
+import { GoogleConnectComponent } from '../../shared/google-connect/google-connect.component';
 import { LoadingComponent } from '../../shared/loading/loading.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { MonthCalendarComponent } from '../../shared/month-calendar/month-calendar.component';
+
+type Item = CalendarEvent & { personal?: boolean; htmlLink?: string | null; location?: string | null };
 
 // Calendar and announcements are one thing: every event is an announcement
 // too. The month grid is clickable; the side panel shows today's events,
@@ -16,7 +19,7 @@ import { MonthCalendarComponent } from '../../shared/month-calendar/month-calend
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LoadingComponent, IconComponent, MonthCalendarComponent],
+  imports: [CommonModule, ReactiveFormsModule, LoadingComponent, IconComponent, MonthCalendarComponent, GoogleConnectComponent],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
 })
@@ -26,7 +29,13 @@ export class CalendarComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private realtime = inject(RealtimeService);
 
-  events: CalendarEvent[] = [];
+  // System events plus the user's own Google Calendar events (private).
+  events: Item[] = [];
+  private systemEvents: CalendarEvent[] = [];
+  private personal: Item[] = [];
+  syncing = false;
+  syncMsg: string | null = null;
+  private syncTimer?: ReturnType<typeof setInterval>;
   today = new Date();
   selectedDate: Date = new Date();
   expandedId: string | null = null;
@@ -47,10 +56,59 @@ export class CalendarComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.load(true);
     this.unsubscribeRealtime = this.realtime.on('calendar:changed', () => this.load(false));
+    this.syncGoogle(false);
+    // Pull changes made in Google Calendar every few minutes while this page is open.
+    this.syncTimer = setInterval(() => this.syncGoogle(false), 5 * 60 * 1000);
   }
 
   ngOnDestroy() {
     this.unsubscribeRealtime?.();
+    if (this.syncTimer) clearInterval(this.syncTimer);
+  }
+
+  get googleConnected(): boolean {
+    return !!this.auth.currentUser()?.googleCalendar;
+  }
+
+  syncGoogle(force: boolean) {
+    if (!this.googleConnected) return;
+    this.syncing = true;
+    this.syncMsg = null;
+    this.calendarService.syncGoogle(force).subscribe({
+      next: (r) => {
+        this.setPersonal(r.events);
+        this.syncing = false;
+        if (force) this.syncMsg = r.connected ? 'Calendar is up to date.' : 'Google Calendar is not connected.';
+        this.load(false);
+      },
+      error: () => {
+        this.syncing = false;
+        if (force) this.syncMsg = 'Could not sync with Google Calendar. Try again in a moment.';
+      },
+    });
+  }
+
+  private setPersonal(list: PersonalEvent[]) {
+    this.personal = list.map((p) => ({
+      id: 'g:' + p.id,
+      title: p.title,
+      description: p.description ?? '',
+      eventDate: p.startsAt,
+      zoomLink: null,
+      isAnnouncement: false,
+      createdBy: { name: 'Your Google Calendar' } as any,
+      createdAt: p.startsAt,
+      personal: true,
+      htmlLink: p.htmlLink,
+      location: p.location,
+    }));
+    this.merge();
+  }
+
+  private merge() {
+    this.events = [...this.systemEvents, ...this.personal].sort(
+      (a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime(),
+    );
   }
 
   get canManage(): boolean {
@@ -108,9 +166,13 @@ export class CalendarComponent implements OnInit, OnDestroy {
   private load(showLoading: boolean) {
     if (showLoading) this.loading = true;
     this.calendarService.findAll().subscribe((events) => {
-      this.events = events;
+      this.systemEvents = events;
+      this.merge();
       this.loading = false;
     });
+    if (this.googleConnected && showLoading) {
+      this.calendarService.personal().subscribe({ next: (l) => this.setPersonal(l), error: () => undefined });
+    }
   }
 
   daysUntil(event: CalendarEvent): number {

@@ -1,0 +1,100 @@
+<div class="page">
+  <h1 class="page-title">My files</h1>
+  <p class="sub">
+    Keep your own documents here. They are saved in your DepEd Google Drive (TaskEd &rsaquo; My Files &rsaquo; school year),
+    so they do not use TaskEd storage. Only you can see them here.
+  </p>
+
+  @if (loading) {
+    <app-loading [compact]="true" />
+  } @else if (view) {
+    @if (!view.driveConnected) {
+      <app-google-connect what="drive" />
+    }
+
+    <form class="card up" (ngSubmit)="upload()">
+      <h2>Add a file</h2>
+      <div class="grid">
+        <label class="wide">
+          File
+          <span class="picker">
+            <label class="btn secondary pick">
+              <app-icon name="upload" [size]="16" /> Choose file
+              <input type="file" hidden (change)="pick($event)" />
+            </label>
+            <span class="muted">{{ picked ? picked.name + ' (' + size(picked.size) + ')' : 'PDF, Word, Excel, PowerPoint, image, CSV, TXT or ZIP · up to ' + maxMb + ' MB' }}</span>
+          </span>
+        </label>
+        <label>
+          Label *
+          <input name="label" [(ngModel)]="label" placeholder="e.g. Service Record" maxlength="150" />
+        </label>
+        <label>
+          Category (folder)
+          <input name="category" [(ngModel)]="category" list="cats" placeholder="e.g. Personal documents" maxlength="60" />
+          <datalist id="cats">
+            @for (c of categories; track c) { <option [value]="c"></option> }
+          </datalist>
+        </label>
+      </div>
+      <p class="muted">It will be filed under {{ yearLabel(view.currentYear) }}.</p>
+      @if (error) { <p class="error">{{ error }}</p> }
+      <button class="btn" type="submit" [disabled]="!picked || !label.trim() || uploading || !view.driveConnected">
+        {{ uploading ? 'Uploading…' : 'Upload to my Drive' }}
+      </button>
+    </form>
+
+    <div class="years">
+      @for (g of groups; track g.schoolYear) {
+        <section class="card year">
+          <button type="button" class="year-head" (click)="toggle(g.schoolYear)" [attr.aria-expanded]="isOpen(g.schoolYear)">
+            <app-icon [name]="isOpen(g.schoolYear) ? 'chevron-down' : 'chevron-right'" [size]="18" />
+            <strong>{{ yearLabel(g.schoolYear) }}</strong>
+            @if (g.schoolYear === view.currentYear) { <span class="chip">Current</span> }
+            <span class="muted">{{ g.files.length }} file{{ g.files.length === 1 ? '' : 's' }}</span>
+          </button>
+          @if (isOpen(g.schoolYear)) {
+            <div class="year-body">
+              @if (g.files.length === 0) {
+                <p class="muted">No files yet for this school year.</p>
+              }
+              @for (c of byCategory(g.files); track c.name) {
+                <h3><app-icon name="folder" [size]="14" /> {{ c.name }}</h3>
+                @for (f of c.files; track f.id) {
+                  <div class="frow">
+                    @if (editingId === f.id) {
+                      <div class="edit">
+                        <input [(ngModel)]="editLabel" name="el{{ f.id }}" placeholder="Label" maxlength="150" />
+                        <input [(ngModel)]="editCategory" name="ec{{ f.id }}" list="cats" placeholder="Category" maxlength="60" />
+                        <button class="btn" type="button" (click)="saveEdit(f)">Save</button>
+                        <button class="btn secondary" type="button" (click)="editingId = null">Cancel</button>
+                      </div>
+                    } @else {
+                      <div class="info">
+                        <strong>{{ f.label }}</strong>
+                        <small>{{ f.fileName }} · {{ size(f.size) }} · {{ f.createdAt | date: 'MMM d, y' }}</small>
+                      </div>
+                      <div class="acts">
+                        <button class="btn secondary" type="button" (click)="download(f)" aria-label="Download">
+                          <app-icon name="download" [size]="15" />
+                        </button>
+                        <button class="btn secondary" type="button" (click)="startEdit(f)" aria-label="Rename">
+                          <app-icon name="pencil" [size]="15" />
+                        </button>
+                        <button class="btn danger" type="button" (click)="remove(f)" aria-label="Delete">
+                          <app-icon name="trash" [size]="15" />
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+              }
+            </div>
+          }
+        </section>
+      }
+    </div>
+  } @else {
+    <div class="card empty">{{ error ?? 'Could not load your files.' }}</div>
+  }
+</div>

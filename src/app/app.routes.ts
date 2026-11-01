@@ -15,6 +15,7 @@ import { ForumQuestionComponent } from './features/forum/forum-question.componen
 import { WeatherComponent } from './features/weather/weather.component';
 import { ProfileComponent } from './features/profile/profile.component';
 import { ChatbotComponent } from './features/chatbot/chatbot.component';
+import { MyFilesComponent } from './features/my-files/my-files.component';
 import { SchoolComponent } from './features/school/school.component';
 import { SchoolsAdminComponent } from './features/schools-admin/schools-admin.component';
 import { DocumentTypesComponent } from './features/document-types/document-types.component';
@@ -25,6 +26,7 @@ import {
   teacherOnlyGuard,
   forumGuard,
   schoolStaffGuard,
+  myFilesGuard,
 } from './core/guards/auth.guards';
 
 export const routes: Routes = [
@@ -52,6 +54,7 @@ export const routes: Routes = [
       { path: 'forum', component: ForumListComponent, canActivate: [forumGuard] },
       { path: 'forum/:id', component: ForumQuestionComponent, canActivate: [forumGuard] },
       { path: 'school', component: SchoolComponent, canActivate: [schoolStaffGuard] },
+      { path: 'my-files', component: MyFilesComponent, canActivate: [myFilesGuard] },
       { path: 'schools', component: SchoolsAdminComponent, canActivate: [adminOnlyGuard] },
       { path: 'schools/:id', component: SchoolComponent, canActivate: [adminOnlyGuard] },
       { path: 'document-types', component: DocumentTypesComponent, canActivate: [adminOnlyGuard] },

@@ -209,3 +209,6 @@ label {
   margin: 0 0 0.4rem 0.3rem;
   padding-left: 0.7rem;
 }
+
+.sync-row { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; margin-bottom: 0.9rem; .muted { color: var(--muted); font-size: 0.82rem; } }
+.mine { color: #7c3aed; font-weight: 600; }

@@ -4,12 +4,13 @@ import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angu
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { SchoolPortalService } from '../../core/services/school-portal.service';
-import { UploadService } from '../../core/services/upload.service';
 import { AccountStatus, Role, SchoolInfo, User } from '../../core/models/user.model';
 import { FileKind, SchoolFilesView, SchoolOverview } from '../../core/models/school-portal.model';
 import { LoadingComponent } from '../../shared/loading/loading.component';
 import { AvatarComponent } from '../../shared/avatar/avatar.component';
 import { IconComponent } from '../../shared/icon/icon.component';
+import { GoogleConnectComponent } from '../../shared/google-connect/google-connect.component';
+import { saveBlob } from '../../shared/download';
 
 type Tab = 'overview' | 'teachers' | 'files';
 
@@ -27,13 +28,12 @@ interface TeacherRow {
 @Component({
   selector: 'app-school',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, DatePipe, LoadingComponent, AvatarComponent, IconComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, DatePipe, LoadingComponent, AvatarComponent, IconComponent, GoogleConnectComponent],
   templateUrl: './school.component.html',
   styleUrl: './school.component.scss',
 })
 export class SchoolComponent implements OnInit {
   private portal = inject(SchoolPortalService);
-  private uploads = inject(UploadService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private fb = inject(FormBuilder);
@@ -308,14 +308,15 @@ export class SchoolComponent implements OnInit {
     const file = input.files?.[0];
     input.value = '';
     if (!file) return;
+    if (file.size > 20 * 1024 * 1024) {
+      this.fileError = 'The file is larger than 20 MB.';
+      return;
+    }
     this.fileError = null;
     this.uploadingKey = typeId + kind;
     try {
-      const url = await this.uploads.uploadSchoolFile(this.schoolId, file, kind);
       await new Promise<void>((resolve, reject) =>
-        this.portal
-          .saveFile(this.schoolId, { documentTypeId: typeId, kind, fileName: file.name, fileUrl: url })
-          .subscribe({ next: () => resolve(), error: reject }),
+        this.portal.uploadFile(this.schoolId, typeId, kind, file).subscribe({ next: () => resolve(), error: reject }),
       );
       this.loadFiles();
     } catch (e: any) {
@@ -323,6 +324,28 @@ export class SchoolComponent implements OnInit {
     } finally {
       this.uploadingKey = null;
     }
+  }
+
+  // Which earlier school years are opened (the current one is always open).
+  openYears = new Set<string>();
+  toggleYear(sy: string) {
+    this.openYears.has(sy) ? this.openYears.delete(sy) : this.openYears.add(sy);
+  }
+  yearLabel(sy: string) {
+    return 'S.Y. ' + sy;
+  }
+
+  download(fileId: string, name: string) {
+    this.fileError = null;
+    this.portal.downloadFile(this.schoolId, fileId).subscribe({
+      next: (blob) => saveBlob(blob, name),
+      error: () => (this.fileError = 'Could not download the file. Try again.'),
+    });
+  }
+
+  get isSchoolStaff() {
+    const r = this.auth.currentUser()?.role;
+    return r === Role.SCHOOL || r === Role.SCHOOL_HEAD;
   }
 
   removeFile(fileId: string, name: string) {

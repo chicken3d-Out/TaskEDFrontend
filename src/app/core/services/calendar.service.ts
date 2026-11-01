@@ -12,6 +12,17 @@ export interface UpsertCalendarEventDto {
   isAnnouncement?: boolean;
 }
 
+export interface PersonalEvent {
+  id: string;
+  title: string;
+  description: string | null;
+  startsAt: string;
+  endsAt: string | null;
+  allDay: boolean;
+  location: string | null;
+  htmlLink: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CalendarService {
   private base = `${environment.apiUrl}/calendar`;
@@ -32,6 +43,17 @@ export class CalendarService {
 
   update(id: string, dto: Partial<UpsertCalendarEventDto>): Observable<CalendarEvent> {
     return this.http.patch<CalendarEvent>(`${this.base}/${id}`, dto);
+  }
+
+  personal(): Observable<PersonalEvent[]> {
+    return this.http.get<PersonalEvent[]>(`${this.base}/personal`);
+  }
+
+  syncGoogle(force = false): Observable<{ connected: boolean; pulled: number; pushed: number; events: PersonalEvent[] }> {
+    return this.http.post<{ connected: boolean; pulled: number; pushed: number; events: PersonalEvent[] }>(
+      `${this.base}/google/sync`,
+      { force },
+    );
   }
 
   remove(id: string): Observable<unknown> {

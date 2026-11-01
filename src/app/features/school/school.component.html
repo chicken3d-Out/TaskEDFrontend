@@ -87,8 +87,12 @@
         <h3>School Head</h3>
         @if (overview.personnel.schoolHead; as h) {
           <div class="person">
-            <app-avatar [name]="h.name" [size]="40" />
-            <div><strong>{{ h.name }}</strong><small>{{ h.contactNumber || 'Current School Head' }}</small></div>
+            <app-avatar [url]="h.avatarUrl ?? null" [name]="h.name" [size]="40" />
+            <div>
+              <strong>{{ h.name }}</strong>
+              <small>{{ h.designation || 'School Head' }}{{ h.contactNumber ? ' · ' + h.contactNumber : '' }}</small>
+              @if (h.depedEmail) { <small>{{ h.depedEmail }}</small> }
+            </div>
           </div>
         } @else {
           <p class="muted">Not set yet.{{ overview.canEdit ? ' Use Edit to add the School Head.' : '' }}</p>
@@ -232,9 +236,14 @@
     } @else {
       <p class="muted">
         {{ uploadedCount }} of {{ files.documents.length }} documents uploaded.
-        Soft copy: PDF or Office file. Scanned copy: PDF, JPG or PNG. Maximum 10 MB each.
-        @if (!files.canUpload) { Only the School account can upload. }
+        Soft copy: PDF or Office file. Scanned copy: PDF, JPG or PNG. Maximum 20 MB each.
+        Files are saved in the Google Drive of the person who uploads them.
+        @if (!files.canUpload) { Only the School account or School Head can upload. }
       </p>
+      <h3 class="sec">{{ yearLabel(files.currentYear) }} (current)</h3>
+      @if (files.canUpload && !files.driveConnected) {
+        <app-google-connect what="drive" />
+      }
       @if (fileError) {
         <p class="error">{{ fileError }}</p>
       }
@@ -258,9 +267,9 @@
                 <div class="slot">
                   <span class="slot-title">{{ kind === 'soft' ? 'Soft copy' : 'Scanned copy' }}</span>
                   @if (f) {
-                    <a [href]="f.fileUrl" target="_blank" rel="noopener" class="file">
+                    <button type="button" class="file linklike" (click)="download(f.id, f.fileName)">
                       <app-icon name="download" [size]="15" /> {{ f.fileName }}
-                    </a>
+                    </button>
                     <small class="muted">{{ f.createdAt | date: 'MMM d, y' }}{{ f.uploadedBy ? ' · ' + f.uploadedBy : '' }}</small>
                   } @else {
                     <span class="muted">Not uploaded</span>
@@ -291,6 +300,36 @@
           </div>
         }
       </div>
+
+      @if (files.archive.length) {
+        <h3 class="sec">Earlier school years</h3>
+        <div class="list">
+          @for (y of files.archive; track y.schoolYear) {
+            <div class="card year">
+              <button type="button" class="year-head" (click)="toggleYear(y.schoolYear)" [attr.aria-expanded]="openYears.has(y.schoolYear)">
+                <app-icon [name]="openYears.has(y.schoolYear) ? 'chevron-down' : 'chevron-right'" [size]="18" />
+                <strong>{{ yearLabel(y.schoolYear) }}</strong>
+                <span class="muted">{{ y.files.length }} file{{ y.files.length === 1 ? '' : 's' }}</span>
+              </button>
+              @if (openYears.has(y.schoolYear)) {
+                <div class="year-body">
+                  @for (f of y.files; track f.id) {
+                    <div class="arow">
+                      <div class="tinfo">
+                        <strong>{{ f.document }}</strong>
+                        <small>{{ f.kind === 'soft' ? 'Soft copy' : 'Scanned copy' }} · {{ f.createdAt | date: 'MMM d, y' }}{{ f.uploadedBy ? ' · ' + f.uploadedBy : '' }}</small>
+                      </div>
+                      <button type="button" class="file linklike" (click)="download(f.id, f.fileName)">
+                        <app-icon name="download" [size]="15" /> {{ f.fileName }}
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
     }
   }
 }

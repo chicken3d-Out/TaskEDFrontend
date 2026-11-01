@@ -74,6 +74,19 @@ export const schoolStaffGuard: CanActivateFn = async () => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const user = await ensureUserLoaded(auth);
-  const ok = user?.role === Role.SCHOOL || user?.role === Role.ADMIN_OFFICER || user?.role === Role.ADMINISTRATOR;
+  const ok =
+    user?.role === Role.SCHOOL ||
+    user?.role === Role.SCHOOL_HEAD ||
+    user?.role === Role.ADMIN_OFFICER ||
+    user?.role === Role.ADMINISTRATOR;
+  return ok ? true : router.createUrlTree(['/dashboard']);
+};
+
+// "My files": Teachers, School Heads and AOs keep their own files in their Google Drive.
+export const myFilesGuard: CanActivateFn = async () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  const user = await ensureUserLoaded(auth);
+  const ok = user?.role === Role.TEACHER || user?.role === Role.SCHOOL_HEAD || user?.role === Role.ADMIN_OFFICER;
   return ok ? true : router.createUrlTree(['/dashboard']);
 };

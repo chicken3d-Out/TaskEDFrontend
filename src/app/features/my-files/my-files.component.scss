@@ -1,0 +1,19 @@
+.sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 1rem; max-width: 70ch; }
+.muted { color: var(--muted); font-size: 0.85rem; margin: 0.2rem 0; }
+.empty { text-align: center; color: var(--muted); }
+h2 { font-size: 1.05rem; margin: 0 0 0.6rem; }
+.up { margin-bottom: 1.2rem; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem; label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.8rem; font-weight: 600; } .wide { grid-column: 1 / -1; } }
+.picker { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; font-weight: 400; }
+.pick { cursor: pointer; }
+.years { display: flex; flex-direction: column; gap: 0.7rem; }
+.year { padding: 0; overflow: hidden; }
+.year-head { width: 100%; display: flex; align-items: center; gap: 0.6rem; background: none; border: none; padding: 0.9rem 1rem; cursor: pointer; text-align: left; }
+.chip { background: var(--primary-soft); color: var(--primary-strong); border-radius: 999px; font-size: 0.7rem; font-weight: 700; padding: 0.1rem 0.55rem; }
+.year-body { border-top: 1px solid var(--border); padding: 0.3rem 1rem 1rem;
+  h3 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 1rem 0 0.3rem; display: flex; align-items: center; gap: 0.35rem; } }
+.frow { display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; flex-wrap: wrap; padding: 0.55rem 0; border-bottom: 1px dashed var(--border); &:last-child { border-bottom: none; } }
+.info { display: flex; flex-direction: column; min-width: 0; flex: 1; small { color: var(--muted); font-size: 0.8rem; overflow-wrap: anywhere; } }
+.acts, .edit { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.edit { flex: 1; input { flex: 1; min-width: 140px; } }
+@media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }

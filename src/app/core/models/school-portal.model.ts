@@ -14,7 +14,7 @@ export interface SchoolOverview {
   school: SchoolInfo;
   canEdit: boolean;
   personnel: {
-    schoolHead: { name: string; contactNumber: string | null } | null;
+    schoolHead: { id?: string | null; name: string; contactNumber: string | null; avatarUrl?: string | null; designation?: string | null; depedEmail?: string | null } | null;
     schoolAccount: PersonMini | null;
     administrativeOfficers: PersonMini[];
     teachers: PersonMini[];
@@ -46,13 +46,20 @@ export interface DocumentType {
 export interface SchoolFileView {
   id: string;
   fileName: string;
-  fileUrl: string;
   uploadedBy: string | null;
   createdAt: string;
 }
 
+export interface SchoolFileArchiveRow extends SchoolFileView {
+  document: string;
+  kind: FileKind;
+}
+
 export interface SchoolFilesView {
   canUpload: boolean;
+  driveConnected: boolean;
+  currentYear: string;
+  archive: { schoolYear: string; files: SchoolFileArchiveRow[] }[];
   documents: { type: DocumentType; soft: SchoolFileView | null; scanned: SchoolFileView | null }[];
 }
 

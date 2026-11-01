@@ -68,14 +68,15 @@ export class SchoolPortalService {
   files(id: string): Observable<SchoolFilesView> {
     return this.http.get<SchoolFilesView>(`${this.base}/schools/${id}/files`);
   }
-  signFile(id: string, fileName: string, kind: FileKind) {
-    return this.http.post<{ uploadUrl: string; fields: Record<string, string> }>(
-      `${this.base}/schools/${id}/files/sign`,
-      { fileName, kind },
-    );
+  uploadFile(id: string, documentTypeId: string, kind: FileKind, file: File) {
+    const form = new FormData();
+    form.append('documentTypeId', documentTypeId);
+    form.append('kind', kind);
+    form.append('file', file);
+    return this.http.post(`${this.base}/schools/${id}/files/upload`, form);
   }
-  saveFile(id: string, dto: { documentTypeId: string; kind: FileKind; fileName: string; fileUrl: string }) {
-    return this.http.post(`${this.base}/schools/${id}/files`, dto);
+  downloadFile(id: string, fileId: string) {
+    return this.http.get(`${this.base}/schools/${id}/files/${fileId}/download`, { responseType: 'blob' });
   }
   deleteFile(id: string, fileId: string) {
     return this.http.delete(`${this.base}/schools/${id}/files/${fileId}`);

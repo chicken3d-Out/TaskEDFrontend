@@ -2,15 +2,26 @@
   <div class="event-item">
     <div class="info">
       <strong>{{ event.title }}</strong>
-      <span class="meta">{{ event.eventDate | date: 'EEE, MMM d · h:mm a' }} · posted by {{ event.createdBy.name }}</span>
+      <span class="meta">
+        @if (event.personal) {
+          <span class="mine">My Google Calendar · private</span> ·
+          {{ event.eventDate | date: 'EEE, MMM d · h:mm a' }}
+        } @else {
+          {{ event.eventDate | date: 'EEE, MMM d · h:mm a' }} · posted by {{ event.createdBy.name }}
+        }
+      </span>
+      @if (event.location) { <span class="meta">📍 {{ event.location }}</span> }
       <p>{{ event.description }}</p>
+      @if (event.personal && event.htmlLink) {
+        <a [href]="event.htmlLink" target="_blank" rel="noopener" class="zoom-link">Open in Google Calendar</a>
+      }
       @if (event.zoomLink) {
         <a [href]="event.zoomLink" target="_blank" rel="noopener" class="zoom-link">
           <app-icon name="video" [size]="16" /> Join Zoom
         </a>
       }
     </div>
-    @if (canManage) {
+    @if (canManage && !event.personal) {
       <button class="del" (click)="remove(event)" aria-label="Delete event">
         <app-icon name="trash" [size]="17" />
       </button>
@@ -28,6 +39,18 @@
       </button>
     }
   </div>
+
+  @if (!googleConnected) {
+    <app-google-connect what="calendar" />
+  } @else {
+    <div class="sync-row">
+      <span class="muted">Synced with your DepEd Google Calendar. Your own Google events are shown only to you.</span>
+      <button class="btn secondary" type="button" (click)="syncGoogle(true)" [disabled]="syncing">
+        {{ syncing ? 'Syncing…' : 'Sync now' }}
+      </button>
+      @if (syncMsg) { <span class="muted">{{ syncMsg }}</span> }
+    </div>
+  }
 
   @if (showForm) {
     <form class="card event-form" [formGroup]="form" (ngSubmit)="submit()">

@@ -2,6 +2,7 @@ export enum Role {
   TEACHER = 'teacher',
   ADMIN_OFFICER = 'admin_officer',
   PUBLISHER = 'publisher',
+  SCHOOL_HEAD = 'school_head',
   SCHOOL = 'school',
   ADMINISTRATOR = 'administrator',
 }
@@ -61,6 +62,9 @@ export interface User {
   status: AccountStatus;
   school: School | null;
   assignedSchools: School[];
+  // whether the user has allowed TaskEd to use their Google Drive / Calendar
+  googleDrive?: boolean;
+  googleCalendar?: boolean;
   createdAt: string;
 }
 
@@ -68,6 +72,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   [Role.TEACHER]: 'Teacher',
   [Role.ADMIN_OFFICER]: 'Administrative Officer',
   [Role.PUBLISHER]: 'Publisher',
+  [Role.SCHOOL_HEAD]: 'School Head',
   [Role.SCHOOL]: 'School',
   [Role.ADMINISTRATOR]: 'Administrator',
 };
