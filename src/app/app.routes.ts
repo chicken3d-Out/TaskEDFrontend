@@ -15,6 +15,7 @@ import { ForumQuestionComponent } from './features/forum/forum-question.componen
 import { WeatherComponent } from './features/weather/weather.component';
 import { ProfileComponent } from './features/profile/profile.component';
 import { ChatbotComponent } from './features/chatbot/chatbot.component';
+import { LegalComponent } from './features/legal/legal.component';
 import { MyFilesComponent } from './features/my-files/my-files.component';
 import { SchoolComponent } from './features/school/school.component';
 import { SchoolsAdminComponent } from './features/schools-admin/schools-admin.component';
@@ -31,6 +32,8 @@ import {
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
+  { path: 'privacy', component: LegalComponent, data: { kind: 'privacy' } },
+  { path: 'terms', component: LegalComponent, data: { kind: 'terms' } },
   { path: 'auth/callback', component: AuthCallbackComponent },
   { path: 'register', component: RegisterComponent, canActivate: [needsRegistrationGuard] },
   { path: 'pending', component: PendingApprovalComponent },

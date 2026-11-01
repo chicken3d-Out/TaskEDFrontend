@@ -1,13 +1,13 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { IconComponent } from '../../shared/icon/icon.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, IconComponent],
+  imports: [ReactiveFormsModule, RouterLink, IconComponent],
   template: `
     <div class="page">
       <div class="card box">
@@ -55,10 +55,14 @@ import { IconComponent } from '../../shared/icon/icon.component';
           </form>
         }
       </div>
+      <p class="legal">
+        <a routerLink="/privacy">Privacy Policy</a> · <a routerLink="/terms">Terms of Service</a>
+      </p>
     </div>
   `,
   styles: [
     `
+      .legal { text-align: center; font-size: 0.78rem; margin: 1rem 0 0; a { color: var(--muted); } }
       .page {
         min-height: 100vh;
         display: flex;
