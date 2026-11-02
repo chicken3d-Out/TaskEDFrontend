@@ -23,6 +23,12 @@ export interface PersonalEvent {
   htmlLink: string | null;
 }
 
+export interface IcalResult {
+  linked: boolean;
+  count: number;
+  events: PersonalEvent[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class CalendarService {
   private base = `${environment.apiUrl}/calendar`;
@@ -49,11 +55,15 @@ export class CalendarService {
     return this.http.get<PersonalEvent[]>(`${this.base}/personal`);
   }
 
-  syncGoogle(force = false): Observable<{ connected: boolean; pulled: number; pushed: number; events: PersonalEvent[] }> {
-    return this.http.post<{ connected: boolean; pulled: number; pushed: number; events: PersonalEvent[] }>(
-      `${this.base}/google/sync`,
-      { force },
-    );
+  // Your own Google Calendar, read one way into TaskEd through its private iCal link.
+  linkCalendar(url: string): Observable<IcalResult> {
+    return this.http.put<IcalResult>(`${this.base}/ical`, { url });
+  }
+  unlinkCalendar(): Observable<unknown> {
+    return this.http.delete(`${this.base}/ical`);
+  }
+  syncCalendar(force = false): Observable<IcalResult> {
+    return this.http.post<IcalResult>(`${this.base}/ical/sync`, { force });
   }
 
   remove(id: string): Observable<unknown> {

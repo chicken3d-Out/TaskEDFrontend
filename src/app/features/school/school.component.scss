@@ -48,3 +48,4 @@ h3.sec { font-size: 0.85rem; margin: 1.3rem 0 0.6rem; }
 .year-head { width: 100%; display: flex; align-items: center; gap: 0.6rem; background: none; border: none; padding: 0.9rem 1rem; cursor: pointer; text-align: left; }
 .year-body { border-top: 1px solid var(--border); padding: 0.4rem 1rem 0.8rem; }
 .arow { display: flex; justify-content: space-between; gap: 1rem; align-items: center; flex-wrap: wrap; padding: 0.55rem 0; border-bottom: 1px dashed var(--border); &:last-child { border-bottom: none; } }
+.linkbox { width: 100%; }

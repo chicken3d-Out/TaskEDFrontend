@@ -17,3 +17,6 @@ h2 { font-size: 1.05rem; margin: 0 0 0.6rem; }
 .acts, .edit { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 .edit { flex: 1; input { flex: 1; min-width: 140px; } }
 @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+
+.tip { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 1rem; font-size: 0.85rem; background: var(--primary-soft); border: 1px solid var(--border); span { color: var(--text); } }
+.acts a.btn { text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; }

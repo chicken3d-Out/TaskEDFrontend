@@ -40,15 +40,37 @@
     }
   </div>
 
-  @if (!googleConnected) {
-    <app-google-connect what="calendar" />
+  @if (!linked) {
+    <div class="card gcal">
+      <div>
+        <strong>See your Google Calendar here</strong>
+        <span class="muted">Optional. Your own Google events show next to division events, only for you. TaskEd needs no permission from Google and never changes your Google Calendar.</span>
+      </div>
+      <button class="btn secondary" type="button" (click)="showLink = !showLink">{{ showLink ? 'Close' : 'Add my Google Calendar' }}</button>
+    </div>
   } @else {
     <div class="sync-row">
-      <span class="muted">Synced with your DepEd Google Calendar. Your own Google events are shown only to you.</span>
+      <span class="muted">Showing your Google Calendar (private to you).</span>
       <button class="btn secondary" type="button" (click)="syncGoogle(true)" [disabled]="syncing">
-        {{ syncing ? 'Syncing…' : 'Sync now' }}
+        {{ syncing ? 'Updating…' : 'Update now' }}
       </button>
+      <button class="btn secondary" type="button" (click)="unlink()">Stop</button>
       @if (syncMsg) { <span class="muted">{{ syncMsg }}</span> }
+    </div>
+  }
+
+  @if (showLink && !linked) {
+    <div class="card gcal-steps">
+      <ol>
+        <li>Open <strong>calendar.google.com</strong> on a computer and sign in with your DepEd account.</li>
+        <li>Click the gear icon → <strong>Settings</strong>. On the left, under <em>Settings for my calendars</em>, click your calendar name.</li>
+        <li>Scroll to <strong>Integrate calendar</strong> and copy the <strong>Secret address in iCal format</strong> (it ends in .ics).</li>
+        <li>Paste it below. Keep it private: anyone with it can read your calendar.</li>
+      </ol>
+      <input class="linkbox" [(ngModel)]="linkUrl" placeholder="https://calendar.google.com/calendar/ical/…/basic.ics" />
+      @if (linkError) { <p class="error">{{ linkError }}</p> }
+      <button class="btn" type="button" [disabled]="!linkUrl.trim() || linkBusy" (click)="saveLink()">{{ linkBusy ? 'Checking…' : 'Save' }}</button>
+      <p class="muted">If you do not see that option, your Google Workspace administrator may have turned it off.</p>
     </div>
   }
 

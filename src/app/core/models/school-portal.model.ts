@@ -46,6 +46,7 @@ export interface DocumentType {
 export interface SchoolFileView {
   id: string;
   fileName: string;
+  link: string;
   uploadedBy: string | null;
   createdAt: string;
 }
@@ -57,7 +58,6 @@ export interface SchoolFileArchiveRow extends SchoolFileView {
 
 export interface SchoolFilesView {
   canUpload: boolean;
-  driveConnected: boolean;
   currentYear: string;
   archive: { schoolYear: string; files: SchoolFileArchiveRow[] }[];
   documents: { type: DocumentType; soft: SchoolFileView | null; scanned: SchoolFileView | null }[];

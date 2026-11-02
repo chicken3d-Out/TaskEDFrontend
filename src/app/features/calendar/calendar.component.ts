@@ -1,12 +1,11 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CalendarService, PersonalEvent } from '../../core/services/calendar.service';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { CalendarService, PersonalEvent, IcalResult } from '../../core/services/calendar.service';
 import { AuthService } from '../../core/services/auth.service';
 import { RealtimeService } from '../../core/services/realtime.service';
 import { CalendarEvent } from '../../core/models/calendar-event.model';
 import { Role } from '../../core/models/user.model';
-import { GoogleConnectComponent } from '../../shared/google-connect/google-connect.component';
 import { LoadingComponent } from '../../shared/loading/loading.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { MonthCalendarComponent } from '../../shared/month-calendar/month-calendar.component';
@@ -19,7 +18,7 @@ type Item = CalendarEvent & { personal?: boolean; htmlLink?: string | null; loca
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LoadingComponent, IconComponent, MonthCalendarComponent, GoogleConnectComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, LoadingComponent, IconComponent, MonthCalendarComponent],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
 })
@@ -66,25 +65,60 @@ export class CalendarComponent implements OnInit, OnDestroy {
     if (this.syncTimer) clearInterval(this.syncTimer);
   }
 
-  get googleConnected(): boolean {
-    return !!this.auth.currentUser()?.googleCalendar;
-  }
+  // linked = the person has pasted in their private Google Calendar link
+  linked = !!this.auth.currentUser()?.calendarLinked;
+  showLink = false;
+  linkUrl = '';
+  linkBusy = false;
+  linkError: string | null = null;
 
   syncGoogle(force: boolean) {
-    if (!this.googleConnected) return;
+    if (!this.linked) return;
     this.syncing = true;
     this.syncMsg = null;
-    this.calendarService.syncGoogle(force).subscribe({
+    this.calendarService.syncCalendar(force).subscribe({
       next: (r) => {
-        this.setPersonal(r.events);
+        this.afterSync(r);
         this.syncing = false;
-        if (force) this.syncMsg = r.connected ? 'Calendar is up to date.' : 'Google Calendar is not connected.';
-        this.load(false);
+        if (force) this.syncMsg = 'Calendar is up to date.';
       },
-      error: () => {
+      error: (e) => {
         this.syncing = false;
-        if (force) this.syncMsg = 'Could not sync with Google Calendar. Try again in a moment.';
+        if (force) this.syncMsg = e?.error?.message ?? 'Could not read your Google Calendar. Try again in a moment.';
       },
+    });
+  }
+
+  private afterSync(r: IcalResult) {
+    this.linked = r.linked;
+    this.setPersonal(r.events);
+  }
+
+  saveLink() {
+    if (!this.linkUrl.trim()) return;
+    this.linkBusy = true;
+    this.linkError = null;
+    this.calendarService.linkCalendar(this.linkUrl.trim()).subscribe({
+      next: (r) => {
+        this.afterSync(r);
+        this.linkBusy = false;
+        this.showLink = false;
+        this.linkUrl = '';
+        this.auth.loadCurrentUser();
+      },
+      error: (e) => {
+        this.linkError = e?.error?.message ?? 'Could not save the link.';
+        this.linkBusy = false;
+      },
+    });
+  }
+
+  unlink() {
+    if (!confirm('Stop showing your Google Calendar in TaskEd? Nothing is changed in Google.')) return;
+    this.calendarService.unlinkCalendar().subscribe(() => {
+      this.linked = false;
+      this.setPersonal([]);
+      this.auth.loadCurrentUser();
     });
   }
 
@@ -170,7 +204,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
       this.merge();
       this.loading = false;
     });
-    if (this.googleConnected && showLoading) {
+    if (this.linked && showLoading) {
       this.calendarService.personal().subscribe({ next: (l) => this.setPersonal(l), error: () => undefined });
     }
   }

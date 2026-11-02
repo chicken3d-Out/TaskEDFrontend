@@ -12,20 +12,13 @@ export class MyFilesService {
   list(): Observable<MyFilesView> {
     return this.http.get<MyFilesView>(this.base);
   }
-  upload(file: File, label: string, category: string): Observable<MyFile> {
-    const form = new FormData();
-    form.append('file', file);
-    form.append('label', label);
-    form.append('category', category);
-    return this.http.post<MyFile>(this.base, form);
+  add(label: string, category: string, link: string): Observable<MyFile> {
+    return this.http.post<MyFile>(this.base, { label, category, link });
   }
-  rename(id: string, label: string, category: string): Observable<MyFile> {
-    return this.http.patch<MyFile>(`${this.base}/${id}`, { label, category });
+  update(id: string, dto: { label: string; category: string; link: string }): Observable<MyFile> {
+    return this.http.patch<MyFile>(`${this.base}/${id}`, dto);
   }
   remove(id: string): Observable<unknown> {
     return this.http.delete(`${this.base}/${id}`);
-  }
-  download(id: string): Observable<Blob> {
-    return this.http.get(`${this.base}/${id}/download`, { responseType: 'blob' });
   }
 }

@@ -1,46 +1,41 @@
 <div class="page">
   <h1 class="page-title">My files</h1>
   <p class="sub">
-    Keep your own documents here. They are saved in your DepEd Google Drive (TaskEd &rsaquo; My Files &rsaquo; school year),
-    so they do not use TaskEd storage. Only you can see them here.
+    Keep your own documents here. Each file stays in your own Google Drive (or OneDrive); TaskEd only keeps a link, so
+    nothing is uploaded to TaskEd and it never asks for access to your Drive. Only you can see this list.
   </p>
 
   @if (loading) {
     <app-loading [compact]="true" />
   } @else if (view) {
-    @if (!view.driveConnected) {
-      <app-google-connect what="drive" />
-    }
+    <div class="card tip">
+      <strong>Suggested Drive folders</strong>
+      <span>Create <em>Personal Files</em> and <em>Scanned Files</em> in your Drive, each with a folder per school year (for example <em>S.Y. {{ view.currentYear }}</em>). Then right-click a file → Share → Copy link, and paste it below. TaskEd groups the list by school year and category for you.</span>
+    </div>
 
-    <form class="card up" (ngSubmit)="upload()">
-      <h2>Add a file</h2>
+    <form class="card up" (ngSubmit)="add()">
+      <h2>Add a file link</h2>
       <div class="grid">
         <label class="wide">
-          File
-          <span class="picker">
-            <label class="btn secondary pick">
-              <app-icon name="upload" [size]="16" /> Choose file
-              <input type="file" hidden (change)="pick($event)" />
-            </label>
-            <span class="muted">{{ picked ? picked.name + ' (' + size(picked.size) + ')' : 'PDF, Word, Excel, PowerPoint, image, CSV, TXT or ZIP · up to ' + maxMb + ' MB' }}</span>
-          </span>
+          Share link *
+          <input name="link" [(ngModel)]="link" placeholder="https://drive.google.com/…" />
         </label>
         <label>
           Label *
           <input name="label" [(ngModel)]="label" placeholder="e.g. Service Record" maxlength="150" />
         </label>
         <label>
-          Category (folder)
-          <input name="category" [(ngModel)]="category" list="cats" placeholder="e.g. Personal documents" maxlength="60" />
+          Category (group)
+          <input name="category" [(ngModel)]="category" list="cats" placeholder="e.g. Personal Files" maxlength="60" />
           <datalist id="cats">
             @for (c of categories; track c) { <option [value]="c"></option> }
           </datalist>
         </label>
       </div>
-      <p class="muted">It will be filed under {{ yearLabel(view.currentYear) }}.</p>
+      <p class="muted">It will be filed under {{ yearLabel(view.currentYear) }}. Links from Google Drive, Google Docs, OneDrive and SharePoint are accepted.</p>
       @if (error) { <p class="error">{{ error }}</p> }
-      <button class="btn" type="submit" [disabled]="!picked || !label.trim() || uploading || !view.driveConnected">
-        {{ uploading ? 'Uploading…' : 'Upload to my Drive' }}
+      <button class="btn" type="submit" [disabled]="!link.trim() || !label.trim() || saving">
+        {{ saving ? 'Saving…' : 'Add to My files' }}
       </button>
     </form>
 
@@ -66,19 +61,20 @@
                       <div class="edit">
                         <input [(ngModel)]="editLabel" name="el{{ f.id }}" placeholder="Label" maxlength="150" />
                         <input [(ngModel)]="editCategory" name="ec{{ f.id }}" list="cats" placeholder="Category" maxlength="60" />
+                        <input [(ngModel)]="editLink" name="el2{{ f.id }}" placeholder="Share link" />
                         <button class="btn" type="button" (click)="saveEdit(f)">Save</button>
                         <button class="btn secondary" type="button" (click)="editingId = null">Cancel</button>
                       </div>
                     } @else {
                       <div class="info">
                         <strong>{{ f.label }}</strong>
-                        <small>{{ f.fileName }} · {{ size(f.size) }} · {{ f.createdAt | date: 'MMM d, y' }}</small>
+                        <small>Added {{ f.createdAt | date: 'MMM d, y' }}</small>
                       </div>
                       <div class="acts">
-                        <button class="btn secondary" type="button" (click)="download(f)" aria-label="Download">
-                          <app-icon name="download" [size]="15" />
-                        </button>
-                        <button class="btn secondary" type="button" (click)="startEdit(f)" aria-label="Rename">
+                        <a class="btn secondary" [href]="f.link" target="_blank" rel="noopener noreferrer" aria-label="Open">
+                          <app-icon name="download" [size]="15" /> Open
+                        </a>
+                        <button class="btn secondary" type="button" (click)="startEdit(f)" aria-label="Edit">
                           <app-icon name="pencil" [size]="15" />
                         </button>
                         <button class="btn danger" type="button" (click)="remove(f)" aria-label="Delete">

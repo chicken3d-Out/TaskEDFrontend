@@ -235,15 +235,16 @@
       <app-loading [compact]="true" />
     } @else {
       <p class="muted">
-        {{ uploadedCount }} of {{ files.documents.length }} documents uploaded.
-        Soft copy: PDF or Office file. Scanned copy: PDF, JPG or PNG. Maximum 20 MB each.
-        Files are saved in the Google Drive of the person who uploads them.
-        @if (!files.canUpload) { Only the School account or School Head can upload. }
+        {{ uploadedCount }} of {{ files.documents.length }} documents added.
+        Keep each file in your own Google Drive (or OneDrive), then paste its share link here.
+        @if (files.canUpload) {
+          Suggested Drive folders: <strong>Personal Files</strong> and <strong>Scanned Files</strong>, each with one folder per school year, for example <strong>S.Y. {{ files.currentYear }}</strong>.
+          Set the link to "Anyone with the link can view" or share it with your AO, School Head and the Administrator.
+        } @else {
+          Only the School account or the School Head can add files.
+        }
       </p>
       <h3 class="sec">{{ yearLabel(files.currentYear) }} (current)</h3>
-      @if (files.canUpload && !files.driveConnected) {
-        <app-google-connect what="drive" />
-      }
       @if (fileError) {
         <p class="error">{{ fileError }}</p>
       }
@@ -267,32 +268,39 @@
                 <div class="slot">
                   <span class="slot-title">{{ kind === 'soft' ? 'Soft copy' : 'Scanned copy' }}</span>
                   @if (f) {
-                    <button type="button" class="file linklike" (click)="download(f.id, f.fileName)">
+                    <a [href]="f.link" target="_blank" rel="noopener noreferrer" class="file">
                       <app-icon name="download" [size]="15" /> {{ f.fileName }}
-                    </button>
+                    </a>
                     <small class="muted">{{ f.createdAt | date: 'MMM d, y' }}{{ f.uploadedBy ? ' · ' + f.uploadedBy : '' }}</small>
                   } @else {
-                    <span class="muted">Not uploaded</span>
+                    <span class="muted">Not added</span>
                   }
                   @if (files.canUpload) {
-                    <div class="row">
-                      <label class="btn secondary pick" [class.disabled]="uploadingKey !== null">
-                        <app-icon name="upload" [size]="15" />
-                        {{ uploadingKey === d.type.id + kind ? 'Uploading…' : f ? 'Replace' : 'Upload' }}
-                        <input
-                          type="file"
-                          hidden
-                          [accept]="kind === 'soft' ? softFormats : scannedFormats"
-                          [disabled]="uploadingKey !== null"
-                          (change)="onPick($event, d.type.id, $any(kind))"
-                        />
-                      </label>
-                      @if (f) {
-                        <button class="btn danger" (click)="removeFile(f.id, f.fileName)">
-                          <app-icon name="trash" [size]="15" />
+                    @if (openEditor.has(keyOf(d.type.id, kind))) {
+                      <input
+                        class="linkbox"
+                        placeholder="Paste the share link (https://drive.google.com/…)"
+                        [ngModel]="linkDrafts[keyOf(d.type.id, kind)] ?? ''"
+                        (ngModelChange)="linkDrafts[keyOf(d.type.id, kind)] = $event"
+                      />
+                      <div class="row">
+                        <button class="btn" type="button" [disabled]="savingKey !== null" (click)="saveLink(d.type.id, $any(kind))">
+                          {{ savingKey === keyOf(d.type.id, kind) ? 'Saving…' : 'Save link' }}
                         </button>
-                      }
-                    </div>
+                        <button class="btn secondary" type="button" (click)="toggleEditor(d.type.id, kind)">Cancel</button>
+                      </div>
+                    } @else {
+                      <div class="row">
+                        <button class="btn secondary" type="button" (click)="toggleEditor(d.type.id, kind)">
+                          <app-icon [name]="f ? 'pencil' : 'plus'" [size]="15" /> {{ f ? 'Replace link' : 'Add link' }}
+                        </button>
+                        @if (f) {
+                          <button class="btn danger" type="button" (click)="removeFile(f.id, f.fileName)">
+                            <app-icon name="trash" [size]="15" />
+                          </button>
+                        }
+                      </div>
+                    }
                   }
                 </div>
               }
@@ -319,9 +327,9 @@
                         <strong>{{ f.document }}</strong>
                         <small>{{ f.kind === 'soft' ? 'Soft copy' : 'Scanned copy' }} · {{ f.createdAt | date: 'MMM d, y' }}{{ f.uploadedBy ? ' · ' + f.uploadedBy : '' }}</small>
                       </div>
-                      <button type="button" class="file linklike" (click)="download(f.id, f.fileName)">
+                      <a [href]="f.link" target="_blank" rel="noopener noreferrer" class="file">
                         <app-icon name="download" [size]="15" /> {{ f.fileName }}
-                      </button>
+                      </a>
                     </div>
                   }
                 </div>

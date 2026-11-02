@@ -9,8 +9,6 @@ import { FileKind, SchoolFilesView, SchoolOverview } from '../../core/models/sch
 import { LoadingComponent } from '../../shared/loading/loading.component';
 import { AvatarComponent } from '../../shared/avatar/avatar.component';
 import { IconComponent } from '../../shared/icon/icon.component';
-import { GoogleConnectComponent } from '../../shared/google-connect/google-connect.component';
-import { saveBlob } from '../../shared/download';
 
 type Tab = 'overview' | 'teachers' | 'files';
 
@@ -28,7 +26,7 @@ interface TeacherRow {
 @Component({
   selector: 'app-school',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, DatePipe, LoadingComponent, AvatarComponent, IconComponent, GoogleConnectComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, DatePipe, LoadingComponent, AvatarComponent, IconComponent],
   templateUrl: './school.component.html',
   styleUrl: './school.component.scss',
 })
@@ -81,17 +79,10 @@ export class SchoolComponent implements OnInit {
   });
 
   // files
-  uploadingKey: string | null = null;
   fileError: string | null = null;
 
   get isAdmin() {
     return this.auth.currentUser()?.role === Role.ADMINISTRATOR;
-  }
-  get softFormats() {
-    return '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx';
-  }
-  get scannedFormats() {
-    return '.pdf,.jpg,.jpeg,.png';
   }
 
   ngOnInit() {
@@ -303,27 +294,37 @@ export class SchoolComponent implements OnInit {
     this.portal.files(this.schoolId).subscribe((f) => (this.files = f));
   }
 
-  async onPick(event: Event, typeId: string, kind: FileKind) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (!file) return;
-    if (file.size > 20 * 1024 * 1024) {
-      this.fileError = 'The file is larger than 20 MB.';
-      return;
-    }
+  // Link boxes: one per document slot ("<typeId>:<kind>").
+  linkDrafts: Record<string, string | undefined> = {};
+  openEditor = new Set<string>();
+  savingKey: string | null = null;
+
+  keyOf(typeId: string, kind: string) {
+    return typeId + ':' + kind;
+  }
+  toggleEditor(typeId: string, kind: string) {
+    const k = this.keyOf(typeId, kind);
+    this.openEditor.has(k) ? this.openEditor.delete(k) : this.openEditor.add(k);
+  }
+
+  saveLink(typeId: string, kind: FileKind) {
+    const k = this.keyOf(typeId, kind);
+    const link = (this.linkDrafts[k] ?? '').trim();
+    if (!link) return;
     this.fileError = null;
-    this.uploadingKey = typeId + kind;
-    try {
-      await new Promise<void>((resolve, reject) =>
-        this.portal.uploadFile(this.schoolId, typeId, kind, file).subscribe({ next: () => resolve(), error: reject }),
-      );
-      this.loadFiles();
-    } catch (e: any) {
-      this.fileError = e?.error?.message ?? e?.message ?? 'Upload failed.';
-    } finally {
-      this.uploadingKey = null;
-    }
+    this.savingKey = k;
+    this.portal.saveFileLink(this.schoolId, typeId, kind, link).subscribe({
+      next: () => {
+        this.savingKey = null;
+        delete this.linkDrafts[k];
+        this.openEditor.delete(k);
+        this.loadFiles();
+      },
+      error: (e) => {
+        this.savingKey = null;
+        this.fileError = e?.error?.message ?? 'Could not save the link.';
+      },
+    });
   }
 
   // Which earlier school years are opened (the current one is always open).
@@ -333,14 +334,6 @@ export class SchoolComponent implements OnInit {
   }
   yearLabel(sy: string) {
     return 'S.Y. ' + sy;
-  }
-
-  download(fileId: string, name: string) {
-    this.fileError = null;
-    this.portal.downloadFile(this.schoolId, fileId).subscribe({
-      next: (blob) => saveBlob(blob, name),
-      error: () => (this.fileError = 'Could not download the file. Try again.'),
-    });
   }
 
   get isSchoolStaff() {

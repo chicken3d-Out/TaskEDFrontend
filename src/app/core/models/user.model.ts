@@ -62,9 +62,8 @@ export interface User {
   status: AccountStatus;
   school: School | null;
   assignedSchools: School[];
-  // whether the user has allowed TaskEd to use their Google Drive / Calendar
-  googleDrive?: boolean;
-  googleCalendar?: boolean;
+  // true once the user has pasted in their private Google Calendar link
+  calendarLinked?: boolean;
   createdAt: string;
 }
 

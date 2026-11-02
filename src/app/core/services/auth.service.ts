@@ -65,16 +65,6 @@ export class AuthService {
     window.location.href = `${environment.apiUrl}/auth/google`;
   }
 
-  // Asks Google again for permission to use Drive and Calendar. The user
-  // lands back on the app signed in, and the new access is saved on the server.
-  connectGoogle() {
-    if (Capacitor.isNativePlatform()) {
-      Browser.open({ url: `${environment.apiUrl}/auth/google?platform=mobile&reconnect=1` });
-      return;
-    }
-    window.location.href = `${environment.apiUrl}/auth/google?reconnect=1`;
-  }
-
   // Called by AppComponent when the OS opens the app via
   // ph.gov.deped.leyte.tasked://auth?token=...
   async handleDeepLink(url: string) {
