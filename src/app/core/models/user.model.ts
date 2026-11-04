@@ -64,6 +64,8 @@ export interface User {
   assignedSchools: School[];
   // true once the user has pasted in their private Google Calendar link
   calendarLinked?: boolean;
+  // the user's own Google Drive folder link (optional shortcut)
+  driveFolderUrl?: string | null;
   createdAt: string;
 }
 

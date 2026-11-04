@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { LegalModalComponent } from './shared/legal/legal-modal.component';
+import { FilePreviewComponent } from './shared/file-preview/file-preview.component';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { AuthService } from './core/services/auth.service';
@@ -7,7 +9,7 @@ import { AuthService } from './core/services/auth.service';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, LegalModalComponent, FilePreviewComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })

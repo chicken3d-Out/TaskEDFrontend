@@ -68,8 +68,8 @@ export class SchoolPortalService {
   files(id: string): Observable<SchoolFilesView> {
     return this.http.get<SchoolFilesView>(`${this.base}/schools/${id}/files`);
   }
-  saveFileLink(id: string, documentTypeId: string, kind: FileKind, link: string, fileName?: string) {
-    return this.http.put(`${this.base}/schools/${id}/files`, { documentTypeId, kind, link, fileName });
+  saveFileLink(id: string, documentTypeId: string, kind: FileKind, link: string, fileName?: string, schoolYear?: string) {
+    return this.http.put(`${this.base}/schools/${id}/files`, { documentTypeId, kind, link, fileName, schoolYear });
   }
   deleteFile(id: string, fileId: string) {
     return this.http.delete(`${this.base}/schools/${id}/files/${fileId}`);

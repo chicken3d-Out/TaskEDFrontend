@@ -8,6 +8,9 @@
   @if (loading) {
     <app-loading [compact]="true" />
   } @else if (view) {
+    @if (auth.currentUser()?.driveFolderUrl; as df) {
+      <p class="muted"><a [href]="df" target="_blank" rel="noopener noreferrer">Open my Drive folder</a></p>
+    }
     <div class="card tip">
       <strong>Suggested Drive folders</strong>
       <span>Create <em>Personal Files</em> and <em>Scanned Files</em> in your Drive, each with a folder per school year (for example <em>S.Y. {{ view.currentYear }}</em>). Then right-click a file → Share → Copy link, and paste it below. TaskEd groups the list by school year and category for you.</span>
@@ -25,17 +28,27 @@
           <input name="label" [(ngModel)]="label" placeholder="e.g. Service Record" maxlength="150" />
         </label>
         <label>
-          Category (group)
-          <input name="category" [(ngModel)]="category" list="cats" placeholder="e.g. Personal Files" maxlength="60" />
-          <datalist id="cats">
-            @for (c of categories; track c) { <option [value]="c"></option> }
-          </datalist>
+          Folder (group)
+          <select [ngModel]="newFolder ? '__new__' : category" (ngModelChange)="onFolderPick($event)" name="folder">
+            <option value="">No folder</option>
+            @for (c of categories; track c) { <option [value]="c">{{ c }}</option> }
+            <option value="__new__">+ New folder…</option>
+          </select>
+          @if (newFolder || categories.length === 0) {
+            <input name="category" [(ngModel)]="category" placeholder="New folder name, e.g. Personal Files" maxlength="60" />
+          }
+        </label>
+        <label>
+          School year
+          <select name="sy" [(ngModel)]="schoolYear">
+            @for (y of yearChoices; track y) { <option [value]="y">{{ yearLabel(y) }}</option> }
+          </select>
         </label>
       </div>
-      <p class="muted">It will be filed under {{ yearLabel(view.currentYear) }}. Links from Google Drive, Google Docs, OneDrive and SharePoint are accepted.</p>
+      <p class="muted">It will be filed under {{ yearLabel(schoolYear) }}. Links from Google Drive, Google Docs, OneDrive and SharePoint are accepted.</p>
       @if (error) { <p class="error">{{ error }}</p> }
       <button class="btn" type="submit" [disabled]="!link.trim() || !label.trim() || saving">
-        {{ saving ? 'Saving…' : 'Add to My files' }}
+        @if (saving) { <span class="spinner"></span> Saving… } @else { Add to My files }
       </button>
     </form>
 
@@ -71,6 +84,7 @@
                         <small>Added {{ f.createdAt | date: 'MMM d, y' }}</small>
                       </div>
                       <div class="acts">
+                        <button class="btn secondary" type="button" (click)="preview.open(f.link, f.label)">Preview</button>
                         <a class="btn secondary" [href]="f.link" target="_blank" rel="noopener noreferrer" aria-label="Open">
                           <app-icon name="download" [size]="15" /> Open
                         </a>

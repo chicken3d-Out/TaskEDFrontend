@@ -16,7 +16,8 @@ export class RealtimeService {
   connect(userId: string) {
     if (this.socket) return; // already connected - don't open a second socket
     this.socket = io(environment.apiUrl, { transports: ['websocket'] });
-    this.socket.emit('join', userId);
+    // Re-join on every (re)connect so presence survives network drops.
+    this.socket.on('connect', () => this.socket?.emit('join', userId));
   }
 
   // Returns an unsubscribe function - call it from the component's

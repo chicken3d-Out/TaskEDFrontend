@@ -235,109 +235,109 @@
       <app-loading [compact]="true" />
     } @else {
       <p class="muted">
-        {{ uploadedCount }} of {{ files.documents.length }} documents added.
+        {{ uploadedCount }} of {{ yearDocs(files.currentYear).length }} documents added for {{ yearLabel(files.currentYear) }}.
         Keep each file in your own Google Drive (or OneDrive), then paste its share link here.
         @if (files.canUpload) {
           Suggested Drive folders: <strong>Personal Files</strong> and <strong>Scanned Files</strong>, each with one folder per school year, for example <strong>S.Y. {{ files.currentYear }}</strong>.
+          @if (auth.currentUser()?.driveFolderUrl; as df) {
+            <a [href]="df" target="_blank" rel="noopener noreferrer">Open my Drive folder</a>
+          }
           Set the link to "Anyone with the link can view" or share it with your AO, School Head and the Administrator.
         } @else {
           Only the School account or the School Head can add files.
         }
       </p>
-      <h3 class="sec">{{ yearLabel(files.currentYear) }} (current)</h3>
+      <div class="card yearpick">
+        <strong>School years to show</strong>
+        <div class="chips">
+          @for (sy of files.selectableYears; track sy) {
+            <label class="chip">
+              <input type="checkbox" [checked]="shownYears.has(sy)" (change)="toggleShown(sy)" />
+              {{ yearLabel(sy) }}@if (sy === files.currentYear) { <em>(current)</em> }
+            </label>
+          }
+        </div>
+      </div>
       @if (fileError) {
         <p class="error">{{ fileError }}</p>
       }
-      @if (files.documents.length === 0) {
+      @if (files.years[0] && files.years[0].documents.length === 0) {
         <div class="card empty">The Administrator has not listed any school documents yet.</div>
       }
       <div class="list">
-        @for (d of files.documents; track d.type.id) {
-          <div class="card doc">
-            <div class="doc-head">
-              <app-icon name="file-text" [size]="22" />
-              <div>
-                <strong>{{ d.type.name }}</strong>
-                @if (d.type.required) { <span class="req">Required</span> }
-                @if (d.type.description) { <small>{{ d.type.description }}</small> }
+        @for (sy of visibleYears; track sy) {
+          @let docs = yearDocs(sy);
+          <div class="card year">
+            <button type="button" class="year-head" (click)="toggleYear(sy)" [attr.aria-expanded]="openYears.has(sy)">
+              <app-icon [name]="openYears.has(sy) ? 'chevron-down' : 'chevron-right'" [size]="18" />
+              <strong>{{ yearLabel(sy) }}</strong>
+              @if (sy === files.currentYear) { <span class="req">Current</span> }
+              <span class="muted">{{ countIn(docs) }} of {{ docs.length }} documents</span>
+            </button>
+            @if (openYears.has(sy)) {
+              <div class="year-body">
+                @for (d of docs; track d.type.id) {
+                  <div class="card doc">
+                    <div class="doc-head">
+                      <app-icon name="file-text" [size]="22" />
+                      <div>
+                        <strong>{{ d.type.name }}</strong>
+                        @if (d.type.required) { <span class="req">Required</span> }
+                        @if (d.type.description) { <small>{{ d.type.description }}</small> }
+                      </div>
+                    </div>
+                    <div class="slots">
+                      @for (kind of ['soft', 'scanned']; track kind) {
+                        @let f = kind === 'soft' ? d.soft : d.scanned;
+                        @let k = keyOf(d.type.id, kind, sy);
+                        <div class="slot">
+                          <span class="slot-title">{{ kind === 'soft' ? 'Soft copy' : 'Scanned copy' }}</span>
+                          @if (f) {
+                            <button type="button" class="file linkbtn" (click)="preview.open(f.link, f.fileName)">
+                              <app-icon name="file-text" [size]="15" /> {{ f.fileName }} · Preview
+                            </button>
+                            <a [href]="f.link" target="_blank" rel="noopener noreferrer" class="muted small">Open in new tab</a>
+                            <small class="muted">{{ f.createdAt | date: 'MMM d, y' }}{{ f.uploadedBy ? ' · ' + f.uploadedBy : '' }}</small>
+                          } @else {
+                            <span class="muted">Not added</span>
+                          }
+                          @if (files.canUpload) {
+                            @if (openEditor.has(k)) {
+                              <input
+                                class="linkbox"
+                                placeholder="Paste the share link (https://drive.google.com/…)"
+                                [ngModel]="linkDrafts[k] ?? ''"
+                                (ngModelChange)="linkDrafts[k] = $event"
+                              />
+                              <div class="row">
+                                <button class="btn" type="button" [disabled]="savingKey !== null" (click)="saveLink(d.type.id, $any(kind), sy)">
+                                  @if (savingKey === k) { <span class="spinner"></span> Saving… } @else { Save link }
+                                </button>
+                                <button class="btn secondary" type="button" [disabled]="savingKey !== null" (click)="toggleEditor(k)">Cancel</button>
+                              </div>
+                            } @else {
+                              <div class="row">
+                                <button class="btn secondary" type="button" (click)="toggleEditor(k)">
+                                  <app-icon [name]="f ? 'pencil' : 'plus'" [size]="15" /> {{ f ? 'Replace link' : 'Add link' }}
+                                </button>
+                                @if (f) {
+                                  <button class="btn danger" type="button" (click)="removeFile(f.id, f.fileName)">
+                                    <app-icon name="trash" [size]="15" />
+                                  </button>
+                                }
+                              </div>
+                            }
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
               </div>
-            </div>
-            <div class="slots">
-              @for (kind of ['soft', 'scanned']; track kind) {
-                @let f = kind === 'soft' ? d.soft : d.scanned;
-                <div class="slot">
-                  <span class="slot-title">{{ kind === 'soft' ? 'Soft copy' : 'Scanned copy' }}</span>
-                  @if (f) {
-                    <a [href]="f.link" target="_blank" rel="noopener noreferrer" class="file">
-                      <app-icon name="download" [size]="15" /> {{ f.fileName }}
-                    </a>
-                    <small class="muted">{{ f.createdAt | date: 'MMM d, y' }}{{ f.uploadedBy ? ' · ' + f.uploadedBy : '' }}</small>
-                  } @else {
-                    <span class="muted">Not added</span>
-                  }
-                  @if (files.canUpload) {
-                    @if (openEditor.has(keyOf(d.type.id, kind))) {
-                      <input
-                        class="linkbox"
-                        placeholder="Paste the share link (https://drive.google.com/…)"
-                        [ngModel]="linkDrafts[keyOf(d.type.id, kind)] ?? ''"
-                        (ngModelChange)="linkDrafts[keyOf(d.type.id, kind)] = $event"
-                      />
-                      <div class="row">
-                        <button class="btn" type="button" [disabled]="savingKey !== null" (click)="saveLink(d.type.id, $any(kind))">
-                          {{ savingKey === keyOf(d.type.id, kind) ? 'Saving…' : 'Save link' }}
-                        </button>
-                        <button class="btn secondary" type="button" (click)="toggleEditor(d.type.id, kind)">Cancel</button>
-                      </div>
-                    } @else {
-                      <div class="row">
-                        <button class="btn secondary" type="button" (click)="toggleEditor(d.type.id, kind)">
-                          <app-icon [name]="f ? 'pencil' : 'plus'" [size]="15" /> {{ f ? 'Replace link' : 'Add link' }}
-                        </button>
-                        @if (f) {
-                          <button class="btn danger" type="button" (click)="removeFile(f.id, f.fileName)">
-                            <app-icon name="trash" [size]="15" />
-                          </button>
-                        }
-                      </div>
-                    }
-                  }
-                </div>
-              }
-            </div>
+            }
           </div>
         }
       </div>
-
-      @if (files.archive.length) {
-        <h3 class="sec">Earlier school years</h3>
-        <div class="list">
-          @for (y of files.archive; track y.schoolYear) {
-            <div class="card year">
-              <button type="button" class="year-head" (click)="toggleYear(y.schoolYear)" [attr.aria-expanded]="openYears.has(y.schoolYear)">
-                <app-icon [name]="openYears.has(y.schoolYear) ? 'chevron-down' : 'chevron-right'" [size]="18" />
-                <strong>{{ yearLabel(y.schoolYear) }}</strong>
-                <span class="muted">{{ y.files.length }} file{{ y.files.length === 1 ? '' : 's' }}</span>
-              </button>
-              @if (openYears.has(y.schoolYear)) {
-                <div class="year-body">
-                  @for (f of y.files; track f.id) {
-                    <div class="arow">
-                      <div class="tinfo">
-                        <strong>{{ f.document }}</strong>
-                        <small>{{ f.kind === 'soft' ? 'Soft copy' : 'Scanned copy' }} · {{ f.createdAt | date: 'MMM d, y' }}{{ f.uploadedBy ? ' · ' + f.uploadedBy : '' }}</small>
-                      </div>
-                      <a [href]="f.link" target="_blank" rel="noopener noreferrer" class="file">
-                        <app-icon name="download" [size]="15" /> {{ f.fileName }}
-                      </a>
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          }
-        </div>
-      }
     }
   }
 }

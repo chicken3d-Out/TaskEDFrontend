@@ -4,13 +4,43 @@
       <app-icon [name]="sidebarOpen() ? 'x' : 'menu'" [size]="22" />
     </button>
     <a class="brand" routerLink="/dashboard">
-      <img src="/sdo-leyte-seal.png" alt="" class="seal" />
+      <img src="/taskEd-mark.png" alt="" class="seal" />
       <span>Task<b>Ed</b></span>
     </a>
     <span class="spacer"></span>
 
     <div class="menu-wrap">
-      <button class="icon-btn" (click)="showNotifications = !showNotifications; showUserMenu = false" aria-label="Notifications">
+      <button class="icon-btn" (click)="showActive = !showActive; showNotifications = false; showUserMenu = false" aria-label="Active users">
+        <app-icon name="users" [size]="21" />
+        @if (presence.users().length > 0) {
+          <span class="badge online-badge">{{ presence.users().length }}</span>
+        }
+      </button>
+      @if (showActive) {
+        <div class="popover notif-panel">
+          <div class="pop-title">Active users</div>
+          @if (presence.users().length === 0) {
+            <p class="empty">No one else is online right now.</p>
+          }
+          @for (u of presence.users(); track u.id) {
+            <div class="active-row">
+              <span class="av-wrap">
+                <app-avatar [url]="u.avatarUrl" [name]="u.name" [size]="34" />
+                <span class="online-dot"></span>
+              </span>
+              <span class="active-text">
+                <strong>{{ u.name }}</strong>
+                <small>{{ u.school || roleLabel(u.role) }}</small>
+              </span>
+              <button class="btn-poke" (click)="presence.poke(u.id)">{{ u.pokedYou ? 'Poke back' : 'Poke' }}</button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="menu-wrap">
+      <button class="icon-btn" (click)="showNotifications = !showNotifications; showUserMenu = false; showActive = false" aria-label="Notifications">
         <app-icon name="bell" [size]="21" />
         @if (notifications.unreadCount() > 0) {
           <span class="badge">{{ notifications.unreadCount() }}</span>
@@ -76,7 +106,20 @@
     <div class="backdrop" (click)="toggleSidebar()"></div>
   }
 
+  <div class="toasts">
+    @for (t of presence.toasts(); track t.id) {
+      <div class="toast">
+        <span>{{ t.text }}</span>
+        @if (t.canPokeBack && t.fromId) {
+          <button (click)="presence.poke(t.fromId); presence.dismiss(t.id)">Poke back</button>
+        }
+        <button class="x" (click)="presence.dismiss(t.id)" aria-label="Dismiss">×</button>
+      </div>
+    }
+  </div>
+
   <main>
     <router-outlet></router-outlet>
+    <app-legal-footer />
   </main>
 </div>

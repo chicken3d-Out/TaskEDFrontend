@@ -100,6 +100,9 @@
     height: 6px;
     border-radius: 50%;
     background: var(--accent);
+    &.hol {
+      background: #dc2626;
+    }
   }
 }
 .first {
@@ -112,6 +115,10 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  &.hol {
+    background: #fee2e2;
+    color: #991b1b;
+  }
 }
 .more {
   font-size: 0.68rem;

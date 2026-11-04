@@ -62,4 +62,8 @@ export class UsersService {
   updateProfile(fields: Partial<RegisterDto>): Observable<User> {
     return this.http.patch<User>(`${this.base}/me`, fields);
   }
+
+  setDriveFolder(url: string): Observable<User> {
+    return this.http.put<User>(`${this.base}/me/drive-folder`, { url });
+  }
 }

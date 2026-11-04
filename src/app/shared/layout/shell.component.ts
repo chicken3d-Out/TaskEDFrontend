@@ -4,8 +4,10 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } fro
 import { filter } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationsService } from '../../core/services/notifications.service';
+import { PresenceService } from '../../core/services/presence.service';
 import { PushNotificationsService } from '../../core/services/push-notifications.service';
 import { Role, roleLabel } from '../../core/models/user.model';
+import { LegalFooterComponent } from '../legal/legal-footer.component';
 import { IconComponent } from '../icon/icon.component';
 import { AvatarComponent } from '../avatar/avatar.component';
 
@@ -22,7 +24,7 @@ interface NavItem {
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent],
+  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent, LegalFooterComponent],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
 })
@@ -31,11 +33,13 @@ export class ShellComponent implements OnInit {
   roleLabel = roleLabel;
   showNotifications = false;
   showUserMenu = false;
+  showActive = false;
   sidebarOpen = signal(true);
 
   constructor(
     public auth: AuthService,
     public notifications: NotificationsService,
+    public presence: PresenceService,
     private pushNotifications: PushNotificationsService,
     private router: Router,
   ) {
@@ -45,6 +49,7 @@ export class ShellComponent implements OnInit {
       .subscribe(() => {
         this.showNotifications = false;
         this.showUserMenu = false;
+        this.showActive = false;
         if (!this.isDesktop()) this.sidebarOpen.set(false);
       });
   }
@@ -52,7 +57,7 @@ export class ShellComponent implements OnInit {
   ngOnInit() {
     const user = this.auth.currentUser();
     if (user) {
-      this.notifications.loadAndConnect(user.id);
+      this.notifications.loadAndConnect(user.id).then(() => this.presence.start());
       // No-ops on web; on the native build this registers the device for push.
       this.pushNotifications.register();
     }
@@ -93,6 +98,7 @@ export class ShellComponent implements OnInit {
   onEscape() {
     this.showNotifications = false;
     this.showUserMenu = false;
+    this.showActive = false;
   }
 
   get role() {
@@ -114,6 +120,7 @@ export class ShellComponent implements OnInit {
       { label: 'Calendar & Announcements', icon: 'calendar', link: '/calendar', show: true },
       { label: 'Forum', icon: 'forum', link: '/forum', show: r === Role.ADMIN_OFFICER || r === Role.ADMINISTRATOR },
       { label: 'Weather', icon: 'weather', link: '/weather', show: true },
+      { label: 'Settings', icon: 'settings', link: '/settings', show: true },
       { label: 'Assistant', icon: 'bot', link: '/chat', show: true },
     ].filter((i) => i.show);
   }

@@ -59,8 +59,11 @@ export interface SchoolFileArchiveRow extends SchoolFileView {
 export interface SchoolFilesView {
   canUpload: boolean;
   currentYear: string;
-  archive: { schoolYear: string; files: SchoolFileArchiveRow[] }[];
-  documents: { type: DocumentType; soft: SchoolFileView | null; scanned: SchoolFileView | null }[];
+  selectableYears: string[];
+  years: {
+    schoolYear: string;
+    documents: { type: DocumentType; soft: SchoolFileView | null; scanned: SchoolFileView | null }[];
+  }[];
 }
 
 export type FileKind = 'soft' | 'scanned';

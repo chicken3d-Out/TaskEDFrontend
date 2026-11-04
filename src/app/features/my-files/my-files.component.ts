@@ -3,6 +3,8 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MyFilesService } from '../../core/services/my-files.service';
 import { MyFile, MyFilesView } from '../../core/models/my-files.model';
+import { FilePreviewService } from '../../shared/file-preview/file-preview.service';
+import { AuthService } from '../../core/services/auth.service';
 import { LoadingComponent } from '../../shared/loading/loading.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 
@@ -23,6 +25,10 @@ interface YearGroup {
 })
 export class MyFilesComponent implements OnInit {
   private api = inject(MyFilesService);
+  preview = inject(FilePreviewService);
+  auth = inject(AuthService);
+  newFolder = false;
+  schoolYear = '';
 
   view: MyFilesView | null = null;
   loading = true;
@@ -52,6 +58,7 @@ export class MyFilesComponent implements OnInit {
     this.api.list().subscribe({
       next: (v) => {
         this.view = v;
+        if (!this.schoolYear) this.schoolYear = v.currentYear;
         this.loading = false;
       },
       error: (e) => {
@@ -84,6 +91,25 @@ export class MyFilesComponent implements OnInit {
       .map(([name, list]) => ({ name, files: list }));
   }
 
+  // S.Y. choices for the add form: current year plus the previous five and any year already used.
+  get yearChoices(): string[] {
+    const cur = this.view?.currentYear ?? '';
+    const start = Number(cur.slice(0, 4));
+    const set = new Set<string>([cur, ...(this.view?.files ?? []).map((f) => f.schoolYear)]);
+    if (start) for (let i = 1; i <= 5; i++) set.add(`${start - i}-${start - i + 1}`);
+    return [...set].sort((a, b) => b.localeCompare(a));
+  }
+
+  onFolderPick(v: string) {
+    if (v === '__new__') {
+      this.newFolder = true;
+      this.category = '';
+    } else {
+      this.newFolder = false;
+      this.category = v;
+    }
+  }
+
   get categories(): string[] {
     return [...new Set((this.view?.files ?? []).map((f) => f.category).filter((c): c is string => !!c))].sort();
   }
@@ -110,10 +136,11 @@ export class MyFilesComponent implements OnInit {
     if (!this.label.trim() || !this.link.trim()) return;
     this.saving = true;
     this.error = null;
-    this.api.add(this.label.trim(), this.category.trim(), this.link.trim()).subscribe({
+    this.api.add(this.label.trim(), this.category.trim(), this.link.trim(), this.schoolYear).subscribe({
       next: () => {
         this.label = '';
         this.link = '';
+        this.newFolder = false;
         this.saving = false;
         this.load();
       },

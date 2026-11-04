@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 // Drop this in wherever a view is fetching a heavy dataset, instead of a
-// generic spinner - per the spec's Branding section ("the SDO Leyte seal
+// generic spinner - per the spec's Branding section ("the TaskEd logo mark
 // with a pulsing/rotating ring animation and the wordmark 'TaskEd' fading
 // in below it").
 @Component({
@@ -13,7 +13,7 @@ import { CommonModule } from '@angular/common';
     <div class="loading-brand" [class.compact]="compact">
       <div class="ring-wrap">
         <div class="ring"></div>
-        <img src="/sdo-leyte-seal.png" alt="" class="seal" />
+        <img src="/taskEd-mark.png" alt="" class="seal" />
       </div>
       <span class="wordmark">TaskEd</span>
       @if (label) {
@@ -55,9 +55,9 @@ import { CommonModule } from '@angular/common';
         animation: spin 1s linear infinite;
       }
       .seal {
-        width: 60%;
-        height: 60%;
-        border-radius: 50%;
+        width: 64%;
+        height: 64%;
+        object-fit: contain;
         animation: pulse 1.6s ease-in-out infinite;
       }
       .wordmark {

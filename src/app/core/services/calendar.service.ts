@@ -66,6 +66,11 @@ export class CalendarService {
     return this.http.post<IcalResult>(`${this.base}/ical/sync`, { force });
   }
 
+  // Philippine public holidays (read by the server from Google's public holiday calendar).
+  holidays(): Observable<{ source: string; holidays: { date: string; title: string }[] }> {
+    return this.http.get<{ source: string; holidays: { date: string; title: string }[] }>(`${this.base}/holidays`);
+  }
+
   remove(id: string): Observable<unknown> {
     return this.http.delete(`${this.base}/${id}`);
   }

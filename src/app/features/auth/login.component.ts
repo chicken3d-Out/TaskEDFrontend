@@ -1,18 +1,19 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { LegalFooterComponent } from '../../shared/legal/legal-footer.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, IconComponent],
+  imports: [ReactiveFormsModule, IconComponent, LegalFooterComponent],
   template: `
     <div class="page">
       <div class="card box">
-        <img src="/sdo-leyte-seal.png" alt="SDO Leyte seal" class="seal" />
-        <h1>Task<b>Ed</b></h1>
+        <img src="/taskEd-logo.png" alt="TaskEd" class="seal" />
+        <h1 class="sr">TaskEd</h1>
         <p class="tag">Task and request tracking for the Schools Division of Leyte</p>
 
         <div class="tabs" role="tablist">
@@ -55,9 +56,7 @@ import { IconComponent } from '../../shared/icon/icon.component';
           </form>
         }
       </div>
-      <p class="legal">
-        <a routerLink="/privacy">Privacy Policy</a> · <a routerLink="/terms">Terms of Service</a>
-      </p>
+      <app-legal-footer />
     </div>
   `,
   styles: [
@@ -79,8 +78,17 @@ import { IconComponent } from '../../shared/icon/icon.component';
         padding: 2.4rem 2.2rem;
       }
       .seal {
-        width: 84px;
-        height: 84px;
+        width: 170px;
+        height: auto;
+        max-height: 170px;
+        object-fit: contain;
+      }
+      .sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
       }
       h1 {
         margin: 0.7rem 0 0.2rem;

@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CalendarService, PersonalEvent, IcalResult } from '../../core/services/calendar.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -10,7 +11,7 @@ import { LoadingComponent } from '../../shared/loading/loading.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { MonthCalendarComponent } from '../../shared/month-calendar/month-calendar.component';
 
-type Item = CalendarEvent & { personal?: boolean; htmlLink?: string | null; location?: string | null };
+type Item = CalendarEvent & { holiday?: boolean; personal?: boolean; htmlLink?: string | null; location?: string | null };
 
 // Calendar and announcements are one thing: every event is an announcement
 // too. The month grid is clickable; the side panel shows today's events,
@@ -18,7 +19,7 @@ type Item = CalendarEvent & { personal?: boolean; htmlLink?: string | null; loca
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, LoadingComponent, IconComponent, MonthCalendarComponent],
+  imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule, LoadingComponent, IconComponent, MonthCalendarComponent],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
 })
@@ -32,6 +33,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
   events: Item[] = [];
   private systemEvents: CalendarEvent[] = [];
   private personal: Item[] = [];
+  private holidayItems: Item[] = [];
   syncing = false;
   syncMsg: string | null = null;
   private syncTimer?: ReturnType<typeof setInterval>;
@@ -67,10 +69,6 @@ export class CalendarComponent implements OnInit, OnDestroy {
 
   // linked = the person has pasted in their private Google Calendar link
   linked = !!this.auth.currentUser()?.calendarLinked;
-  showLink = false;
-  linkUrl = '';
-  linkBusy = false;
-  linkError: string | null = null;
 
   syncGoogle(force: boolean) {
     if (!this.linked) return;
@@ -94,34 +92,6 @@ export class CalendarComponent implements OnInit, OnDestroy {
     this.setPersonal(r.events);
   }
 
-  saveLink() {
-    if (!this.linkUrl.trim()) return;
-    this.linkBusy = true;
-    this.linkError = null;
-    this.calendarService.linkCalendar(this.linkUrl.trim()).subscribe({
-      next: (r) => {
-        this.afterSync(r);
-        this.linkBusy = false;
-        this.showLink = false;
-        this.linkUrl = '';
-        this.auth.loadCurrentUser();
-      },
-      error: (e) => {
-        this.linkError = e?.error?.message ?? 'Could not save the link.';
-        this.linkBusy = false;
-      },
-    });
-  }
-
-  unlink() {
-    if (!confirm('Stop showing your Google Calendar in TaskEd? Nothing is changed in Google.')) return;
-    this.calendarService.unlinkCalendar().subscribe(() => {
-      this.linked = false;
-      this.setPersonal([]);
-      this.auth.loadCurrentUser();
-    });
-  }
-
   private setPersonal(list: PersonalEvent[]) {
     this.personal = list.map((p) => ({
       id: 'g:' + p.id,
@@ -140,7 +110,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
   }
 
   private merge() {
-    this.events = [...this.systemEvents, ...this.personal].sort(
+    this.events = [...this.systemEvents, ...this.holidayItems, ...this.personal].sort(
       (a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime(),
     );
   }
@@ -204,6 +174,25 @@ export class CalendarComponent implements OnInit, OnDestroy {
       this.merge();
       this.loading = false;
     });
+    if (showLoading) {
+      this.calendarService.holidays().subscribe({
+        next: (r) => {
+          this.holidayItems = r.holidays.map((h) => ({
+            id: 'h:' + h.date,
+            title: h.title,
+            description: 'Philippine holiday',
+            eventDate: new Date(h.date + 'T12:00:00').toISOString(),
+            zoomLink: null,
+            isAnnouncement: false,
+            createdBy: { name: 'Philippine holiday' } as any,
+            createdAt: h.date,
+            holiday: true,
+          }));
+          this.merge();
+        },
+        error: () => undefined,
+      });
+    }
     if (this.linked && showLoading) {
       this.calendarService.personal().subscribe({ next: (l) => this.setPersonal(l), error: () => undefined });
     }

@@ -6,6 +6,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { SchoolPortalService } from '../../core/services/school-portal.service';
 import { AccountStatus, Role, SchoolInfo, User } from '../../core/models/user.model';
 import { FileKind, SchoolFilesView, SchoolOverview } from '../../core/models/school-portal.model';
+import { FilePreviewService } from '../../shared/file-preview/file-preview.service';
 import { LoadingComponent } from '../../shared/loading/loading.component';
 import { AvatarComponent } from '../../shared/avatar/avatar.component';
 import { IconComponent } from '../../shared/icon/icon.component';
@@ -36,6 +37,7 @@ export class SchoolComponent implements OnInit {
   private router = inject(Router);
   private fb = inject(FormBuilder);
   public auth = inject(AuthService);
+  public preview = inject(FilePreviewService);
 
   AccountStatus = AccountStatus;
   Role = Role;
@@ -291,29 +293,35 @@ export class SchoolComponent implements OnInit {
 
   // ---- files ----
   loadFiles() {
-    this.portal.files(this.schoolId).subscribe((f) => (this.files = f));
+    this.portal.files(this.schoolId).subscribe((f) => {
+      this.files = f;
+      if (!this.yearsInit) {
+        this.yearsInit = true;
+        this.shownYears.add(f.currentYear);
+        this.openYears.add(f.currentYear);
+      }
+    });
   }
 
-  // Link boxes: one per document slot ("<typeId>:<kind>").
+  // Link boxes: one per document slot per school year ("<typeId>:<kind>:<sy>").
   linkDrafts: Record<string, string | undefined> = {};
   openEditor = new Set<string>();
   savingKey: string | null = null;
 
-  keyOf(typeId: string, kind: string) {
-    return typeId + ':' + kind;
+  keyOf(typeId: string, kind: string, sy: string) {
+    return `${typeId}:${kind}:${sy}`;
   }
-  toggleEditor(typeId: string, kind: string) {
-    const k = this.keyOf(typeId, kind);
-    this.openEditor.has(k) ? this.openEditor.delete(k) : this.openEditor.add(k);
+  toggleEditor(key: string) {
+    this.openEditor.has(key) ? this.openEditor.delete(key) : this.openEditor.add(key);
   }
 
-  saveLink(typeId: string, kind: FileKind) {
-    const k = this.keyOf(typeId, kind);
+  saveLink(typeId: string, kind: FileKind, sy: string) {
+    const k = this.keyOf(typeId, kind, sy);
     const link = (this.linkDrafts[k] ?? '').trim();
     if (!link) return;
     this.fileError = null;
     this.savingKey = k;
-    this.portal.saveFileLink(this.schoolId, typeId, kind, link).subscribe({
+    this.portal.saveFileLink(this.schoolId, typeId, kind, link, undefined, sy).subscribe({
       next: () => {
         this.savingKey = null;
         delete this.linkDrafts[k];
@@ -327,10 +335,34 @@ export class SchoolComponent implements OnInit {
     });
   }
 
-  // Which earlier school years are opened (the current one is always open).
+  // School years: checkboxes choose which are shown (default: the current
+  // one); each shown year is a collapsible section, newest first.
+  shownYears = new Set<string>();
   openYears = new Set<string>();
+  private yearsInit = false;
+  toggleShown(sy: string) {
+    if (this.shownYears.has(sy)) this.shownYears.delete(sy);
+    else {
+      this.shownYears.add(sy);
+      this.openYears.add(sy);
+    }
+  }
+  get visibleYears(): string[] {
+    return [...this.shownYears].sort((a, b) => b.localeCompare(a));
+  }
   toggleYear(sy: string) {
     this.openYears.has(sy) ? this.openYears.delete(sy) : this.openYears.add(sy);
+  }
+  yearDocs(sy: string) {
+    const f = this.files;
+    if (!f) return [];
+    const y = f.years.find((x) => x.schoolYear === sy);
+    if (y) return y.documents;
+    const base = f.years[0]?.documents ?? [];
+    return base.map((d) => ({ type: d.type, soft: null, scanned: null }));
+  }
+  countIn(docs: { soft: unknown; scanned: unknown }[]) {
+    return docs.filter((d) => d.soft || d.scanned).length;
   }
   yearLabel(sy: string) {
     return 'S.Y. ' + sy;
@@ -350,6 +382,6 @@ export class SchoolComponent implements OnInit {
   }
 
   get uploadedCount() {
-    return (this.files?.documents ?? []).filter((d) => d.soft || d.scanned).length;
+    return this.countIn(this.yearDocs(this.files?.currentYear ?? ''));
   }
 }

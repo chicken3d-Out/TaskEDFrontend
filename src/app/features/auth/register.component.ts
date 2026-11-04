@@ -11,7 +11,7 @@ import { ProfileFormComponent } from '../../shared/profile-form/profile-form.com
     <div class="page">
       <div class="card box">
         <div class="head">
-          <img src="/sdo-leyte-seal.png" alt="" />
+          <img src="/taskEd-mark.png" alt="" />
           <div>
             <h1>Set up your TaskEd profile</h1>
             <p>
