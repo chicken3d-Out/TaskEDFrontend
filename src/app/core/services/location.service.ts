@@ -4,6 +4,7 @@ import { Geolocation } from '@capacitor/geolocation';
 export interface Coordinates {
   latitude: number;
   longitude: number;
+  accuracy?: number; // metres
 }
 
 // Uses @capacitor/geolocation instead of the raw browser API - it has a
@@ -25,11 +26,13 @@ export class LocationService {
 
     const position = await Geolocation.getCurrentPosition({
       enableHighAccuracy: true,
-      timeout: 10000,
+      timeout: 20000,
+      maximumAge: 0, // always a fresh reading, never a cached one
     });
     return {
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
+      accuracy: position.coords.accuracy,
     };
   }
 }
