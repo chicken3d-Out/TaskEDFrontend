@@ -99,9 +99,12 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: var(--accent);
+    background: #16a34a;
     &.hol {
-      background: #dc2626;
+      background: #2563eb;
+    }
+    &.note {
+      background: #ea580c;
     }
   }
 }
@@ -116,8 +119,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   &.hol {
-    background: #fee2e2;
-    color: #991b1b;
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+  &.note {
+    background: #ffedd5;
+    color: #c2410c;
   }
 }
 .more {

@@ -7,6 +7,7 @@ export interface CalendarDot {
   title: string;
   eventDate: string;
   holiday?: boolean;
+  note?: boolean;
 }
 
 interface DayCell {
@@ -58,13 +59,14 @@ const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
             @if (cell.events.length) {
               <span class="dots">
                 @for (e of cell.events.slice(0, 3); track e.id) {
-                  <i [class.hol]="e.holiday"></i>
+                  <i [class.hol]="e.holiday" [class.note]="e.note"></i>
                 }
               </span>
               @if (!compact) {
                 <span
                   class="first"
                   [class.hol]="cell.events[0].holiday"
+                  [class.note]="cell.events[0].note"
                   role="button"
                   [title]="cell.events[0].title"
                   (click)="pickEvent($event, cell, cell.events[0].id)"

@@ -4,10 +4,10 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } fro
 import { filter } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationsService } from '../../core/services/notifications.service';
+import { LegalService } from '../legal/legal.service';
 import { PresenceService } from '../../core/services/presence.service';
 import { PushNotificationsService } from '../../core/services/push-notifications.service';
 import { Role, roleLabel } from '../../core/models/user.model';
-import { LegalFooterComponent } from '../legal/legal-footer.component';
 import { IconComponent } from '../icon/icon.component';
 import { AvatarComponent } from '../avatar/avatar.component';
 
@@ -24,7 +24,7 @@ interface NavItem {
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent, LegalFooterComponent],
+  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AvatarComponent],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
 })
@@ -40,6 +40,7 @@ export class ShellComponent implements OnInit {
     public auth: AuthService,
     public notifications: NotificationsService,
     public presence: PresenceService,
+    public legal: LegalService,
     private pushNotifications: PushNotificationsService,
     private router: Router,
   ) {
@@ -113,14 +114,13 @@ export class ShellComponent implements OnInit {
       { label: 'Tasks', icon: 'ticket', link: '/tasks', show: hasTickets },
       { label: 'New Task', icon: 'plus', link: '/tasks/new', show: r === Role.TEACHER },
       { label: r === Role.ADMIN_OFFICER ? 'My Schools' : 'My School', icon: 'school', link: '/school', show: r === Role.SCHOOL || r === Role.SCHOOL_HEAD || r === Role.ADMIN_OFFICER },
-      { label: 'My files', icon: 'folder', link: '/my-files', show: r === Role.TEACHER || r === Role.SCHOOL_HEAD || r === Role.ADMIN_OFFICER },
+      { label: 'My files', icon: 'folder', link: '/my-files', show: r === Role.TEACHER || r === Role.SCHOOL_HEAD || r === Role.ADMIN_OFFICER || r === Role.PUBLISHER || r === Role.SCHOOL },
       { label: 'Users', icon: 'users', link: '/users', show: r === Role.ADMINISTRATOR },
       { label: 'Schools', icon: 'school', link: '/schools', show: r === Role.ADMINISTRATOR },
       { label: 'School documents', icon: 'folder', link: '/document-types', show: r === Role.ADMINISTRATOR },
       { label: 'Calendar & Announcements', icon: 'calendar', link: '/calendar', show: true },
       { label: 'Forum', icon: 'forum', link: '/forum', show: r === Role.ADMIN_OFFICER || r === Role.ADMINISTRATOR },
       { label: 'Weather', icon: 'weather', link: '/weather', show: true },
-      { label: 'Settings', icon: 'settings', link: '/settings', show: true },
       { label: 'Assistant', icon: 'bot', link: '/chat', show: true },
     ].filter((i) => i.show);
   }

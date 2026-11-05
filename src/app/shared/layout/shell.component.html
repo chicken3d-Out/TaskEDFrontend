@@ -93,6 +93,11 @@
       }
     </nav>
     <div class="side-foot">
+      <div class="legal-card">
+        <button type="button" (click)="legal.show('privacy')">Privacy Policy</button>
+        <span>·</span>
+        <button type="button" (click)="legal.show('terms')">Terms of Service</button>
+      </div>
       <a routerLink="/profile" (click)="closeSidebarOnMobile()" class="profile-chip">
         <app-avatar [url]="auth.currentUser()?.avatarUrl" [name]="auth.currentUser()?.name" [size]="36" />
         <span>
@@ -120,6 +125,5 @@
 
   <main>
     <router-outlet></router-outlet>
-    <app-legal-footer />
   </main>
 </div>

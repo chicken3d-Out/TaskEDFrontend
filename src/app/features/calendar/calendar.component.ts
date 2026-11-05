@@ -1,8 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CalendarService, PersonalEvent, IcalResult } from '../../core/services/calendar.service';
+import { CalendarService, CalendarNoteDto } from '../../core/services/calendar.service';
 import { AuthService } from '../../core/services/auth.service';
 import { RealtimeService } from '../../core/services/realtime.service';
 import { CalendarEvent } from '../../core/models/calendar-event.model';
@@ -11,7 +10,7 @@ import { LoadingComponent } from '../../shared/loading/loading.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { MonthCalendarComponent } from '../../shared/month-calendar/month-calendar.component';
 
-type Item = CalendarEvent & { holiday?: boolean; personal?: boolean; htmlLink?: string | null; location?: string | null };
+type Item = CalendarEvent & { holiday?: boolean; note?: boolean; noteId?: string; noteBody?: string };
 
 // Calendar and announcements are one thing: every event is an announcement
 // too. The month grid is clickable; the side panel shows today's events,
@@ -19,7 +18,7 @@ type Item = CalendarEvent & { holiday?: boolean; personal?: boolean; htmlLink?: 
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule, LoadingComponent, IconComponent, MonthCalendarComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, LoadingComponent, IconComponent, MonthCalendarComponent],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
 })
@@ -29,14 +28,11 @@ export class CalendarComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private realtime = inject(RealtimeService);
 
-  // System events plus the user's own Google Calendar events (private).
+  // Division events and announcements (green), Philippine holidays (blue) and the person's private notes (orange).
   events: Item[] = [];
   private systemEvents: CalendarEvent[] = [];
-  private personal: Item[] = [];
+  private noteItems: Item[] = [];
   private holidayItems: Item[] = [];
-  syncing = false;
-  syncMsg: string | null = null;
-  private syncTimer?: ReturnType<typeof setInterval>;
   today = new Date();
   selectedDate: Date = new Date();
   expandedId: string | null = null;
@@ -57,62 +53,90 @@ export class CalendarComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.load(true);
     this.unsubscribeRealtime = this.realtime.on('calendar:changed', () => this.load(false));
-    this.syncGoogle(false);
-    // Pull changes made in Google Calendar every few minutes while this page is open.
-    this.syncTimer = setInterval(() => this.syncGoogle(false), 5 * 60 * 1000);
   }
 
   ngOnDestroy() {
     this.unsubscribeRealtime?.();
-    if (this.syncTimer) clearInterval(this.syncTimer);
   }
 
-  // linked = the person has pasted in their private Google Calendar link
-  linked = !!this.auth.currentUser()?.calendarLinked;
-
-  syncGoogle(force: boolean) {
-    if (!this.linked) return;
-    this.syncing = true;
-    this.syncMsg = null;
-    this.calendarService.syncCalendar(force).subscribe({
-      next: (r) => {
-        this.afterSync(r);
-        this.syncing = false;
-        if (force) this.syncMsg = 'Calendar is up to date.';
-      },
-      error: (e) => {
-        this.syncing = false;
-        if (force) this.syncMsg = e?.error?.message ?? 'Could not read your Google Calendar. Try again in a moment.';
-      },
-    });
+  private merge() {
+    this.events = [...this.systemEvents, ...this.holidayItems, ...this.noteItems].sort(
+      (a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime(),
+    );
   }
 
-  private afterSync(r: IcalResult) {
-    this.linked = r.linked;
-    this.setPersonal(r.events);
+  // ---- personal notes (private, orange) ----
+  noteTitle = '';
+  noteBody = '';
+  noteBusy = false;
+  noteError: string | null = null;
+  editingNote: string | null = null;
+
+  private ymd(d: Date) {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   }
 
-  private setPersonal(list: PersonalEvent[]) {
-    this.personal = list.map((p) => ({
-      id: 'g:' + p.id,
-      title: p.title,
-      description: p.description ?? '',
-      eventDate: p.startsAt,
+  private setNotes(list: CalendarNoteDto[]) {
+    this.noteItems = list.map((n) => ({
+      id: 'n:' + n.id,
+      noteId: n.id,
+      title: n.title,
+      description: n.body,
+      noteBody: n.body,
+      eventDate: new Date(n.noteDate + 'T12:00:00').toISOString(),
       zoomLink: null,
       isAnnouncement: false,
-      createdBy: { name: 'Your Google Calendar' } as any,
-      createdAt: p.startsAt,
-      personal: true,
-      htmlLink: p.htmlLink,
-      location: p.location,
+      createdBy: { name: 'You' } as any,
+      createdAt: n.noteDate,
+      note: true,
     }));
     this.merge();
   }
 
-  private merge() {
-    this.events = [...this.systemEvents, ...this.holidayItems, ...this.personal].sort(
-      (a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime(),
-    );
+  saveNote() {
+    const title = this.noteTitle.trim();
+    if (!title || this.noteBusy) return;
+    this.noteBusy = true;
+    this.noteError = null;
+    const req = this.editingNote
+      ? this.calendarService.updateNote(this.editingNote, { title, body: this.noteBody })
+      : this.calendarService.addNote({ noteDate: this.ymd(this.selectedDate), title, body: this.noteBody });
+    req.subscribe({
+      next: () => {
+        this.noteTitle = '';
+        this.noteBody = '';
+        this.editingNote = null;
+        this.noteBusy = false;
+        this.loadNotes();
+      },
+      error: (e) => {
+        this.noteError = e?.error?.message ?? 'Could not save your note.';
+        this.noteBusy = false;
+      },
+    });
+  }
+
+  editNote(e: Item) {
+    this.editingNote = e.noteId ?? null;
+    this.noteTitle = e.title;
+    this.noteBody = e.noteBody ?? '';
+  }
+
+  cancelNote() {
+    this.editingNote = null;
+    this.noteTitle = '';
+    this.noteBody = '';
+    this.noteError = null;
+  }
+
+  removeNote(e: Item) {
+    if (!e.noteId || !confirm(`Delete your note "${e.title}"?`)) return;
+    this.calendarService.deleteNote(e.noteId).subscribe(() => this.loadNotes());
+  }
+
+  private loadNotes() {
+    this.calendarService.notes().subscribe({ next: (l) => this.setNotes(l), error: () => undefined });
   }
 
   get canManage(): boolean {
@@ -132,12 +156,12 @@ export class CalendarComponent implements OnInit, OnDestroy {
     return this.sameDay(this.selectedDate, this.today);
   }
 
-  get dayEvents(): CalendarEvent[] {
+  get dayEvents(): Item[] {
     return this.events.filter((e) => this.sameDay(new Date(e.eventDate), this.selectedDate));
   }
 
   // Strictly after today, soonest first.
-  get upcoming(): CalendarEvent[] {
+  get upcoming(): Item[] {
     const endOfToday = new Date(this.today);
     endOfToday.setHours(23, 59, 59, 999);
     return this.events.filter((e) => new Date(e.eventDate) > endOfToday).slice(0, 8);
@@ -154,6 +178,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
   selectDay(date: Date) {
     this.selectedDate = date;
     this.expandedId = null;
+    if (this.editingNote) this.cancelNote();
     // Pre-fill the form with the clicked day (9:00 AM) for managers.
     const d = new Date(date);
     d.setHours(9, 0, 0, 0);
@@ -193,9 +218,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
         error: () => undefined,
       });
     }
-    if (this.linked && showLoading) {
-      this.calendarService.personal().subscribe({ next: (l) => this.setPersonal(l), error: () => undefined });
-    }
+    if (showLoading) this.loadNotes();
   }
 
   daysUntil(event: CalendarEvent): number {

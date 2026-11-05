@@ -12,6 +12,13 @@ export interface UpsertCalendarEventDto {
   isAnnouncement?: boolean;
 }
 
+export interface CalendarNoteDto {
+  id: string;
+  noteDate: string; // YYYY-MM-DD
+  title: string;
+  body: string;
+}
+
 export interface PersonalEvent {
   id: string;
   title: string;
@@ -64,6 +71,19 @@ export class CalendarService {
   }
   syncCalendar(force = false): Observable<IcalResult> {
     return this.http.post<IcalResult>(`${this.base}/ical/sync`, { force });
+  }
+
+  notes(): Observable<CalendarNoteDto[]> {
+    return this.http.get<CalendarNoteDto[]>(`${this.base}/notes`);
+  }
+  addNote(n: { noteDate: string; title: string; body?: string }): Observable<CalendarNoteDto> {
+    return this.http.post<CalendarNoteDto>(`${this.base}/notes`, n);
+  }
+  updateNote(id: string, n: { title?: string; body?: string }): Observable<CalendarNoteDto> {
+    return this.http.patch<CalendarNoteDto>(`${this.base}/notes/${id}`, n);
+  }
+  deleteNote(id: string): Observable<unknown> {
+    return this.http.delete(`${this.base}/notes/${id}`);
   }
 
   // Philippine public holidays (read by the server from Google's public holiday calendar).

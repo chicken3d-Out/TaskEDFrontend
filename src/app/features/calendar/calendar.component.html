@@ -1,29 +1,27 @@
 <ng-template #details let-event>
-  <div class="event-item">
+  <div class="event-item" [class.k-holiday]="event.holiday" [class.k-note]="event.note" [class.k-event]="!event.holiday && !event.note">
     <div class="info">
       <strong>{{ event.title }}</strong>
       <span class="meta">
         @if (event.holiday) {
           <span class="holiday">Holiday</span> · {{ event.eventDate | date: 'EEE, MMM d' }}
-        } @else if (event.personal) {
-          <span class="mine">My Google Calendar · private</span> ·
-          {{ event.eventDate | date: 'EEE, MMM d · h:mm a' }}
+        } @else if (event.note) {
+          <span class="mine">My note · private</span> · {{ event.eventDate | date: 'EEE, MMM d' }}
         } @else {
           {{ event.eventDate | date: 'EEE, MMM d · h:mm a' }} · posted by {{ event.createdBy.name }}
         }
       </span>
-      @if (event.location) { <span class="meta">📍 {{ event.location }}</span> }
-      @if (!event.holiday) { <p>{{ event.description }}</p> }
-      @if (event.personal && event.htmlLink) {
-        <a [href]="event.htmlLink" target="_blank" rel="noopener" class="zoom-link">Open in Google Calendar</a>
-      }
+      @if (!event.holiday && event.description) { <p class="desc">{{ event.description }}</p> }
       @if (event.zoomLink) {
         <a [href]="event.zoomLink" target="_blank" rel="noopener" class="zoom-link">
           <app-icon name="video" [size]="16" /> Join Zoom
         </a>
       }
     </div>
-    @if (canManage && !event.personal && !event.holiday) {
+    @if (event.note) {
+      <button class="del" (click)="editNote(event)" aria-label="Edit note"><app-icon name="pencil" [size]="16" /></button>
+      <button class="del" (click)="removeNote(event)" aria-label="Delete note"><app-icon name="trash" [size]="17" /></button>
+    } @else if (canManage && !event.holiday) {
       <button class="del" (click)="remove(event)" aria-label="Delete event">
         <app-icon name="trash" [size]="17" />
       </button>
@@ -41,24 +39,6 @@
       </button>
     }
   </div>
-
-  @if (!linked) {
-    <div class="card gcal">
-      <div>
-        <strong>See your Google Calendar here</strong>
-        <span class="muted">Optional. Add your calendar link once in Settings and your own Google events show next to division events, only for you.</span>
-      </div>
-      <a class="btn secondary" routerLink="/settings">Set up in Settings</a>
-    </div>
-  } @else {
-    <div class="sync-row">
-      <span class="muted">Showing your Google Calendar (private to you). <a routerLink="/settings">Settings</a></span>
-      <button class="btn secondary" type="button" (click)="syncGoogle(true)" [disabled]="syncing">
-        {{ syncing ? 'Updating…' : 'Update now' }}
-      </button>
-      @if (syncMsg) { <span class="muted">{{ syncMsg }}</span> }
-    </div>
-  }
 
   @if (showForm) {
     <form class="card event-form" [formGroup]="form" (ngSubmit)="submit()">
@@ -94,40 +74,50 @@
           (daySelected)="selectDay($event)"
           (eventSelected)="openEvent($event)"
         />
+        <div class="legend">
+          <span><i class="lg holiday-c"></i> Holidays</span>
+          <span><i class="lg event-c"></i> Events &amp; announcements</span>
+          <span><i class="lg note-c"></i> My notes</span>
+          <span class="hint">Click a day to see it or add a note.</span>
+        </div>
       </div>
 
       <aside class="side">
-        <div class="card">
-          <h2><span class="dot today"></span> Today · {{ today | date: 'MMM d' }}</h2>
-          @if (todayEvents.length === 0) {
-            <p class="empty">Nothing scheduled today.</p>
+        <div class="card selected">
+          <h2>
+            <span class="dot today"></span>
+            @if (selectedIsToday) { Today · } {{ selectedDate | date: selectedIsToday ? 'MMM d' : 'EEEE, MMM d' }}
+          </h2>
+          @if (dayEvents.length === 0) {
+            <p class="empty">Nothing on this day.</p>
           }
-          @for (event of todayEvents; track event.id) {
+          @for (event of dayEvents; track event.id) {
             <ng-container [ngTemplateOutlet]="details" [ngTemplateOutletContext]="{ $implicit: event }" />
           }
+
+          <form class="note-form" (ngSubmit)="saveNote()">
+            <strong class="note-h">{{ editingNote ? 'Edit note' : 'Add a note for this day' }}</strong>
+            <input name="nt" [(ngModel)]="noteTitle" placeholder="Note title" maxlength="200" />
+            <textarea name="nb" [(ngModel)]="noteBody" rows="2" placeholder="Details (optional)"></textarea>
+            @if (noteError) { <p class="error">{{ noteError }}</p> }
+            <div class="note-actions">
+              <button class="btn note-btn" type="submit" [disabled]="!noteTitle.trim() || noteBusy">
+                {{ noteBusy ? 'Saving…' : editingNote ? 'Save changes' : 'Add note' }}
+              </button>
+              @if (editingNote) { <button class="btn secondary" type="button" (click)="cancelNote()">Cancel</button> }
+            </div>
+          </form>
         </div>
 
-        @if (!selectedIsToday) {
-          <div class="card selected">
-            <h2><span class="dot"></span> {{ selectedDate | date: 'EEEE, MMM d' }}</h2>
-            @if (dayEvents.length === 0) {
-              <p class="empty">No events on this day.</p>
-            }
-            @for (event of dayEvents; track event.id) {
-              <ng-container [ngTemplateOutlet]="details" [ngTemplateOutletContext]="{ $implicit: event }" />
-            }
-          </div>
-        }
-
         <div class="card">
-          <h2><span class="dot soon"></span> Coming up</h2>
+          <h2><span class="dot soon"></span> Upcoming</h2>
           @if (upcoming.length === 0) {
             <p class="empty">Nothing coming up.</p>
           }
           @for (event of upcoming; track event.id) {
             <div class="up">
               <button class="up-row" (click)="toggle(event.id); selectEventDay(event)">
-                <span class="d">{{ event.eventDate | date: 'MMM d' }}</span>
+                <span class="d" [class.d-hol]="event.holiday" [class.d-note]="event.note">{{ event.eventDate | date: 'MMM d' }}</span>
                 <span class="t">{{ event.title }}</span>
                 <span class="in">{{ daysUntil(event) === 1 ? 'tomorrow' : 'in ' + daysUntil(event) + ' days' }}</span>
               </button>

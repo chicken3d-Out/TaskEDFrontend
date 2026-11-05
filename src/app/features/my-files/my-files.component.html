@@ -1,42 +1,30 @@
 <div class="page">
   <h1 class="page-title">My files</h1>
   <p class="sub">
-    Keep your own documents here. Each file stays in your own Google Drive (or OneDrive); TaskEd only keeps a link, so
-    nothing is uploaded to TaskEd and it never asks for access to your Drive. Only you can see this list.
+    Your documents are saved in <strong>your own Google Drive</strong>, not on TaskEd. TaskEd keeps only a link, and
+    this list is private: nobody else, including the Administrator, can see or open your files.
   </p>
 
   @if (loading) {
     <app-loading [compact]="true" />
   } @else if (view) {
-    @if (auth.currentUser()?.driveFolderUrl; as df) {
-      <p class="muted"><a [href]="df" target="_blank" rel="noopener noreferrer">Open my Drive folder</a></p>
-    }
     <div class="card tip">
-      <strong>Suggested Drive folders</strong>
-      <span>Create <em>Personal Files</em> and <em>Scanned Files</em> in your Drive, each with a folder per school year (for example <em>S.Y. {{ view.currentYear }}</em>). Then right-click a file → Share → Copy link, and paste it below. TaskEd groups the list by school year and category for you.</span>
+      <strong>Where your files go</strong>
+      <span>
+        <em>TaskEd Files</em> › <em>Personal Files</em> or <em>Scanned Files</em> › <em>S.Y. {{ view.currentYear }}</em>
+        (the latest five school years are kept, and a new one starts every June). Google asks your permission the first
+        time you upload. It only lets TaskEd see the files it saves, never the rest of your Drive.
+      </span>
     </div>
 
-    <form class="card up" (ngSubmit)="add()">
-      <h2>Add a file link</h2>
+    <form class="card up" (ngSubmit)="pasteMode ? add() : upload()">
+      <h2>{{ pasteMode ? 'Add a file link' : 'Upload a file' }}</h2>
       <div class="grid">
-        <label class="wide">
-          Share link *
-          <input name="link" [(ngModel)]="link" placeholder="https://drive.google.com/…" />
-        </label>
         <label>
-          Label *
-          <input name="label" [(ngModel)]="label" placeholder="e.g. Service Record" maxlength="150" />
-        </label>
-        <label>
-          Folder (group)
-          <select [ngModel]="newFolder ? '__new__' : category" (ngModelChange)="onFolderPick($event)" name="folder">
-            <option value="">No folder</option>
+          Folder
+          <select name="category" [(ngModel)]="category">
             @for (c of categories; track c) { <option [value]="c">{{ c }}</option> }
-            <option value="__new__">+ New folder…</option>
           </select>
-          @if (newFolder || categories.length === 0) {
-            <input name="category" [(ngModel)]="category" placeholder="New folder name, e.g. Personal Files" maxlength="60" />
-          }
         </label>
         <label>
           School year
@@ -44,12 +32,41 @@
             @for (y of yearChoices; track y) { <option [value]="y">{{ yearLabel(y) }}</option> }
           </select>
         </label>
+        @if (pasteMode) {
+          <label class="wide">
+            Share link *
+            <input name="link" [(ngModel)]="link" placeholder="https://drive.google.com/…" />
+          </label>
+        } @else {
+          <label class="wide">
+            File * (PDF, Word, Excel, picture… up to 25 MB)
+            <input type="file" name="file" (change)="onFile($event)" />
+          </label>
+        }
+        <label class="wide">
+          Label *
+          <input name="label" [(ngModel)]="label" placeholder="e.g. Service Record" maxlength="150" />
+        </label>
       </div>
-      <p class="muted">It will be filed under {{ yearLabel(schoolYear) }}. Links from Google Drive, Google Docs, OneDrive and SharePoint are accepted.</p>
       @if (error) { <p class="error">{{ error }}</p> }
-      <button class="btn" type="submit" [disabled]="!link.trim() || !label.trim() || saving">
-        @if (saving) { <span class="spinner"></span> Saving… } @else { Add to My files }
-      </button>
+      @if (saving && !pasteMode) {
+        <div class="bar"><div class="fill" [style.width.%]="progress"></div></div>
+      }
+      @if (uploadMsg) { <p class="muted">{{ uploadMsg }}</p> }
+      <div class="row">
+        <button class="btn" type="submit" [disabled]="saving || !label.trim() || (pasteMode ? !link.trim() : !file)">
+          @if (saving) { <span class="spinner"></span> {{ pasteMode ? 'Saving…' : 'Uploading…' }} }
+          @else { {{ pasteMode ? 'Add to My files' : 'Upload to my Drive' }} }
+        </button>
+        @if (canUpload) {
+          <button class="btn secondary" type="button" [disabled]="saving || setupBusy" (click)="makeFolders()">
+            @if (setupBusy) { <span class="spinner"></span> Creating… } @else { Create my Drive folders }
+          </button>
+          <button class="linklike" type="button" (click)="pasteMode = !pasteMode">
+            {{ pasteMode ? 'Upload a file instead' : 'Paste a link instead' }}
+          </button>
+        }
+      </div>
     </form>
 
     <div class="years">
@@ -63,40 +80,44 @@
           </button>
           @if (isOpen(g.schoolYear)) {
             <div class="year-body">
-              @if (g.files.length === 0) {
-                <p class="muted">No files yet for this school year.</p>
-              }
               @for (c of byCategory(g.files); track c.name) {
-                <h3><app-icon name="folder" [size]="14" /> {{ c.name }}</h3>
-                @for (f of c.files; track f.id) {
-                  <div class="frow">
-                    @if (editingId === f.id) {
-                      <div class="edit">
-                        <input [(ngModel)]="editLabel" name="el{{ f.id }}" placeholder="Label" maxlength="150" />
-                        <input [(ngModel)]="editCategory" name="ec{{ f.id }}" list="cats" placeholder="Category" maxlength="60" />
-                        <input [(ngModel)]="editLink" name="el2{{ f.id }}" placeholder="Share link" />
-                        <button class="btn" type="button" (click)="saveEdit(f)">Save</button>
-                        <button class="btn secondary" type="button" (click)="editingId = null">Cancel</button>
-                      </div>
-                    } @else {
-                      <div class="info">
-                        <strong>{{ f.label }}</strong>
-                        <small>Added {{ f.createdAt | date: 'MMM d, y' }}</small>
-                      </div>
-                      <div class="acts">
-                        <button class="btn secondary" type="button" (click)="preview.open(f.link, f.label)">Preview</button>
-                        <a class="btn secondary" [href]="f.link" target="_blank" rel="noopener noreferrer" aria-label="Open">
-                          <app-icon name="download" [size]="15" /> Open
-                        </a>
-                        <button class="btn secondary" type="button" (click)="startEdit(f)" aria-label="Edit">
-                          <app-icon name="pencil" [size]="15" />
-                        </button>
-                        <button class="btn danger" type="button" (click)="remove(f)" aria-label="Delete">
-                          <app-icon name="trash" [size]="15" />
-                        </button>
-                      </div>
-                    }
-                  </div>
+                @if (c.files.length || categories.includes(c.name)) {
+                  <h3><app-icon name="folder" [size]="14" /> {{ c.name }}</h3>
+                  @if (c.files.length === 0) {
+                    <p class="muted">No files yet.</p>
+                  }
+                  @for (f of c.files; track f.id) {
+                    <div class="frow">
+                      @if (editingId === f.id) {
+                        <div class="edit">
+                          <input [(ngModel)]="editLabel" name="el{{ f.id }}" placeholder="Label" maxlength="150" />
+                          <select [(ngModel)]="editCategory" name="ec{{ f.id }}">
+                            @for (cat of categories; track cat) { <option [value]="cat">{{ cat }}</option> }
+                          </select>
+                          <input [(ngModel)]="editLink" name="el2{{ f.id }}" placeholder="Share link" />
+                          <button class="btn" type="button" (click)="saveEdit(f)">Save</button>
+                          <button class="btn secondary" type="button" (click)="editingId = null">Cancel</button>
+                        </div>
+                      } @else {
+                        <div class="info">
+                          <strong>{{ f.label }}</strong>
+                          <small>Added {{ f.createdAt | date: 'MMM d, y' }}</small>
+                        </div>
+                        <div class="acts">
+                          <button class="btn secondary" type="button" (click)="preview.open(f.link, f.label)">Preview</button>
+                          <a class="btn secondary" [href]="f.link" target="_blank" rel="noopener noreferrer" aria-label="Open">
+                            <app-icon name="download" [size]="15" /> Open
+                          </a>
+                          <button class="btn secondary" type="button" (click)="startEdit(f)" aria-label="Edit">
+                            <app-icon name="pencil" [size]="15" />
+                          </button>
+                          <button class="btn danger" type="button" (click)="remove(f)" aria-label="Delete">
+                            <app-icon name="trash" [size]="15" />
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  }
                 }
               }
             </div>

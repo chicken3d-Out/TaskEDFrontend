@@ -11,7 +11,7 @@ import { LoadingComponent } from '../../shared/loading/loading.component';
 import { AvatarComponent } from '../../shared/avatar/avatar.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 
-type Tab = 'overview' | 'teachers' | 'files';
+type Tab = 'overview' | 'teachers';
 
 interface TeacherRow {
   user: User;
@@ -90,7 +90,7 @@ export class SchoolComponent implements OnInit {
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
     const tab = this.route.snapshot.queryParamMap.get('tab') as Tab | null;
-    if (tab === 'teachers' || tab === 'files') this.tab = tab;
+    if (tab === 'teachers') this.tab = tab;
     if (id) {
       this.portal.mine().subscribe({
         next: (list) => {
@@ -122,13 +122,11 @@ export class SchoolComponent implements OnInit {
     this.editingProfile = false;
     this.loadOverview();
     if (this.tab === 'teachers') this.loadTeachers();
-    if (this.tab === 'files') this.loadFiles();
   }
 
   setTab(t: Tab) {
     this.tab = t;
     if (t === 'teachers' && !this.teachersLoaded) this.loadTeachers();
-    if (t === 'files' && !this.files) this.loadFiles();
   }
 
   private loadOverview() {

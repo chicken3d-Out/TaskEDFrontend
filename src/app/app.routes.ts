@@ -1,4 +1,3 @@
-import { SettingsComponent } from './features/settings/settings.component';
 import { Routes } from '@angular/router';
 import { LoginComponent } from './features/auth/login.component';
 import { AuthCallbackComponent } from './features/auth/auth-callback.component';
@@ -62,7 +61,6 @@ export const routes: Routes = [
       { path: 'schools', component: SchoolsAdminComponent, canActivate: [adminOnlyGuard] },
       { path: 'schools/:id', component: SchoolComponent, canActivate: [adminOnlyGuard] },
       { path: 'document-types', component: DocumentTypesComponent, canActivate: [adminOnlyGuard] },
-      { path: 'settings', component: SettingsComponent },
       { path: 'weather', component: WeatherComponent },
       { path: 'profile', component: ProfileComponent },
       { path: 'chat', component: ChatbotComponent },
