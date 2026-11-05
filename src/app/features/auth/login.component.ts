@@ -55,12 +55,13 @@ import { IconComponent } from '../../shared/icon/icon.component';
             </button>
           </form>
         }
+        <app-legal-footer />
       </div>
-      <app-legal-footer />
     </div>
   `,
   styles: [
     `
+      .box app-legal-footer { display: block; margin-top: 1.1rem; border-top: 1px solid var(--border); }
       .legal { text-align: center; font-size: 0.78rem; margin: 1rem 0 0; a { color: var(--muted); } }
       .page {
         min-height: 100vh;

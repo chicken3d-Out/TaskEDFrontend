@@ -36,11 +36,11 @@ export class MyFilesComponent implements OnInit {
   file: File | null = null;
   progress = 0;
   uploadMsg: string | null = null;
-  setupBusy = false;
+  newFolder = false;
+  newFolderName = '';
   // pasting a link instead of uploading (also used inside the Android app,
   // where Google blocks its permission window)
-  pasteMode = Capacitor.isNativePlatform();
-  readonly canUpload = !Capacitor.isNativePlatform();
+  readonly pasteMode = Capacitor.isNativePlatform();
   category = 'Personal Files';
 
   view: MyFilesView | null = null;
@@ -104,6 +104,26 @@ export class MyFilesComponent implements OnInit {
 
   // The latest five school years. A new one appears by itself when the school
   // year opens in June (the current year comes from the server's date).
+  // Personal Files and Scanned Files, plus any folder the person made before.
+  get folderChoices(): string[] {
+    const names = [...CATEGORIES];
+    for (const f of this.view?.files ?? []) {
+      const c = (f.category ?? '').trim();
+      if (c && !names.includes(c)) names.push(c);
+    }
+    return names;
+  }
+
+  onFolderPick(v: string) {
+    this.newFolder = v === '__new__';
+    if (!this.newFolder) this.category = v;
+  }
+
+  // the folder the file will go to (a new name is created in Drive on upload)
+  get chosenFolder(): string {
+    return (this.newFolder ? this.newFolderName : this.category).trim().replace(/[\\/]+/g, ' ').slice(0, 60);
+  }
+
   get yearChoices(): string[] {
     const cur = this.view?.currentYear ?? '';
     const start = Number(cur.slice(0, 4));
@@ -137,7 +157,8 @@ export class MyFilesComponent implements OnInit {
 
   // Saves the chosen file into the person's own Drive, then keeps its link here.
   async upload() {
-    if (!this.file || !this.label.trim() || this.saving) return;
+    const folder = this.chosenFolder;
+    if (!this.file || !this.label.trim() || !folder || this.saving) return;
     this.saving = true;
     this.error = null;
     this.progress = 0;
@@ -145,13 +166,16 @@ export class MyFilesComponent implements OnInit {
     try {
       const token = await this.drive.accessToken(this.auth.currentUser()?.depedEmail);
       this.uploadMsg = 'Preparing your folders…';
-      const parent = await this.drive.ensureFolder(token, this.category, this.schoolYear);
+      const parent = await this.drive.ensureFolder(token, folder, this.schoolYear);
       this.uploadMsg = 'Uploading…';
       const up = await this.drive.upload(token, parent, this.file, (p) => (this.progress = p));
       this.uploadMsg = 'Saving to My files…';
-      await firstValueFrom(this.api.add(this.label.trim(), this.category, up.link, this.schoolYear));
+      await firstValueFrom(this.api.add(this.label.trim(), folder, up.link, this.schoolYear));
       this.label = '';
       this.file = null;
+      this.newFolder = false;
+      this.newFolderName = '';
+      this.category = folder;
       this.uploadMsg = 'Uploaded to your Google Drive.';
       this.load();
     } catch (e: any) {
@@ -159,20 +183,6 @@ export class MyFilesComponent implements OnInit {
       this.error = e?.error?.message ?? e?.message ?? 'Could not upload the file.';
     }
     this.saving = false;
-  }
-
-  async makeFolders() {
-    this.setupBusy = true;
-    this.error = null;
-    this.uploadMsg = null;
-    try {
-      const token = await this.drive.accessToken(this.auth.currentUser()?.depedEmail);
-      await this.drive.createAllFolders(token, this.years);
-      this.uploadMsg = 'Your Drive folders are ready: TaskEd Files / Personal Files and Scanned Files / one folder per school year.';
-    } catch (e: any) {
-      this.error = e?.message ?? 'Could not create the folders.';
-    }
-    this.setupBusy = false;
   }
 
   isOpen(sy: string): boolean {
@@ -197,7 +207,7 @@ export class MyFilesComponent implements OnInit {
     if (!this.label.trim() || !this.link.trim()) return;
     this.saving = true;
     this.error = null;
-    this.api.add(this.label.trim(), this.category.trim(), this.link.trim(), this.schoolYear).subscribe({
+    this.api.add(this.label.trim(), this.chosenFolder, this.link.trim(), this.schoolYear).subscribe({
       next: () => {
         this.label = '';
         this.link = '';

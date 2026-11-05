@@ -105,16 +105,12 @@ export class DriveUploadService {
     return id;
   }
 
-  // TaskEd Files / <Personal Files | Scanned Files> / S.Y. 2026-2027
+  // TaskEd Files / <Personal Files | Scanned Files | a folder the person named> / S.Y. 2026-2027.
+  // Every folder is created on the spot if it does not exist yet.
   async ensureFolder(token: string, category: string, schoolYear: string): Promise<string> {
     const root = await this.folder(token, ROOT_NAME, 'root');
     const cat = await this.folder(token, category, root);
     return this.folder(token, `S.Y. ${schoolYear}`, cat);
-  }
-
-  // Makes every folder in advance (both categories, every school year given).
-  async createAllFolders(token: string, years: string[]) {
-    for (const c of CATEGORIES) for (const y of years) await this.ensureFolder(token, c, y);
   }
 
   upload(token: string, parent: string, file: File, onProgress: (pct: number) => void): Promise<UploadedFile> {

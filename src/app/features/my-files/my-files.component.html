@@ -12,8 +12,8 @@
       <strong>Where your files go</strong>
       <span>
         <em>TaskEd Files</em> › <em>Personal Files</em> or <em>Scanned Files</em> › <em>S.Y. {{ view.currentYear }}</em>
-        (the latest five school years are kept, and a new one starts every June). Google asks your permission the first
-        time you upload. It only lets TaskEd see the files it saves, never the rest of your Drive.
+        (the latest five school years are kept, and a new one starts every June). Folders are created for you automatically when
+        you upload, and you can add your own folder too. Google asks your permission the first time you upload. It only lets TaskEd see the files it saves, never the rest of your Drive.
       </span>
     </div>
 
@@ -22,9 +22,13 @@
       <div class="grid">
         <label>
           Folder
-          <select name="category" [(ngModel)]="category">
-            @for (c of categories; track c) { <option [value]="c">{{ c }}</option> }
+          <select name="category" [ngModel]="newFolder ? '__new__' : category" (ngModelChange)="onFolderPick($event)">
+            @for (c of folderChoices; track c) { <option [value]="c">{{ c }}</option> }
+            <option value="__new__">+ New folder…</option>
           </select>
+          @if (newFolder) {
+            <input name="newfolder" [(ngModel)]="newFolderName" placeholder="Folder name, e.g. Trainings" maxlength="60" />
+          }
         </label>
         <label>
           School year
@@ -54,18 +58,10 @@
       }
       @if (uploadMsg) { <p class="muted">{{ uploadMsg }}</p> }
       <div class="row">
-        <button class="btn" type="submit" [disabled]="saving || !label.trim() || (pasteMode ? !link.trim() : !file)">
+        <button class="btn" type="submit" [disabled]="saving || !label.trim() || !chosenFolder || (pasteMode ? !link.trim() : !file)">
           @if (saving) { <span class="spinner"></span> {{ pasteMode ? 'Saving…' : 'Uploading…' }} }
           @else { {{ pasteMode ? 'Add to My files' : 'Upload to my Drive' }} }
         </button>
-        @if (canUpload) {
-          <button class="btn secondary" type="button" [disabled]="saving || setupBusy" (click)="makeFolders()">
-            @if (setupBusy) { <span class="spinner"></span> Creating… } @else { Create my Drive folders }
-          </button>
-          <button class="linklike" type="button" (click)="pasteMode = !pasteMode">
-            {{ pasteMode ? 'Upload a file instead' : 'Paste a link instead' }}
-          </button>
-        }
       </div>
     </form>
 
@@ -92,7 +88,7 @@
                         <div class="edit">
                           <input [(ngModel)]="editLabel" name="el{{ f.id }}" placeholder="Label" maxlength="150" />
                           <select [(ngModel)]="editCategory" name="ec{{ f.id }}">
-                            @for (cat of categories; track cat) { <option [value]="cat">{{ cat }}</option> }
+                            @for (cat of folderChoices; track cat) { <option [value]="cat">{{ cat }}</option> }
                           </select>
                           <input [(ngModel)]="editLink" name="el2{{ f.id }}" placeholder="Share link" />
                           <button class="btn" type="button" (click)="saveEdit(f)">Save</button>
