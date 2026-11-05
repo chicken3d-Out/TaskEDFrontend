@@ -11,11 +11,8 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <div class="loading-brand" [class.compact]="compact">
-      <div class="ring-wrap">
-        <div class="ring"></div>
-        <img src="/taskEd-mark.png" alt="" class="seal" />
-      </div>
-      <span class="wordmark">TaskEd</span>
+      <img src="/taskEd-logo.png" alt="TaskEd" class="logo" />
+      <div class="track"><div class="runner"></div></div>
       @if (label) {
         <span class="label">{{ label }}</span>
       }
@@ -34,40 +31,39 @@ import { CommonModule } from '@angular/common';
       .loading-brand.compact {
         padding: 1rem;
       }
-      .ring-wrap {
-        position: relative;
-        width: 72px;
-        height: 72px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+      .logo {
+        width: 220px;
+        max-width: 70%;
+        height: auto;
+        animation: pulse 1.8s ease-in-out infinite;
       }
-      .compact .ring-wrap {
-        width: 44px;
-        height: 44px;
+      .compact .logo {
+        width: 130px;
       }
-      .ring {
-        position: absolute;
-        inset: 0;
-        border-radius: 50%;
-        border: 3px solid #e5e7eb;
-        border-top-color: #14532d;
-        animation: spin 1s linear infinite;
+      .track {
+        width: 140px;
+        height: 3px;
+        border-radius: 3px;
+        background: #e5e7eb;
+        overflow: hidden;
       }
-      .seal {
-        width: 64%;
-        height: 64%;
-        object-fit: contain;
-        animation: pulse 1.6s ease-in-out infinite;
+      .compact .track {
+        width: 90px;
       }
-      .wordmark {
-        font-weight: 700;
-        color: #14532d;
-        letter-spacing: 0.02em;
-        animation: fadeIn 0.8s ease-in;
+      .runner {
+        width: 40%;
+        height: 100%;
+        border-radius: 3px;
+        background: #14532d;
+        animation: slide 1.1s ease-in-out infinite;
       }
-      .compact .wordmark {
-        font-size: 0.85rem;
+      @keyframes slide {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(250%);
+        }
       }
       .label {
         font-size: 0.8rem;
