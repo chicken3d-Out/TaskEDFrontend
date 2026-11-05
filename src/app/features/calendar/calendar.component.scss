@@ -232,3 +232,16 @@ label {
   .desc { white-space: pre-wrap; }
 }
 .desc { white-space: pre-wrap; }
+
+.add-note { margin-top: 0.8rem; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; }
+.note-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 1100; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.note-modal { background: var(--surface, #fff); border-radius: 16px; width: min(460px, 100%); padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.7rem; box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; font-weight: 600; }
+  input, textarea { font-weight: 400; }
+  .nm-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+  .nm-x { border: none; background: transparent; cursor: pointer; color: var(--muted); padding: 0.2rem; }
+  .nm-sub { margin: 0; font-size: 0.82rem; }
+}
+
+.note-btn { background: #ea580c; border-color: #ea580c; }
+.note-btn:hover:not(:disabled) { background: #c2410c; border-color: #c2410c; }

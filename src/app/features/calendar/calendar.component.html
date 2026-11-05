@@ -95,18 +95,9 @@
             <ng-container [ngTemplateOutlet]="details" [ngTemplateOutletContext]="{ $implicit: event }" />
           }
 
-          <form class="note-form" (ngSubmit)="saveNote()">
-            <strong class="note-h">{{ editingNote ? 'Edit note' : 'Add a note for this day' }}</strong>
-            <input name="nt" [(ngModel)]="noteTitle" placeholder="Note title" maxlength="200" />
-            <textarea name="nb" [(ngModel)]="noteBody" rows="2" placeholder="Details (optional)"></textarea>
-            @if (noteError) { <p class="error">{{ noteError }}</p> }
-            <div class="note-actions">
-              <button class="btn note-btn" type="submit" [disabled]="!noteTitle.trim() || noteBusy">
-                {{ noteBusy ? 'Saving…' : editingNote ? 'Save changes' : 'Add note' }}
-              </button>
-              @if (editingNote) { <button class="btn secondary" type="button" (click)="cancelNote()">Cancel</button> }
-            </div>
-          </form>
+          <button class="btn note-btn add-note" type="button" (click)="openNote()">
+            <app-icon name="plus" [size]="16" /> Add a note
+          </button>
         </div>
 
         <div class="card">
@@ -133,3 +124,30 @@
     </div>
   }
 </div>
+
+@if (noteOpen) {
+  <div class="note-backdrop" (click)="cancelNote()">
+    <form class="note-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()" (ngSubmit)="saveNote()">
+      <div class="nm-head">
+        <strong>{{ editingNote ? 'Edit note' : 'New note' }} · {{ selectedDate | date: 'EEEE, MMM d' }}</strong>
+        <button type="button" class="nm-x" (click)="cancelNote()" aria-label="Close"><app-icon name="x" [size]="20" /></button>
+      </div>
+      <p class="muted nm-sub">Only you can see your notes. They show in orange on your calendar.</p>
+      <label>
+        Title
+        <input name="nt" [(ngModel)]="noteTitle" placeholder="e.g. Submit SIP to AO" maxlength="200" autofocus />
+      </label>
+      <label>
+        Details (optional)
+        <textarea name="nb" [(ngModel)]="noteBody" rows="3" placeholder="Anything you want to remember"></textarea>
+      </label>
+      @if (noteError) { <p class="error">{{ noteError }}</p> }
+      <div class="note-actions">
+        <button class="btn note-btn" type="submit" [disabled]="!noteTitle.trim() || noteBusy">
+          {{ noteBusy ? 'Saving…' : editingNote ? 'Save changes' : 'Add note' }}
+        </button>
+        <button class="btn secondary" type="button" (click)="cancelNote()">Cancel</button>
+      </div>
+    </form>
+  </div>
+}

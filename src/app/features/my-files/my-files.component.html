@@ -44,7 +44,7 @@
         } @else {
           <label class="wide">
             File * (PDF, Word, Excel, picture… up to 25 MB)
-            <input type="file" name="file" (change)="onFile($event)" />
+            <input #fileInput type="file" name="file" (change)="onFile($event)" />
           </label>
         }
         <label class="wide">

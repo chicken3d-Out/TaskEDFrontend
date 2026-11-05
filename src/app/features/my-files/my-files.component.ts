@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -33,6 +33,7 @@ export class MyFilesComponent implements OnInit {
   categories = [...CATEGORIES];
   schoolYear = '';
   // upload state
+  @ViewChild('fileInput') fileInput?: ElementRef<HTMLInputElement>;
   file: File | null = null;
   progress = 0;
   uploadMsg: string | null = null;
@@ -173,9 +174,7 @@ export class MyFilesComponent implements OnInit {
       await firstValueFrom(this.api.add(this.label.trim(), folder, up.link, this.schoolYear));
       this.label = '';
       this.file = null;
-      this.newFolder = false;
-      this.newFolderName = '';
-      this.category = folder;
+      this.resetForm();
       this.uploadMsg = 'Uploaded to your Google Drive.';
       this.load();
     } catch (e: any) {
@@ -183,6 +182,18 @@ export class MyFilesComponent implements OnInit {
       this.error = e?.error?.message ?? e?.message ?? 'Could not upload the file.';
     }
     this.saving = false;
+  }
+
+  // Empty the upload form again: file, label, folder (back to Personal Files) and the school year.
+  private resetForm() {
+    this.label = '';
+    this.file = null;
+    this.link = '';
+    if (this.fileInput) this.fileInput.nativeElement.value = '';
+    this.newFolder = false;
+    this.newFolderName = '';
+    this.category = CATEGORIES[0];
+    this.schoolYear = this.view?.currentYear ?? this.schoolYear;
   }
 
   isOpen(sy: string): boolean {
@@ -209,8 +220,7 @@ export class MyFilesComponent implements OnInit {
     this.error = null;
     this.api.add(this.label.trim(), this.chosenFolder, this.link.trim(), this.schoolYear).subscribe({
       next: () => {
-        this.label = '';
-        this.link = '';
+        this.resetForm();
         this.saving = false;
         this.load();
       },

@@ -71,6 +71,12 @@ export class CalendarComponent implements OnInit, OnDestroy {
   noteBusy = false;
   noteError: string | null = null;
   editingNote: string | null = null;
+  noteOpen = false;
+
+  openNote() {
+    this.cancelNote();
+    this.noteOpen = true;
+  }
 
   private ymd(d: Date) {
     const pad = (n: number) => String(n).padStart(2, '0');
@@ -107,6 +113,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
         this.noteTitle = '';
         this.noteBody = '';
         this.editingNote = null;
+        this.noteOpen = false;
         this.noteBusy = false;
         this.loadNotes();
       },
@@ -121,10 +128,13 @@ export class CalendarComponent implements OnInit, OnDestroy {
     this.editingNote = e.noteId ?? null;
     this.noteTitle = e.title;
     this.noteBody = e.noteBody ?? '';
+    this.noteError = null;
+    this.noteOpen = true;
   }
 
   cancelNote() {
     this.editingNote = null;
+    this.noteOpen = false;
     this.noteTitle = '';
     this.noteBody = '';
     this.noteError = null;

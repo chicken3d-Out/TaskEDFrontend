@@ -79,9 +79,9 @@ import { IconComponent } from '../../shared/icon/icon.component';
         padding: 2.4rem 2.2rem;
       }
       .seal {
-        width: 170px;
+        width: 280px;
+        max-width: 100%;
         height: auto;
-        max-height: 170px;
         object-fit: contain;
       }
       .sr {

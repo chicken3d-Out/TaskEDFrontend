@@ -49,6 +49,7 @@ import { ProfileFormComponent } from '../../shared/profile-form/profile-form.com
       .head img {
         width: 56px;
         height: 56px;
+        object-fit: contain;
       }
       h1 {
         margin: 0;
