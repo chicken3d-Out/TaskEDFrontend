@@ -1,29 +1,57 @@
 <div class="chat-page">
-  <h1>TaskEd Assistant</h1>
-  <p class="subtitle">Ask about how TaskEd works, or about your own tasks.</p>
-
-  <div class="message-list">
-    @for (m of messages; track $index) {
-      <div class="message" [class.from-user]="m.role === 'user'">
-        <div class="bubble">{{ m.content }}</div>
-      </div>
-    }
-    @if (sending) {
-      <div class="message">
-        <div class="bubble typing">
-          <app-loading [compact]="true" />
-        </div>
-      </div>
-    }
-    <div #scrollAnchor></div>
+  <div class="head">
+    <div>
+      <h1>TaskEd AI Assistant</h1>
+      <p class="subtitle">Ask about how TaskEd works, or about your own tasks. Your chats are saved on this device only.</p>
+    </div>
+    <div class="head-actions">
+      <button type="button" class="new-chat mobile-only" (click)="showList = !showList">History ({{ history.length }})</button>
+      <button type="button" class="new-chat" (click)="newChat()" [disabled]="messages.length <= 1">+ New chat</button>
+    </div>
   </div>
 
-  @if (error) {
-    <p class="error">{{ error }}</p>
-  }
+  <div class="layout">
+    <aside class="history" [class.open]="showList">
+      <strong class="ht">Chat history</strong>
+      @if (history.length === 0) {
+        <p class="none">Your chats will appear here.</p>
+      }
+      @for (c of history; track c.id) {
+        <div class="item" [class.on]="c === current" (click)="open(c)" tabindex="0" (keydown.enter)="open(c)">
+          <span class="it">
+            <span class="title">{{ c.title }}</span>
+            <small>{{ c.updatedAt | date: 'MMM d, h:mm a' }}</small>
+          </span>
+          <button type="button" class="del" (click)="remove(c, $event)" aria-label="Delete chat">×</button>
+        </div>
+      }
+    </aside>
 
-  <form class="composer" [formGroup]="form" (ngSubmit)="send()">
-    <input formControlName="message" placeholder="Type a message…" autocomplete="off" />
-    <button type="submit" [disabled]="form.invalid || sending">Send</button>
-  </form>
+    <div class="main">
+      <div class="message-list">
+        @for (m of messages; track $index) {
+          <div class="message" [class.from-user]="m.role === 'user'">
+            <div class="bubble">{{ m.content }}</div>
+          </div>
+        }
+        @if (sending) {
+          <div class="message">
+            <div class="bubble typing">
+              <app-loading [compact]="true" />
+            </div>
+          </div>
+        }
+        <div #scrollAnchor></div>
+      </div>
+
+      @if (error) {
+        <p class="error">{{ error }}</p>
+      }
+
+      <form class="composer" [formGroup]="form" (ngSubmit)="send()">
+        <input formControlName="message" placeholder="Type a message…" autocomplete="off" />
+        <button type="submit" [disabled]="form.invalid || sending">Send</button>
+      </form>
+    </div>
+  </div>
 </div>
