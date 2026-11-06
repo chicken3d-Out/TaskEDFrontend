@@ -33,6 +33,7 @@
     <button type="button" [class.on]="tab === 'forecast'" (click)="setTab('forecast')">Forecast</button>
     <button type="button" [class.on]="tab === 'radar'" (click)="setTab('radar')">Radar &amp; satellite</button>
     <button type="button" [class.on]="tab === 'typhoon'" (click)="setTab('typhoon')">Typhoon tracker</button>
+    <button type="button" [class.on]="tab === 'quake'" (click)="setTab('quake')">Earthquakes</button>
   </div>
 
   @if (tab === 'radar') {
@@ -46,13 +47,17 @@
   }
 
   @if (tab === 'typhoon') {
-    @if (typhoonUrl) { <iframe [src]="typhoonUrl" class="big-map" title="Wind and storm map"></iframe> }
-    <p class="muted src">Wind map: storms show as a large rotating pattern with strong winds. For the official track, signal numbers and bulletins, open:</p>
+    <app-typhoon-tracker [lat]="forecast?.location?.latitude ?? null" [lon]="forecast?.location?.longitude ?? null" />
+    <p class="muted src">Official track, signal numbers and bulletins:</p>
     <div class="links">
       @for (l of typhoonLinks; track l.url) {
         <a [href]="l.url" target="_blank" rel="noopener">{{ l.label }} ↗</a>
       }
     </div>
+  }
+
+  @if (tab === 'quake') {
+    <app-earthquakes [lat]="forecast?.location?.latitude ?? null" [lon]="forecast?.location?.longitude ?? null" />
   }
 
   @if (tab === 'forecast') {

@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { LocationError, LocationService } from '../../core/services/location.service';
 import { PlaceResult, WeatherApiService, WeatherForecast } from '../../core/services/weather-api.service';
+import { TyphoonTrackerComponent } from './typhoon-tracker.component';
+import { EarthquakesComponent } from './earthquakes.component';
 import { LoadingComponent } from '../../shared/loading/loading.component';
 
 type LoadState = 'idle' | 'requesting' | 'loading' | 'ready' | 'error';
@@ -26,7 +28,7 @@ function describe(code: number | null | undefined): { label: string; icon: strin
 @Component({
   selector: 'app-weather',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingComponent],
+  imports: [CommonModule, FormsModule, LoadingComponent, TyphoonTrackerComponent, EarthquakesComponent],
   templateUrl: './weather.component.html',
   styleUrl: './weather.component.scss',
 })
@@ -52,7 +54,7 @@ export class WeatherComponent implements OnInit {
 
   describe = describe;
 
-  tab: 'forecast' | 'radar' | 'typhoon' = 'forecast';
+  tab: 'forecast' | 'radar' | 'typhoon' | 'quake' = 'forecast';
   layer: 'radar' | 'satellite' | 'clouds' | 'rain' = 'radar';
   layers: { id: 'radar' | 'satellite' | 'clouds' | 'rain'; label: string }[] = [
     { id: 'radar', label: 'Rain radar' },
@@ -61,7 +63,6 @@ export class WeatherComponent implements OnInit {
     { id: 'rain', label: 'Rain forecast' },
   ];
   radarUrl: SafeResourceUrl | null = null;
-  typhoonUrl: SafeResourceUrl | null = null;
   typhoonLinks = [
     { label: 'PAGASA – tropical cyclone bulletin', url: 'https://bagong.pagasa.dost.gov.ph/tropical-cyclone/severe-weather-bulletin' },
     { label: 'PAGASA – satellite & radar', url: 'https://bagong.pagasa.dost.gov.ph/weather/satellite' },
@@ -69,12 +70,9 @@ export class WeatherComponent implements OnInit {
     { label: 'JTWC – warnings', url: 'https://www.metoc.navy.mil/jtwc/jtwc.html' },
   ];
 
-  setTab(t: 'forecast' | 'radar' | 'typhoon') {
+  setTab(t: 'forecast' | 'radar' | 'typhoon' | 'quake') {
     this.tab = t;
     if (t === 'radar' && !this.radarUrl) this.setLayer(this.layer);
-    if (t === 'typhoon' && !this.typhoonUrl) {
-      this.typhoonUrl = this.windy('wind', 'ecmwf');
-    }
   }
 
   setLayer(l: 'radar' | 'satellite' | 'clouds' | 'rain') {

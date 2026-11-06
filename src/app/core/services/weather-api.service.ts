@@ -162,3 +162,29 @@ export class WeatherApiService {
       );
   }
 }
+
+export interface TyphoonPoint {
+  time: string | null; latitude: number; longitude: number; forecast: boolean;
+  windKph: number | null; gustKph: number | null; pressure: number | null; status: string | null; category: string;
+}
+export interface Typhoon {
+  id: string; name: string; country: string | null; alert: string | null; category: string;
+  windKph: number | null; source: string | null; points: TyphoonPoint[];
+}
+export interface Quake {
+  id: string; magnitude: number; place: string; time: string; depthKm: number; latitude: number; longitude: number;
+  distanceKm: number | null; estimatedIntensity: number | null; reportedIntensity: number | null; url: string;
+}
+
+@Injectable({ providedIn: 'root' })
+export class HazardsApiService {
+  constructor(private http: HttpClient) {}
+  typhoons() {
+    return this.http.get<{ typhoons: Typhoon[]; updated: string; error?: boolean }>(`${environment.apiUrl}/weather/typhoons`);
+  }
+  earthquakes(lat: number | null, lon: number | null) {
+    const params: Record<string, number> = {};
+    if (lat != null && lon != null) { params['lat'] = lat; params['lon'] = lon; }
+    return this.http.get<{ quakes: Quake[]; updated: string; error?: boolean }>(`${environment.apiUrl}/weather/earthquakes`, { params });
+  }
+}
