@@ -2,7 +2,7 @@ import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core'
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { LocationService } from '../../core/services/location.service';
+import { LocationError, LocationService } from '../../core/services/location.service';
 import { PlaceResult, WeatherApiService, WeatherForecast } from '../../core/services/weather-api.service';
 import { LoadingComponent } from '../../shared/loading/loading.component';
 
@@ -52,6 +52,44 @@ export class WeatherComponent implements OnInit {
 
   describe = describe;
 
+  tab: 'forecast' | 'radar' | 'typhoon' = 'forecast';
+  layer: 'radar' | 'satellite' | 'clouds' | 'rain' = 'radar';
+  layers: { id: 'radar' | 'satellite' | 'clouds' | 'rain'; label: string }[] = [
+    { id: 'radar', label: 'Rain radar' },
+    { id: 'satellite', label: 'Satellite' },
+    { id: 'clouds', label: 'Clouds' },
+    { id: 'rain', label: 'Rain forecast' },
+  ];
+  radarUrl: SafeResourceUrl | null = null;
+  typhoonUrl: SafeResourceUrl | null = null;
+  typhoonLinks = [
+    { label: 'PAGASA – tropical cyclone bulletin', url: 'https://bagong.pagasa.dost.gov.ph/tropical-cyclone/severe-weather-bulletin' },
+    { label: 'PAGASA – satellite & radar', url: 'https://bagong.pagasa.dost.gov.ph/weather/satellite' },
+    { label: 'Windy – typhoon tracker', url: 'https://www.windy.com/-Hurricanes-tropical-cyclones/tropical-cyclones?cyclones,12.0,122.0,5' },
+    { label: 'JTWC – warnings', url: 'https://www.metoc.navy.mil/jtwc/jtwc.html' },
+  ];
+
+  setTab(t: 'forecast' | 'radar' | 'typhoon') {
+    this.tab = t;
+    if (t === 'radar' && !this.radarUrl) this.setLayer(this.layer);
+    if (t === 'typhoon' && !this.typhoonUrl) {
+      this.typhoonUrl = this.windy('wind', 'ecmwf');
+    }
+  }
+
+  setLayer(l: 'radar' | 'satellite' | 'clouds' | 'rain') {
+    this.layer = l;
+    this.radarUrl = this.windy(l === 'rain' ? 'rain' : l, l === 'radar' ? 'radar' : 'ecmwf');
+  }
+
+  // Windy's free embeddable map, centred on the Philippines.
+  private windy(overlay: string, product: string): SafeResourceUrl {
+    const u =
+      `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh` +
+      `&zoom=5&overlay=${overlay}&product=${product}&level=surface&lat=12.5&lon=122&message=true`;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(u);
+  }
+
   ngOnInit() {
     this.useMyLocation();
   }
@@ -65,9 +103,16 @@ export class WeatherComponent implements OnInit {
       this.accuracy = c.accuracy ?? null;
       this.usingMyLocation = true;
       this.load(c.latitude, c.longitude);
-    } catch {
-      this.errorMessage =
-        'TaskEd could not get your location. Allow location for this site (tap the padlock next to the address, set Location to Allow, then press the button again), or search for your town below.';
+    } catch (e) {
+      const r = e instanceof LocationError ? e.reason : 'unavailable';
+      const msg: Record<string, string> = {
+        denied: 'Location is blocked for this site. Tap the padlock next to the address, set Location to Allow, reload, then press the button again.',
+        timeout: 'Your device took too long to find its location. Check that GPS/Wi-Fi is on and try again.',
+        insecure: 'Location only works on a secure (https://) address.',
+        unsupported: 'This browser does not support location.',
+        unavailable: 'Your device could not determine its location. Turn on Location/GPS and try again.',
+      };
+      this.errorMessage = (msg[r] ?? msg['unavailable']) + ' You can also search for your town below.';
       this.state = this.forecast ? 'ready' : 'error';
     }
   }

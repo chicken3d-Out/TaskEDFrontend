@@ -29,6 +29,33 @@
   }
   @if (searchMsg) { <p class="muted">{{ searchMsg }}</p> }
 
+  <div class="tabs">
+    <button type="button" [class.on]="tab === 'forecast'" (click)="setTab('forecast')">Forecast</button>
+    <button type="button" [class.on]="tab === 'radar'" (click)="setTab('radar')">Radar &amp; satellite</button>
+    <button type="button" [class.on]="tab === 'typhoon'" (click)="setTab('typhoon')">Typhoon tracker</button>
+  </div>
+
+  @if (tab === 'radar') {
+    <div class="layers">
+      @for (l of layers; track l.id) {
+        <button type="button" [class.on]="layer === l.id" (click)="setLayer(l.id)">{{ l.label }}</button>
+      }
+    </div>
+    @if (radarUrl) { <iframe [src]="radarUrl" class="big-map" title="Philippines weather map"></iframe> }
+    <p class="muted src">Live map by Windy.com. Use the play button on the map to animate. Radar shows where it is raining now; Satellite shows cloud cover.</p>
+  }
+
+  @if (tab === 'typhoon') {
+    @if (typhoonUrl) { <iframe [src]="typhoonUrl" class="big-map" title="Wind and storm map"></iframe> }
+    <p class="muted src">Wind map: storms show as a large rotating pattern with strong winds. For the official track, signal numbers and bulletins, open:</p>
+    <div class="links">
+      @for (l of typhoonLinks; track l.url) {
+        <a [href]="l.url" target="_blank" rel="noopener">{{ l.label }} ↗</a>
+      }
+    </div>
+  }
+
+  @if (tab === 'forecast') {
   @if (errorMessage && state !== 'requesting') {
     <div class="error-card"><p>{{ errorMessage }}</p></div>
   }
@@ -88,5 +115,6 @@
       <iframe [src]="mapUrl" class="map-frame" title="Location map"></iframe>
     }
     <p class="muted src">Forecast data: Open-Meteo. Times are local to the selected place.</p>
+  }
   }
 </div>

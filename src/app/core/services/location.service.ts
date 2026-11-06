@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
 import { Geolocation } from '@capacitor/geolocation';
 
 export interface Coordinates {
@@ -7,32 +8,53 @@ export interface Coordinates {
   accuracy?: number; // metres
 }
 
-// Uses @capacitor/geolocation instead of the raw browser API - it has a
-// web implementation too (falls back to navigator.geolocation under the
-// hood), so this works unchanged whether the app is running in a browser
-// or wrapped natively via Capacitor. This was the one file the rest of
-// the app was written to depend on for location - now that the Ionic
-// wrapper exists, this is the only file that changed for it.
+export type LocationFailure = 'denied' | 'unavailable' | 'timeout' | 'insecure' | 'unsupported';
+
+export class LocationError extends Error {
+  constructor(public reason: LocationFailure) {
+    super(reason);
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class LocationService {
   async getCurrentPosition(): Promise<Coordinates> {
-    const permission = await Geolocation.checkPermissions();
-    if (permission.location !== 'granted') {
-      const requested = await Geolocation.requestPermissions();
-      if (requested.location !== 'granted') {
-        throw new Error('Location permission was denied');
+    // Native app: use the Capacitor plugin (it asks Android for permission).
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const p = await Geolocation.checkPermissions();
+        if (p.location !== 'granted' && p.coarseLocation !== 'granted') {
+          const r = await Geolocation.requestPermissions();
+          if (r.location !== 'granted' && r.coarseLocation !== 'granted') throw new LocationError('denied');
+        }
+        const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+        return { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy };
+      } catch (e) {
+        throw e instanceof LocationError ? e : new LocationError('unavailable');
       }
     }
 
-    const position = await Geolocation.getCurrentPosition({
-      enableHighAccuracy: true,
-      timeout: 20000,
-      maximumAge: 0, // always a fresh reading, never a cached one
+    // Browser: call the standard API directly (the plugin's web permission
+    // helpers are not reliable across browsers).
+    if (!('geolocation' in navigator)) throw new LocationError('unsupported');
+    if (!window.isSecureContext) throw new LocationError('insecure');
+    try {
+      return await this.browserPosition({ enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+    } catch (e) {
+      if (e instanceof LocationError && e.reason === 'denied') throw e;
+      // Laptops have no GPS: retry with network (Wi-Fi/IP) location, which is much faster.
+      return this.browserPosition({ enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 });
+    }
+  }
+
+  private browserPosition(opts: PositionOptions): Promise<Coordinates> {
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        (p) => resolve({ latitude: p.coords.latitude, longitude: p.coords.longitude, accuracy: p.coords.accuracy }),
+        (err) =>
+          reject(new LocationError(err.code === 1 ? 'denied' : err.code === 3 ? 'timeout' : 'unavailable')),
+        opts,
+      );
     });
-    return {
-      latitude: position.coords.latitude,
-      longitude: position.coords.longitude,
-      accuracy: position.coords.accuracy,
-    };
   }
 }
