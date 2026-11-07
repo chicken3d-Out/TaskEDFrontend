@@ -7,6 +7,7 @@ import { SchoolPortalService } from '../../core/services/school-portal.service';
 import { AccountStatus, Role, SchoolInfo, User } from '../../core/models/user.model';
 import { FileKind, SchoolFilesView, SchoolOverview } from '../../core/models/school-portal.model';
 import { FilePreviewService } from '../../shared/file-preview/file-preview.service';
+import { TeacherManagerComponent } from '../../shared/teacher-manager/teacher-manager.component';
 import { LoadingComponent } from '../../shared/loading/loading.component';
 import { AvatarComponent } from '../../shared/avatar/avatar.component';
 import { IconComponent } from '../../shared/icon/icon.component';
@@ -27,7 +28,7 @@ interface TeacherRow {
 @Component({
   selector: 'app-school',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, DatePipe, LoadingComponent, AvatarComponent, IconComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, DatePipe, LoadingComponent, AvatarComponent, IconComponent, TeacherManagerComponent],
   templateUrl: './school.component.html',
   styleUrl: './school.component.scss',
 })
@@ -364,6 +365,11 @@ export class SchoolComponent implements OnInit {
   }
   yearLabel(sy: string) {
     return 'S.Y. ' + sy;
+  }
+
+  managingId: string | null = null;
+  get isAO() {
+    return this.auth.currentUser()?.role === Role.ADMIN_OFFICER;
   }
 
   get isSchoolStaff() {

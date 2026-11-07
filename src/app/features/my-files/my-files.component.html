@@ -5,6 +5,14 @@
     this list is private: nobody else, including the Administrator, can see or open your files.
   </p>
 
+  <div class="tabs">
+    <button type="button" [class.on]="tab === 'working'" (click)="tab = 'working'">Working Directory Files</button>
+    <button type="button" [class.on]="tab === 'storage'" (click)="tab = 'storage'">File Storage</button>
+  </div>
+
+  @if (tab === 'working') {
+    <app-working-files />
+  } @else {
   @if (loading) {
     <app-loading [compact]="true" />
   } @else if (view) {
@@ -123,5 +131,6 @@
     </div>
   } @else {
     <div class="card empty">{{ error ?? 'Could not load your files.' }}</div>
+  }
   }
 </div>

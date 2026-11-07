@@ -2,12 +2,13 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { roleLabel } from '../../core/models/user.model';
+import { HrProfileFormComponent } from '../../shared/hr-profile-form/hr-profile-form.component';
 import { ProfileFormComponent } from '../../shared/profile-form/profile-form.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [ProfileFormComponent, ReactiveFormsModule],
+  imports: [ProfileFormComponent, HrProfileFormComponent, ReactiveFormsModule],
   template: `
     <h1 class="page-title">My profile</h1>
     <div class="card box">
@@ -25,6 +26,13 @@ import { ProfileFormComponent } from '../../shared/profile-form/profile-form.com
       </div>
       <app-profile-form mode="edit" />
     </div>
+
+    @if (auth.currentUser()?.role && auth.currentUser()?.role !== 'administrator') {
+      <div class="card box">
+        <h2>Employment details</h2>
+        <app-hr-profile-form userId="me" />
+      </div>
+    }
 
     @if (auth.currentUser()?.username) {
       <div class="card box pw">

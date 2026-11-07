@@ -113,6 +113,13 @@ export class DriveUploadService {
     return this.folder(token, `S.Y. ${schoolYear}`, cat);
   }
 
+  // TaskEd Files / a / b / c ... (every folder is created if missing)
+  async ensurePath(token: string, names: string[]): Promise<string> {
+    let parent = await this.folder(token, ROOT_NAME, 'root');
+    for (const n of names) parent = await this.folder(token, n.replace(/[\\/]+/g, ' ').trim().slice(0, 80) || 'Folder', parent);
+    return parent;
+  }
+
   upload(token: string, parent: string, file: File, onProgress: (pct: number) => void): Promise<UploadedFile> {
     return new Promise((resolve, reject) => {
       const boundary = 'tasked' + Math.random().toString(36).slice(2);

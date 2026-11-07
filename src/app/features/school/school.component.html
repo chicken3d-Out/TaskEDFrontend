@@ -194,6 +194,9 @@
               </div>
               <span class="status" [class]="'s-' + row.user.status">{{ row.user.status }}</span>
               <div class="actions">
+                @if (isAO && row.user.role) {
+                  <button class="btn" (click)="managingId = row.user.id">Manage</button>
+                }
                 <button class="btn secondary" (click)="row.editing = !row.editing">
                   <app-icon name="pencil" [size]="15" /> {{ row.editing ? 'Close' : 'Edit' }}
                 </button>
@@ -225,4 +228,7 @@
       </div>
     }
   }
+}
+@if (managingId) {
+  <app-teacher-manager [teacherId]="managingId" (close)="managingId = null" />
 }

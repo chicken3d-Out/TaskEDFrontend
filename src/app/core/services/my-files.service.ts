@@ -12,8 +12,8 @@ export class MyFilesService {
   list(): Observable<MyFilesView> {
     return this.http.get<MyFilesView>(this.base);
   }
-  add(label: string, category: string, link: string, schoolYear?: string): Observable<MyFile> {
-    return this.http.post<MyFile>(this.base, { label, category, link, schoolYear });
+  add(label: string, category: string, link: string, schoolYear?: string, section?: string): Observable<MyFile> {
+    return this.http.post<MyFile>(this.base, { label, category, link, schoolYear, section });
   }
   update(id: string, dto: { label: string; category: string; link: string }): Observable<MyFile> {
     return this.http.patch<MyFile>(`${this.base}/${id}`, dto);

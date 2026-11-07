@@ -9,6 +9,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { CATEGORIES, DriveUploadService, MAX_UPLOAD_BYTES } from '../../core/services/drive-upload.service';
 import { Capacitor } from '@capacitor/core';
 import { LoadingComponent } from '../../shared/loading/loading.component';
+import { WorkingFilesComponent } from './working-files.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 
 interface YearGroup {
@@ -21,7 +22,7 @@ interface YearGroup {
 @Component({
   selector: 'app-my-files',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, LoadingComponent, IconComponent],
+  imports: [CommonModule, FormsModule, DatePipe, LoadingComponent, IconComponent, WorkingFilesComponent],
   templateUrl: './my-files.component.html',
   styleUrl: './my-files.component.scss',
 })
@@ -30,6 +31,7 @@ export class MyFilesComponent implements OnInit {
   preview = inject(FilePreviewService);
   auth = inject(AuthService);
   drive = inject(DriveUploadService);
+  tab: 'working' | 'storage' = 'working';
   categories = [...CATEGORIES];
   schoolYear = '';
   // upload state
@@ -70,7 +72,7 @@ export class MyFilesComponent implements OnInit {
   load() {
     this.api.list().subscribe({
       next: (v) => {
-        this.view = v;
+        this.view = { ...v, files: v.files.filter((f) => f.section !== 'working') };
         if (!this.schoolYear) this.schoolYear = v.currentYear;
         this.loading = false;
       },

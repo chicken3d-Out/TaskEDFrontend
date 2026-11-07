@@ -26,3 +26,7 @@ h2 { font-size: 1.05rem; margin: 0 0 0.6rem; }
 .bar { height: 8px; background: var(--surface-2); border-radius: 999px; overflow: hidden; margin: 0.6rem 0; .fill { height: 100%; background: var(--primary); transition: width 0.2s; } }
 .row { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; margin-top: 0.6rem; }
 .linklike { background: none; border: none; padding: 0; cursor: pointer; color: var(--primary-strong); text-decoration: underline; font-size: 0.85rem; }
+
+.tabs { display: flex; gap: .4rem; margin: 1rem 0; flex-wrap: wrap; }
+.tabs button { border: 1px solid #e5e7eb; background: #fff; border-radius: 999px; padding: .45rem 1rem; font: inherit; cursor: pointer; }
+.tabs button.on { background: #15803d; color: #fff; border-color: #15803d; }
