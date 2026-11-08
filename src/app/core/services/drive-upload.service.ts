@@ -114,6 +114,19 @@ export class DriveUploadService {
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   }
 
+  // Moves a file TaskEd put in the person's Drive to the Drive Trash (restorable for 30 days).
+  // A file that is already gone counts as done.
+  async trash(token: string, fileId: string): Promise<void> {
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ trashed: true }),
+    });
+    if (res.status === 401) this.token = null;
+    if (res.ok || res.status === 404) return;
+    throw new Error(`Google Drive said no (${res.status}).`);
+  }
+
   // Replaces the content of a file TaskEd put in the person's Drive.
   async replaceContent(token: string, fileId: string, blob: Blob): Promise<void> {
     const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {

@@ -250,8 +250,14 @@ export class MyFilesComponent implements OnInit {
     });
   }
 
-  remove(f: MyFile) {
-    if (!confirm(`Remove "${f.label}" from My files? The file itself stays in your Drive.`)) return;
+  async remove(f: MyFile) {
+    if (!confirm(`Remove "${f.label}" from My files? It is also moved to the Trash in your Google Drive (you can restore it there for 30 days).`)) return;
+    try {
+      const id = DriveUploadService.fileId(f.link);
+      if (id) await this.drive.trash(await this.drive.accessToken(this.auth.currentUser()?.depedEmail), id);
+    } catch (e: any) {
+      if (!confirm(`Could not delete it from your Drive (${e?.message ?? 'error'}). Remove it from this list anyway?`)) return;
+    }
     this.api.remove(f.id).subscribe({
       next: () => this.load(),
       error: (e) => (this.error = e?.error?.message ?? 'Could not delete the file.'),

@@ -36,7 +36,7 @@ const FEEL = ['', 'Scarcely perceptible', 'Slightly felt', 'Weak', 'Moderately s
     <p class="muted">Source: USGS (last 7 days, M2.5+). Intensity at your location is a rough estimate from magnitude, depth and distance. For official PHIVOLCS intensity and bulletins see <a href="https://earthquake.phivolcs.dost.gov.ph" target="_blank" rel="noopener">earthquake.phivolcs.dost.gov.ph</a>.</p>
   `,
   styles: [`
-    .hz-map { height: min(50vh, 420px); border-radius: 12px; border: 1px solid #e5e7eb; margin: .6rem 0; }
+    .hz-map { position: relative; z-index: 0; isolation: isolate; height: min(50vh, 420px); border-radius: 12px; border: 1px solid #e5e7eb; margin: .6rem 0; }
     .alert { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: .7rem 1rem; border-radius: 10px; margin-top: .6rem; }
     .qlist { display: flex; flex-direction: column; gap: .4rem; }
     .q { display: flex; gap: .7rem; align-items: center; padding: .55rem .7rem; border: 1px solid #e5e7eb; border-radius: 10px; text-decoration: none; color: inherit; }

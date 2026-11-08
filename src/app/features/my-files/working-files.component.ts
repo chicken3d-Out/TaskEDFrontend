@@ -42,7 +42,10 @@ export const WORKING_TYPES = ['PDS', 'Service Record', 'Service Credit', 'SALN',
           <div class="frow">
             <div class="info"><strong>{{ f.label }}</strong><small>Added {{ f.createdAt | date: 'MMM d, y' }}</small></div>
             <div class="acts">
-              @if (t === 'PDS') { <button class="btn" type="button" (click)="editPds(f)">Edit</button> }
+              @if (t === 'PDS') {
+                <button class="btn secondary" type="button" (click)="editPds(f, true)">Preview</button>
+                <button class="btn" type="button" (click)="editPds(f)">Edit</button>
+              }
               @else { <button class="btn secondary" type="button" (click)="preview.open(f.link, f.label)">Preview</button> }
               <button class="btn secondary" type="button" (click)="download(f, t)" [disabled]="saving">Download</button>
               <button class="btn danger" type="button" (click)="remove(f)">Remove</button>
@@ -116,12 +119,13 @@ export class WorkingFilesComponent implements OnInit {
     this.saving = false;
   }
 
-  editPds(f: MyFile) {
+  editPds(f: MyFile, readOnly = false) {
     const id = DriveUploadService.fileId(f.link);
     if (!id) { this.error = 'This entry has no Google Drive file to open.'; return; }
     const email = this.auth.currentUser()?.depedEmail;
     this.pds.open({
       title: f.label,
+      readOnly,
       fileName: `${f.label}.xlsx`,
       load: async () => this.drive.download(await this.drive.accessToken(email), id),
       save: { label: 'Save to my Drive', run: async (blob) => { await this.drive.replaceContent(await this.drive.accessToken(email), id, blob); return 'Saved to your Google Drive.'; } },
@@ -153,8 +157,15 @@ export class WorkingFilesComponent implements OnInit {
     });
   }
 
-  remove(f: MyFile) {
-    if (!confirm(`Remove "${f.label}"? The file itself stays in your Drive.`)) return;
+  async remove(f: MyFile) {
+    if (!confirm(`Remove "${f.label}"? It is also moved to the Trash in your Google Drive (you can restore it there for 30 days).`)) return;
+    this.error = '';
+    try {
+      const id = DriveUploadService.fileId(f.link);
+      if (id) await this.drive.trash(await this.drive.accessToken(this.auth.currentUser()?.depedEmail), id);
+    } catch (e: any) {
+      if (!confirm(`Could not delete it from your Drive (${e?.message ?? 'error'}). Remove it from this list anyway?`)) return;
+    }
     this.api.remove(f.id).subscribe({ next: () => this.load(), error: (e) => (this.error = e?.error?.message ?? 'Could not remove.') });
   }
 }

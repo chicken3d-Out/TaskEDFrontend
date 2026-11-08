@@ -52,10 +52,13 @@ import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.compo
               <div class="frow">
                 <div><strong>{{ f.label }}</strong><small>Added {{ f.createdAt | date: 'MMM d, y' }}</small></div>
                 <div class="acts">
-                  @if (s === 'PDS') { <button class="btn" type="button" (click)="editPds(f)">Edit</button> }
+                  @if (s === 'PDS') {
+                    <button class="btn secondary" type="button" (click)="editPds(f, true)">Preview</button>
+                    <button class="btn" type="button" (click)="editPds(f)">Edit</button>
+                  }
                   @else { <button class="btn secondary" type="button" (click)="preview.open(f.link, f.label)">Preview</button> }
                   <button class="btn secondary" type="button" (click)="download(f, s)" [disabled]="busy">Download</button>
-                  <button class="btn danger" type="button" (click)="remove(f.id, f.label)">Remove</button>
+                  <button class="btn danger" type="button" (click)="remove(f.id, f.label, f.link)">Remove</button>
                 </div>
               </div>
             } @empty { <p class="muted">No files yet.</p> }
@@ -175,20 +178,28 @@ export class TeacherManagerComponent implements OnInit {
     }
   }
 
-  editPds(f: { link: string; label: string }) {
+  editPds(f: { link: string; label: string }, readOnly = false) {
     const id = DriveUploadService.fileId(f.link);
     if (!id) { this.error = 'This entry has no Google Drive file to open.'; return; }
     const email = this.auth.currentUser()?.depedEmail;
     this.pds.open({
       title: `${this.teacherName} – ${f.label}`,
+      readOnly,
       fileName: `${f.label}.xlsx`,
       load: async () => this.drive.download(await this.drive.accessToken(email), id),
       save: { label: 'Save to my Drive', run: async (blob) => { await this.drive.replaceContent(await this.drive.accessToken(email), id, blob); return 'Saved to your Google Drive.'; } },
     });
   }
 
-  remove(id: string, label: string) {
-    if (!confirm(`Remove "${label}" from this list? The file stays in your Drive.`)) return;
+  async remove(id: string, label: string, link: string) {
+    if (!confirm(`Remove "${label}"? It is also moved to the Trash in your Google Drive (you can restore it there for 30 days).`)) return;
+    this.error = '';
+    try {
+      const fid = DriveUploadService.fileId(link);
+      if (fid) await this.drive.trash(await this.drive.accessToken(this.auth.currentUser()?.depedEmail), fid);
+    } catch (e: any) {
+      if (!confirm(`Could not delete it from your Drive (${e?.message ?? 'error'}). Remove it from this list anyway?`)) return;
+    }
     this.api.removeTeacherFile(id).subscribe({ next: () => this.load(), error: (e) => (this.error = e?.error?.message ?? 'Could not remove.') });
   }
 }

@@ -21,7 +21,7 @@ import { FIELDS, QUESTIONS, RADIOS, SECTIONS, TABLES, TableDef } from './pds-sch
           <div class="hbtns">
             @if (data) {
               <button class="btn secondary" type="button" (click)="download()" [disabled]="busy">Download .xlsx</button>
-              @if (req.save) { <button class="btn" type="button" (click)="save()" [disabled]="busy">{{ busy ? 'Saving…' : req.save.label }}</button> }
+              @if (req.save && !req.readOnly) { <button class="btn" type="button" (click)="save()" [disabled]="busy">{{ busy ? 'Saving…' : req.save.label }}</button> }
             }
             <button class="btn secondary" type="button" (click)="tryClose()">Close</button>
           </div>
@@ -39,7 +39,8 @@ import { FIELDS, QUESTIONS, RADIOS, SECTIONS, TABLES, TableDef } from './pds-sch
           </nav>
           @if (dirty()) { <p class="muted pad">You have unsaved changes. Save or download to keep them.</p> }
 
-          <div class="body">
+          @if (req.readOnly) { <p class="muted pad">Preview only. Press Edit on the file to make changes.</p> }
+          <div class="body"><fieldset class="ro" [disabled]="!!req.readOnly">
             <!-- single fields grouped -->
             @for (g of groupsOf(active); track g.name) {
               @if (g.name) { <h3>{{ g.name }}</h3> }
@@ -74,7 +75,7 @@ import { FIELDS, QUESTIONS, RADIOS, SECTIONS, TABLES, TableDef } from './pds-sch
                 <div class="entry">
                   <div class="ehead">
                     <strong>{{ t.fixedLabels ? t.fixedLabels[i] : (t.rowLabel | titlecase) + ' ' + (i + 1) }}</strong>
-                    @if (!t.fixedLabels) { <button type="button" class="link danger" (click)="removeRow(t, i)">Remove</button> }
+                    @if (!t.fixedLabels && !req.readOnly) { <button type="button" class="link danger" (click)="removeRow(t, i)">Remove</button> }
                   </div>
                   <div class="grid">
                     @for (c of t.cols; track c.key) {
@@ -83,7 +84,7 @@ import { FIELDS, QUESTIONS, RADIOS, SECTIONS, TABLES, TableDef } from './pds-sch
                   </div>
                 </div>
               }
-              @if (!t.fixedLabels) {
+              @if (!t.fixedLabels && !req.readOnly) {
                 <button type="button" class="btn secondary" [disabled]="data.tables[t.id].length >= capacity(t)" (click)="addRow(t)">+ Add {{ t.rowLabel }}</button>
                 @if (data.tables[t.id].length >= capacity(t)) { <p class="muted">The form is full. More rows need a continuation sheet, which TaskEd cannot write yet.</p> }
               }
@@ -107,7 +108,7 @@ import { FIELDS, QUESTIONS, RADIOS, SECTIONS, TABLES, TableDef } from './pds-sch
                 </div>
               }
             }
-          </div>
+          </fieldset></div>
         }
       </div>
     }
@@ -123,6 +124,7 @@ import { FIELDS, QUESTIONS, RADIOS, SECTIONS, TABLES, TableDef } from './pds-sch
     .chips button { white-space: nowrap; border: 1px solid #e5e7eb; background: #fff; border-radius: 999px; padding: .4rem .9rem; font: inherit; cursor: pointer; }
     .chips button.on { background: #15803d; color: #fff; border-color: #15803d; }
     .body { padding: 1rem 1.2rem 3rem; overflow-y: auto; flex: 1; }
+    fieldset.ro { border: 0; padding: 0; margin: 0; min-width: 0; }
     .pad { padding: .6rem 1.2rem 0; margin: 0; }
     h3 { margin: 1.2rem 0 .4rem; font-size: 1rem; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .6rem .8rem; }

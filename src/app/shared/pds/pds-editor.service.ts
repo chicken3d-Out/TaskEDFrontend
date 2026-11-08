@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 
 export interface PdsEditorRequest {
   title: string; // shown at the top, e.g. the file label
+  readOnly?: boolean; // preview: nothing can be changed or saved
   fileName: string; // used when downloading
   load: () => Promise<ArrayBuffer>;
   // Saves the edited file somewhere (e.g. back to the person's Drive). Optional.
