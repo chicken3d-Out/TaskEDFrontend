@@ -85,6 +85,30 @@ export class DriveUploadService {
     return res.json();
   }
 
+  static fileId(link: string): string | null {
+    const m = /\/d\/([\w-]+)/.exec(link) ?? /[?&]id=([\w-]+)/.exec(link);
+    return m ? m[1] : null;
+  }
+
+  // Downloads a file TaskEd put in the person's Drive.
+  async download(token: string, fileId: string): Promise<ArrayBuffer> {
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { Authorization: `Bearer ${token}` } });
+    if (res.status === 401) this.token = null;
+    if (!res.ok) throw new Error(res.status === 404 ? 'TaskEd can only open files it uploaded. Upload this file through TaskEd first.' : `Google Drive said no (${res.status}).`);
+    return res.arrayBuffer();
+  }
+
+  // Replaces the content of a file TaskEd put in the person's Drive.
+  async replaceContent(token: string, fileId: string, blob: Blob): Promise<void> {
+    const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': blob.type || 'application/octet-stream' },
+      body: blob,
+    });
+    if (res.status === 401) this.token = null;
+    if (!res.ok) throw new Error(`Google Drive said no (${res.status}).`);
+  }
+
   // Finds a folder TaskEd made earlier, or makes it.
   private async folder(token: string, name: string, parent: string): Promise<string> {
     const key = `${parent}/${name}`;

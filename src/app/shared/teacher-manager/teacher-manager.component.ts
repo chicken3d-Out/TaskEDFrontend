@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { HrProfileService, TeacherFilesView } from '../../core/services/hr-profile.service';
 import { DriveUploadService, MAX_UPLOAD_BYTES } from '../../core/services/drive-upload.service';
 import { AuthService } from '../../core/services/auth.service';
+import { PdsEditorService } from '../pds/pds-editor.service';
 import { FilePreviewService } from '../file-preview/file-preview.service';
 import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.component';
 
@@ -51,6 +52,7 @@ import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.compo
               <div class="frow">
                 <div><strong>{{ f.label }}</strong><small>Added {{ f.createdAt | date: 'MMM d, y' }}</small></div>
                 <div class="acts">
+                  @if (s === 'PDS') { <button class="btn" type="button" (click)="editPds(f)">Edit</button> }
                   <button class="btn secondary" type="button" (click)="preview.open(f.link, f.label)">Preview</button>
                   <a class="btn secondary" [href]="f.link" target="_blank" rel="noopener noreferrer">Open</a>
                   <button class="btn danger" type="button" (click)="remove(f.id, f.label)">Remove</button>
@@ -86,6 +88,7 @@ export class TeacherManagerComponent implements OnInit {
   private drive = inject(DriveUploadService);
   private auth = inject(AuthService);
   preview = inject(FilePreviewService);
+  pds = inject(PdsEditorService);
 
   @Input({ required: true }) teacherId!: string;
   @Output() close = new EventEmitter<void>();
@@ -144,6 +147,18 @@ export class TeacherManagerComponent implements OnInit {
       this.error = e?.error?.message ?? e?.message ?? 'Could not upload.';
     }
     this.busy = false;
+  }
+
+  editPds(f: { link: string; label: string }) {
+    const id = DriveUploadService.fileId(f.link);
+    if (!id) { this.error = 'This entry has no Google Drive file to open.'; return; }
+    const email = this.auth.currentUser()?.depedEmail;
+    this.pds.open({
+      title: `${this.teacherName} – ${f.label}`,
+      fileName: `${f.label}.xlsx`,
+      load: async () => this.drive.download(await this.drive.accessToken(email), id),
+      save: { label: 'Save to my Drive', run: async (blob) => { await this.drive.replaceContent(await this.drive.accessToken(email), id, blob); return 'Saved to your Google Drive.'; } },
+    });
   }
 
   remove(id: string, label: string) {

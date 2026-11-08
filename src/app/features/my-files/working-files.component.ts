@@ -6,6 +6,7 @@ import { MyFilesService } from '../../core/services/my-files.service';
 import { MyFile } from '../../core/models/my-files.model';
 import { FilePreviewService } from '../../shared/file-preview/file-preview.service';
 import { AuthService } from '../../core/services/auth.service';
+import { PdsEditorService } from '../../shared/pds/pds-editor.service';
 import { DriveUploadService, MAX_UPLOAD_BYTES } from '../../core/services/drive-upload.service';
 
 export const WORKING_TYPES = ['PDS', 'Service Record', 'Service Credit', 'SALN', 'Other'];
@@ -36,6 +37,11 @@ export const WORKING_TYPES = ['PDS', 'Service Record', 'Service Credit', 'SALN',
       @if (msg) { <p class="muted">{{ msg }}</p> }
       <div class="row"><button class="btn" type="submit" [disabled]="saving || !file || !label.trim()">{{ saving ? 'Uploading…' : 'Upload to my Drive' }}</button></div>
     </form>
+    <div class="card tip">
+      <strong>Edit your PDS in TaskEd</strong>
+      <span>Open your filled-in PDS (CS Form 212, Revised 2026 .xlsx). TaskEd shows it as simple sections, you edit, and it is saved back into the official form.</span>
+      <label class="btn secondary pick">Open a PDS from this computer<input type="file" accept=".xlsx" hidden (change)="openLocalPds($event)" /></label>
+    </div>
     @for (t of types; track t) {
       <section class="card">
         <h3>{{ t }}</h3>
@@ -43,6 +49,7 @@ export const WORKING_TYPES = ['PDS', 'Service Record', 'Service Credit', 'SALN',
           <div class="frow">
             <div class="info"><strong>{{ f.label }}</strong><small>Added {{ f.createdAt | date: 'MMM d, y' }}</small></div>
             <div class="acts">
+              @if (t === 'PDS') { <button class="btn" type="button" (click)="editPds(f)">Edit</button> }
               <button class="btn secondary" type="button" (click)="preview.open(f.link, f.label)">Preview</button>
               <a class="btn secondary" [href]="f.link" target="_blank" rel="noopener noreferrer">Open</a>
               <button class="btn danger" type="button" (click)="remove(f)">Remove</button>
@@ -59,6 +66,7 @@ export class WorkingFilesComponent implements OnInit {
   private drive = inject(DriveUploadService);
   private auth = inject(AuthService);
   preview = inject(FilePreviewService);
+  pds = inject(PdsEditorService);
   @ViewChild('fi') fi?: ElementRef<HTMLInputElement>;
 
   types = WORKING_TYPES;
@@ -109,6 +117,43 @@ export class WorkingFilesComponent implements OnInit {
       this.error = e?.error?.message ?? e?.message ?? 'Could not upload.';
     }
     this.saving = false;
+  }
+
+  editPds(f: MyFile) {
+    const id = DriveUploadService.fileId(f.link);
+    if (!id) { this.error = 'This entry has no Google Drive file to open.'; return; }
+    const email = this.auth.currentUser()?.depedEmail;
+    this.pds.open({
+      title: f.label,
+      fileName: `${f.label}.xlsx`,
+      load: async () => this.drive.download(await this.drive.accessToken(email), id),
+      save: { label: 'Save to my Drive', run: async (blob) => { await this.drive.replaceContent(await this.drive.accessToken(email), id, blob); return 'Saved to your Google Drive.'; } },
+    });
+  }
+
+  openLocalPds(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    const email = this.auth.currentUser()?.depedEmail;
+    const base = file.name.replace(/\.xlsx$/i, '');
+    this.pds.open({
+      title: file.name,
+      fileName: file.name,
+      load: () => file.arrayBuffer(),
+      save: {
+        label: 'Save a copy to my Drive',
+        run: async (blob, name) => {
+          const token = await this.drive.accessToken(email);
+          const parent = await this.drive.ensurePath(token, ['Working Directory', 'PDS']);
+          const up = await this.drive.upload(token, parent, new File([blob], name, { type: blob.type }), () => {});
+          await firstValueFrom(this.api.add(base, 'PDS', up.link, this.currentYear, 'working'));
+          this.load();
+          return 'Saved to your Google Drive (Working Directory › PDS).';
+        },
+      },
+    });
   }
 
   remove(f: MyFile) {
