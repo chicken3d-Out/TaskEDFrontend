@@ -130,14 +130,6 @@ export const FIELDS: FieldDef[] = [
   f('govIdType', 'C4', 'D61', 'Government-issued ID', 'references', { group: 'Government ID' }),
   f('govIdNo', 'C4', 'D62', 'ID / License / Passport No.', 'references', { group: 'Government ID' }),
   f('govIdIssued', 'C4', 'D64', 'Date / Place of issuance', 'references', { group: 'Government ID' }),
-  f('dateAccomplished', 'C1', 'L61', 'Date accomplished (also written on pages 2–4)', 'references', { group: 'Declaration' }),
-];
-
-// Dates accomplished on the other pages follow the one on page 1.
-export const DATE_ACCOMPLISHED_ALSO: { sheet: 'C2' | 'C3' | 'C4'; ref: string }[] = [
-  { sheet: 'C2', ref: 'J42' },
-  { sheet: 'C3', ref: 'I46' },
-  { sheet: 'C4', ref: 'G64' },
 ];
 
 export const RADIOS: RadioDef[] = [
@@ -156,7 +148,7 @@ export const RADIOS: RadioDef[] = [
 export const COUNTRY = { sheet: 'C1' as const, linkRef: 'J16', listFirst: 11, listLast: 217, listCol: 'Q' };
 
 export const TABLES: TableDef[] = [
-  { id: 'children', sheet: 'C1', section: 'family', title: 'Children', rowLabel: 'child', first: 37, last: 49,
+  { id: 'children', sheet: 'C1', section: 'family', title: 'Children', rowLabel: 'child', first: 37, last: 49, marker: true,
     cols: [{ key: 'name', col: 'I', label: 'Full name', wide: true }, { key: 'dob', col: 'M', label: 'Date of birth (dd/mm/yyyy)' }] },
   { id: 'education', sheet: 'C1', section: 'education', title: 'Educational background', rowLabel: 'level', first: 55, last: 59,
     fixedLabels: ['Elementary', 'Secondary', 'Vocational / Trade course', 'College', 'Graduate studies'],

@@ -30,3 +30,8 @@ h2 { font-size: 1.05rem; margin: 0 0 0.6rem; }
 .tabs { display: flex; gap: .4rem; margin: 1rem 0; flex-wrap: wrap; }
 .tabs button { border: 1px solid #e5e7eb; background: #fff; border-radius: 999px; padding: .45rem 1rem; font: inherit; cursor: pointer; }
 .tabs button.on { background: #15803d; color: #fff; border-color: #15803d; }
+
+.sechead { display: flex; justify-content: space-between; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.sechead h3 { margin: 0; }
+.pick { cursor: pointer; }
+.pick.disabled { opacity: .5; pointer-events: none; }

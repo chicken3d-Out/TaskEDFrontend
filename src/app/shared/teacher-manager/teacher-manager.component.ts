@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild, ElementRef, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -7,6 +7,7 @@ import { DriveUploadService, MAX_UPLOAD_BYTES } from '../../core/services/drive-
 import { AuthService } from '../../core/services/auth.service';
 import { PdsEditorService } from '../pds/pds-editor.service';
 import { FilePreviewService } from '../file-preview/file-preview.service';
+import { downloadDriveFile } from '../pds/pds-download';
 import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.component';
 
 // The Administrative Officer's workspace for one teacher: employment details,
@@ -34,27 +35,26 @@ import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.compo
           Your own copy, saved in <strong>your Google Drive</strong> under <em>TaskEd Files › {{ folderTeachers }} › {{ teacherName }}</em>.
           This is separate from the teacher's own My files.
         </p>
-        <div class="up">
-          <select [(ngModel)]="section" name="section">
-            @for (s of sections; track s) { <option>{{ s }}</option> }
-          </select>
-          <input [(ngModel)]="label" name="label" placeholder="Label, e.g. PDS 2026" maxlength="150" />
-          <input #fi type="file" (change)="onFile($event)" />
-          <button class="btn" type="button" [disabled]="busy || !file || !label.trim()" (click)="upload()">{{ busy ? 'Uploading…' : 'Upload' }}</button>
-        </div>
         @if (busy) { <div class="bar"><div class="fill" [style.width.%]="progress"></div></div> }
         @if (msg) { <p class="muted">{{ msg }}</p> }
         @if (error) { <p class="error">{{ error }}</p> }
         @if (view) {
           @for (s of sections; track s) {
-            <h3>{{ s }}</h3>
+            <div class="sechead">
+              <h3>{{ s }}</h3>
+              @if (s === 'PDS') {
+                <label class="btn pick" [class.disabled]="busy">Upload PDS<input type="file" accept=".xlsx" hidden (change)="openLocalPds($event)" /></label>
+              } @else {
+                <label class="btn pick" [class.disabled]="busy">Upload {{ s }}<input type="file" hidden (change)="uploadDirect($event, s)" /></label>
+              }
+            </div>
             @for (f of filesOf(s); track f.id) {
               <div class="frow">
                 <div><strong>{{ f.label }}</strong><small>Added {{ f.createdAt | date: 'MMM d, y' }}</small></div>
                 <div class="acts">
                   @if (s === 'PDS') { <button class="btn" type="button" (click)="editPds(f)">Edit</button> }
-                  <button class="btn secondary" type="button" (click)="preview.open(f.link, f.label)">Preview</button>
-                  <a class="btn secondary" [href]="f.link" target="_blank" rel="noopener noreferrer">Open</a>
+                  @else { <button class="btn secondary" type="button" (click)="preview.open(f.link, f.label)">Preview</button> }
+                  <button class="btn secondary" type="button" (click)="download(f, s)" [disabled]="busy">Download</button>
                   <button class="btn danger" type="button" (click)="remove(f.id, f.label)">Remove</button>
                 </div>
               </div>
@@ -73,6 +73,9 @@ import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.compo
     .tabs { display: flex; gap: .4rem; margin: 1rem 0; }
     .tabs button { border: 1px solid #e5e7eb; background: #fff; border-radius: 999px; padding: .4rem .9rem; font: inherit; cursor: pointer; }
     .tabs button.on { background: #15803d; color: #fff; border-color: #15803d; }
+    .sechead { display: flex; justify-content: space-between; align-items: center; gap: .6rem; margin-top: 1rem; }
+    .sechead h3 { margin: 0; }
+    .pick { cursor: pointer; } .pick.disabled { opacity: .5; pointer-events: none; }
     .up { display: flex; flex-wrap: wrap; gap: .5rem; margin: .6rem 0; }
     .up input[type=text], .up input:not([type]) { flex: 1; min-width: 160px; }
     .up select, .up input { padding: .5rem .6rem; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; }
@@ -92,7 +95,6 @@ export class TeacherManagerComponent implements OnInit {
 
   @Input({ required: true }) teacherId!: string;
   @Output() close = new EventEmitter<void>();
-  @ViewChild('fi') fi?: ElementRef<HTMLInputElement>;
 
   tab: 'profile' | 'files' = 'profile';
   view: TeacherFilesView | null = null;
@@ -120,33 +122,57 @@ export class TeacherManagerComponent implements OnInit {
 
   filesOf(s: string) { return (this.view?.files ?? []).filter((f) => f.section === s); }
 
-  onFile(ev: Event) {
-    const f = (ev.target as HTMLInputElement).files?.[0] ?? null;
-    this.error = '';
-    if (f && f.size > MAX_UPLOAD_BYTES) { this.error = 'That file is bigger than 25 MB.'; this.file = null; return; }
-    this.file = f;
-    if (f && !this.label.trim()) this.label = f.name.replace(/\.[^.]+$/, '');
+  private async saveFile(file: File | Blob, name: string, section: string) {
+    const token = await this.drive.accessToken(this.auth.currentUser()?.depedEmail);
+    this.msg = 'Preparing folders…';
+    const parent = await this.drive.ensurePath(token, [this.folderTeachers, this.teacherName || 'Teacher', section]);
+    this.msg = 'Uploading…';
+    const f = file instanceof File ? file : new File([file], name, { type: file.type });
+    const up = await this.drive.upload(token, parent, f, (p) => (this.progress = p));
+    await firstValueFrom(this.api.addTeacherFile(this.teacherId, section, name.replace(/\.[^.]+$/, ''), up.link));
+    this.load();
   }
 
-  async upload() {
-    if (!this.file || !this.label.trim() || this.busy || !this.view) return;
-    this.busy = true; this.error = ''; this.progress = 0; this.msg = 'Asking Google for permission…';
+  async uploadDirect(ev: Event, section: string) {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || this.busy) return;
+    this.error = '';
+    if (file.size > MAX_UPLOAD_BYTES) { this.error = 'That file is bigger than 25 MB.'; return; }
+    this.busy = true; this.progress = 0; this.msg = 'Asking Google for permission…';
     try {
-      const token = await this.drive.accessToken(this.auth.currentUser()?.depedEmail);
-      this.msg = 'Preparing folders…';
-      const parent = await this.drive.ensurePath(token, [this.folderTeachers, this.teacherName || 'Teacher', this.section]);
-      this.msg = 'Uploading…';
-      const up = await this.drive.upload(token, parent, this.file, (p) => (this.progress = p));
-      await firstValueFrom(this.api.addTeacherFile(this.teacherId, this.section, this.label.trim(), up.link));
+      await this.saveFile(file, file.name, section);
       this.msg = 'Saved to your Drive.';
-      this.label = ''; this.file = null;
-      if (this.fi) this.fi.nativeElement.value = '';
-      this.load();
     } catch (e: any) {
       this.msg = '';
       this.error = e?.error?.message ?? e?.message ?? 'Could not upload.';
     }
     this.busy = false;
+  }
+
+  // The PDS is read straight away so it can be corrected before it is saved.
+  openLocalPds(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    this.pds.open({
+      title: `${this.teacherName} – ${file.name}`,
+      fileName: file.name,
+      load: () => file.arrayBuffer(),
+      save: { label: 'Save to my Drive', run: async (blob, name) => { await this.saveFile(blob, name, 'PDS'); return 'Saved to your Drive.'; } },
+    });
+  }
+
+  async download(f: { link: string; label: string }, section: string) {
+    this.error = '';
+    try {
+      const token = await this.drive.accessToken(this.auth.currentUser()?.depedEmail);
+      await downloadDriveFile(this.drive, token, f.link, f.label, section === 'PDS');
+    } catch (e: any) {
+      this.error = e?.message ?? 'Could not download.';
+    }
   }
 
   editPds(f: { link: string; label: string }) {

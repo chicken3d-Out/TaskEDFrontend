@@ -98,6 +98,22 @@ export class DriveUploadService {
     return res.arrayBuffer();
   }
 
+  async fileName(token: string, fileId: string): Promise<string> {
+    const r = await this.api(token, `files/${fileId}?fields=name`);
+    return r?.name ?? 'file';
+  }
+
+  // Saves a Blob to the device.
+  static saveBlob(blob: Blob, name: string) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }
+
   // Replaces the content of a file TaskEd put in the person's Drive.
   async replaceContent(token: string, fileId: string, blob: Blob): Promise<void> {
     const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {

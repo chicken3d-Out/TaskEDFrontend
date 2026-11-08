@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import {
-  COUNTRY, DATE_ACCOMPLISHED_ALSO, FIELDS, QUESTIONS, RADIOS, SHEETS, SIGNATURE, TABLES, TableDef,
+  COUNTRY, FIELDS, QUESTIONS, RADIOS, SHEETS, SIGNATURE, TABLES, TableDef,
 } from './pds-schema';
 
 // Reads a CS Form 212 (Revised 2026) .xlsx into plain data and writes changes
@@ -31,6 +31,8 @@ export interface PdsPackage {
   dateOrder: Map<number, 'dmy' | 'mdy'>; // cell style index -> date order
   countries: string[];
   original: PdsData;
+  tables: TableDef[]; // table positions found in THIS file (rows differ between PDS copies)
+  dateRefs: { sheet: Sheet; ref: string }[]; // every "date accomplished" cell
 }
 
 export class PdsFormatError extends Error {}
@@ -276,7 +278,7 @@ export async function openPds(buf: ArrayBuffer): Promise<PdsPackage> {
     sheets[s] = { path, doc, ctrl };
   }
 
-  const pkg: PdsPackage = { zip, sheets, sst, dateOrder, countries: [], original: null as unknown as PdsData };
+  const pkg: PdsPackage = { zip, sheets, sst, dateOrder, countries: [], original: null as unknown as PdsData, tables: TABLES, dateRefs: [] };
 
   for (const sg of SIGNATURE) {
     if (!cellText(pkg, sg.sheet, sg.ref).toLowerCase().includes(sg.includes.toLowerCase())) {
@@ -287,9 +289,47 @@ export async function openPds(buf: ArrayBuffer): Promise<PdsPackage> {
     }
   }
 
+  resolveLayout(pkg);
   for (let r = COUNTRY.listFirst; r <= COUNTRY.listLast; r++) pkg.countries.push(cellText(pkg, 'C1', COUNTRY.listCol + r));
   pkg.original = readData(pkg);
   return pkg;
+}
+
+// ---------- layout detection ----------
+// Sheet C3 differs between PDS copies (rows are inserted or removed), so its
+// tables are located from their headings instead of fixed row numbers.
+function resolveLayout(pkg: PdsPackage) {
+  const tables: TableDef[] = TABLES.map((t) => ({ ...t, layout: t.layout ? { ...t.layout, merges: [...t.layout.merges] } : undefined }));
+  const dateRefs: { sheet: Sheet; ref: string }[] = [{ sheet: 'C1', ref: 'L61' }, { sheet: 'C2', ref: 'J42' }, { sheet: 'C4', ref: 'G64' }];
+  const txt = (r: number, col = 'A') => cellText(pkg, 'C3', col + r).trim();
+  const find = (from: number, test: (r: number) => boolean) => { for (let r = from; r <= 90; r++) if (test(r)) return r; return -1; };
+  const rVI = find(1, (r) => /^VI\./.test(txt(r)));
+  const rVII = find(1, (r) => /^VII\./.test(txt(r)));
+  const rVIII = find(1, (r) => /^VIII\./.test(txt(r)));
+  const rSig = find(1, (r) => /^SIGNATURE/i.test(txt(r)));
+  const cont = (from: number) => find(from + 1, (r) => /^\(continue/i.test(txt(r)));
+  const lastData = (_first: number, end: number) => end - 1;
+  const set = (id: string, first: number, last: number) => {
+    const t = tables.find((x) => x.id === id)!;
+    const off = t.layout ? t.layout.refRow - t.first : 0;
+    t.first = first; t.last = last;
+    if (t.layout) t.layout.refRow = Math.min(first + off, last);
+  };
+  if (rVI > 0 && rVII > rVI && rVIII > rVII && rSig > rVIII) {
+    const fromRow = (a: number) => find(a + 1, (r) => /^from$/i.test(txt(r, 'E')));
+    const f1 = fromRow(rVI) + 1, c1 = cont(f1);
+    const f2 = fromRow(rVII) + 1, c2 = cont(f2);
+    const f3 = rVIII + 2, c3 = cont(f3);
+    if (f1 > 1 && c1 > f1 && f2 > 1 && c2 > f2 && c3 > f3) {
+      set('learning', f1, lastData(f1, c1));
+      set('voluntary', f2, lastData(f2, c2));
+      for (const id of ['skills', 'distinctions', 'memberships']) set(id, f3, c3 - 1);
+      dateRefs.push({ sheet: 'C3', ref: 'I' + rSig });
+    }
+  }
+  if (dateRefs.length === 3) dateRefs.push({ sheet: 'C3', ref: 'I46' });
+  pkg.tables = tables;
+  pkg.dateRefs = dateRefs;
 }
 
 // ---------- read ----------
@@ -323,7 +363,7 @@ function readData(pkg: PdsPackage): PdsData {
   const idx = Number(cellText(pkg, 'C1', COUNTRY.linkRef)) || 0;
   const country = idx > 1 ? (pkg.countries[idx - 1] ?? '') : '';
   const tables: Record<string, Row[]> = {};
-  for (const t of TABLES) tables[t.id] = readTable(pkg, t);
+  for (const t of pkg.tables) tables[t.id] = readTable(pkg, t);
   const questions: PdsData['questions'] = {};
   for (const q of QUESTIONS) {
     const yes = isTrue(cellText(pkg, 'C4', q.yes)), no = isTrue(cellText(pkg, 'C4', q.no));
@@ -422,10 +462,12 @@ export async function buildPds(pkg: PdsPackage, data: PdsData): Promise<Blob> {
     if (data.fields[f.id] === orig.fields[f.id]) continue;
     const v = (data.fields[f.id] ?? '').trim();
     setCell(pkg.sheets[f.sheet].doc, f.ref, asValue(v, f.num));
-    if (f.id === 'dateAccomplished') {
-      for (const x of DATE_ACCOMPLISHED_ALSO) setCell(pkg.sheets[x.sheet].doc, x.ref, v);
-    }
   }
+
+  // The date accomplished (page 1 and the date under each signature) is always the day it is saved/downloaded.
+  const d = new Date();
+  const today = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
+  for (const x of pkg.dateRefs) setCell(pkg.sheets[x.sheet].doc, x.ref, today);
 
   for (const r of RADIOS) {
     if (data.radios[r.id] === orig.radios[r.id]) continue;
@@ -440,8 +482,8 @@ export async function buildPds(pkg: PdsPackage, data: PdsData): Promise<Blob> {
     sh.ctrl[COUNTRY.linkRef]?.doc.documentElement.setAttribute('sel', String(idx));
   }
 
-  for (const t of TABLES) {
-    if (same(data.tables[t.id], orig.tables[t.id])) continue;
+  for (const t of pkg.tables) {
+    if (!t.marker && same(data.tables[t.id], orig.tables[t.id])) continue; // marker tables are always re-written so "*** NOTHING FOLLOWS ***" follows the last entry
     const cap = t.last - t.first + 1;
     if ((data.tables[t.id] ?? []).length > cap) warnings.push(`${t.title}: only ${cap} rows fit on the form.`);
     writeTable(pkg, t, data.tables[t.id] ?? []);
