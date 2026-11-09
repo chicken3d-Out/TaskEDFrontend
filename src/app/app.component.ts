@@ -1,4 +1,5 @@
 import { PdsEditorComponent } from './shared/pds/pds-editor.component';
+import { PdsPreviewComponent } from './shared/pds/pds-preview.component';
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { LegalModalComponent } from './shared/legal/legal-modal.component';
@@ -10,7 +11,7 @@ import { AuthService } from './core/services/auth.service';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, LegalModalComponent, FilePreviewComponent, PdsEditorComponent],
+  imports: [RouterOutlet, LegalModalComponent, FilePreviewComponent, PdsEditorComponent, PdsPreviewComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })

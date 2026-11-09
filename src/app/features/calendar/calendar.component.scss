@@ -245,3 +245,6 @@ label {
 
 .note-btn { background: #ea580c; border-color: #ea580c; }
 .note-btn:hover:not(:disabled) { background: #c2410c; border-color: #c2410c; }
+.day-modal { max-height: 90vh; overflow-y: auto; }
+.day-list { display: flex; flex-direction: column; gap: .5rem; }
+.day-form { display: flex; flex-direction: column; gap: .6rem; border-top: 1px solid var(--border, #e2e8f0); padding-top: .8rem; }

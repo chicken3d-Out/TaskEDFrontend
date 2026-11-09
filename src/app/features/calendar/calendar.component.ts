@@ -72,10 +72,17 @@ export class CalendarComponent implements OnInit, OnDestroy {
   noteError: string | null = null;
   editingNote: string | null = null;
   noteOpen = false;
+  dayOpen = false;
 
   openNote() {
     this.cancelNote();
+    this.dayOpen = true;
     this.noteOpen = true;
+  }
+
+  closeDay() {
+    this.cancelNote();
+    this.dayOpen = false;
   }
 
   private ymd(d: Date) {
@@ -188,7 +195,8 @@ export class CalendarComponent implements OnInit, OnDestroy {
   selectDay(date: Date) {
     this.selectedDate = date;
     this.expandedId = null;
-    if (this.editingNote) this.cancelNote();
+    this.dayOpen = true;
+    if (this.editingNote || this.noteOpen) this.cancelNote();
     // Pre-fill the form with the clicked day (9:00 AM) for managers.
     const d = new Date(date);
     d.setHours(9, 0, 0, 0);

@@ -125,29 +125,52 @@
   }
 </div>
 
-@if (noteOpen) {
-  <div class="note-backdrop" (click)="cancelNote()">
-    <form class="note-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()" (ngSubmit)="saveNote()">
+@if (dayOpen) {
+  <div class="note-backdrop" (click)="closeDay()">
+    <div class="note-modal day-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
       <div class="nm-head">
-        <strong>{{ editingNote ? 'Edit note' : 'New note' }} · {{ selectedDate | date: 'EEEE, MMM d' }}</strong>
-        <button type="button" class="nm-x" (click)="cancelNote()" aria-label="Close"><app-icon name="x" [size]="20" /></button>
+        <strong>
+          @if (selectedIsToday) { Today · }
+          {{ selectedDate | date: 'EEEE, MMMM d, y' }}
+        </strong>
+        <button type="button" class="nm-x" (click)="closeDay()" aria-label="Close"><app-icon name="x" [size]="20" /></button>
       </div>
-      <p class="muted nm-sub">Only you can see your notes. They show in orange on your calendar.</p>
-      <label>
-        Title
-        <input name="nt" [(ngModel)]="noteTitle" placeholder="e.g. Submit SIP to AO" maxlength="200" autofocus />
-      </label>
-      <label>
-        Details (optional)
-        <textarea name="nb" [(ngModel)]="noteBody" rows="3" placeholder="Anything you want to remember"></textarea>
-      </label>
-      @if (noteError) { <p class="error">{{ noteError }}</p> }
-      <div class="note-actions">
-        <button class="btn note-btn" type="submit" [disabled]="!noteTitle.trim() || noteBusy">
-          {{ noteBusy ? 'Saving…' : editingNote ? 'Save changes' : 'Add note' }}
-        </button>
-        <button class="btn secondary" type="button" (click)="cancelNote()">Cancel</button>
+
+      <div class="day-list">
+        @if (dayEvents.length === 0) { <p class="empty">Nothing on this day.</p> }
+        @for (event of dayEvents; track event.id) {
+          <ng-container [ngTemplateOutlet]="details" [ngTemplateOutletContext]="{ $implicit: event }" />
+        }
       </div>
-    </form>
+
+      @if (noteOpen) {
+        <form class="day-form" (ngSubmit)="saveNote()">
+          <strong>{{ editingNote ? 'Edit note' : 'Add a note' }}</strong>
+          <p class="muted nm-sub">Only you can see your notes. They show in orange on your calendar.</p>
+          <label>
+            Title
+            <input name="nt" [(ngModel)]="noteTitle" placeholder="e.g. Submit SIP to AO" maxlength="200" autofocus />
+          </label>
+          <label>
+            Details (optional)
+            <textarea name="nb" [(ngModel)]="noteBody" rows="3" placeholder="Anything you want to remember"></textarea>
+          </label>
+          @if (noteError) { <p class="error">{{ noteError }}</p> }
+          <div class="note-actions">
+            <button class="btn note-btn" type="submit" [disabled]="!noteTitle.trim() || noteBusy">
+              {{ noteBusy ? 'Saving…' : editingNote ? 'Save changes' : 'Add note' }}
+            </button>
+            <button class="btn secondary" type="button" (click)="cancelNote()">Cancel</button>
+          </div>
+        </form>
+      } @else {
+        <div class="note-actions">
+          <button class="btn note-btn" type="button" (click)="noteOpen = true">
+            <app-icon name="plus" [size]="16" /> Add a note
+          </button>
+          <button class="btn secondary" type="button" (click)="closeDay()">Close</button>
+        </div>
+      }
+    </div>
   </div>
 }

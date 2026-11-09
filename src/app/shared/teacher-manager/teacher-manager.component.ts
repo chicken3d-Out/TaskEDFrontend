@@ -6,6 +6,7 @@ import { HrProfileService, TeacherFilesView } from '../../core/services/hr-profi
 import { DriveUploadService, MAX_UPLOAD_BYTES } from '../../core/services/drive-upload.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PdsEditorService } from '../pds/pds-editor.service';
+import { PdsPreviewService } from '../pds/pds-preview.service';
 import { FilePreviewService } from '../file-preview/file-preview.service';
 import { downloadDriveFile } from '../pds/pds-download';
 import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.component';
@@ -95,6 +96,7 @@ export class TeacherManagerComponent implements OnInit {
   private auth = inject(AuthService);
   preview = inject(FilePreviewService);
   pds = inject(PdsEditorService);
+  private previewSvc = inject(PdsPreviewService);
 
   @Input({ required: true }) teacherId!: string;
   @Output() close = new EventEmitter<void>();
@@ -182,6 +184,14 @@ export class TeacherManagerComponent implements OnInit {
     const id = DriveUploadService.fileId(f.link);
     if (!id) { this.error = 'This entry has no Google Drive file to open.'; return; }
     const email = this.auth.currentUser()?.depedEmail;
+    if (readOnly) {
+      this.previewSvc.open({
+        title: `${this.teacherName} – ${f.label}`,
+        load: async () => this.drive.download(await this.drive.accessToken(email), id),
+        download: () => this.download(f as any, 'PDS'),
+      });
+      return;
+    }
     this.pds.open({
       title: `${this.teacherName} – ${f.label}`,
       readOnly,

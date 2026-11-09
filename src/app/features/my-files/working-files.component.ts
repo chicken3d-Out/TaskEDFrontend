@@ -8,6 +8,7 @@ import { FilePreviewService } from '../../shared/file-preview/file-preview.servi
 import { AuthService } from '../../core/services/auth.service';
 import { downloadDriveFile } from '../../shared/pds/pds-download';
 import { PdsEditorService } from '../../shared/pds/pds-editor.service';
+import { PdsPreviewService } from '../../shared/pds/pds-preview.service';
 import { DriveUploadService, MAX_UPLOAD_BYTES } from '../../core/services/drive-upload.service';
 
 export const WORKING_TYPES = ['PDS', 'Service Record', 'Service Credit', 'SALN', 'Other'];
@@ -63,6 +64,7 @@ export class WorkingFilesComponent implements OnInit {
   private auth = inject(AuthService);
   preview = inject(FilePreviewService);
   pds = inject(PdsEditorService);
+  private previewSvc = inject(PdsPreviewService);
 
   types = WORKING_TYPES;
   files: MyFile[] = [];
@@ -123,6 +125,14 @@ export class WorkingFilesComponent implements OnInit {
     const id = DriveUploadService.fileId(f.link);
     if (!id) { this.error = 'This entry has no Google Drive file to open.'; return; }
     const email = this.auth.currentUser()?.depedEmail;
+    if (readOnly) {
+      this.previewSvc.open({
+        title: f.label,
+        load: async () => this.drive.download(await this.drive.accessToken(email), id),
+        download: () => this.download(f, 'PDS'),
+      });
+      return;
+    }
     this.pds.open({
       title: f.label,
       readOnly,
