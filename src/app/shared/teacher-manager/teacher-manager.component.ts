@@ -6,6 +6,7 @@ import { HrProfileService, TeacherFilesView } from '../../core/services/hr-profi
 import { DriveUploadService, MAX_UPLOAD_BYTES } from '../../core/services/drive-upload.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PdsEditorService } from '../pds/pds-editor.service';
+import { SalnEditorService } from '../saln/saln-editor.service';
 import { PdsPreviewService } from '../pds/pds-preview.service';
 import { FilePreviewService } from '../file-preview/file-preview.service';
 import { downloadDriveFile } from '../pds/pds-download';
@@ -45,6 +46,8 @@ import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.compo
               <h3>{{ s }}</h3>
               @if (s === 'PDS') {
                 <label class="btn pick" [class.disabled]="busy">Upload PDS<input type="file" accept=".xlsx" hidden (change)="openLocalPds($event)" /></label>
+              } @else if (s === 'SALN') {
+                <label class="btn pick" [class.disabled]="busy">Upload SALN<input type="file" accept=".docx" hidden (change)="openLocalSaln($event)" /></label>
               } @else {
                 <label class="btn pick" [class.disabled]="busy">Upload {{ s }}<input type="file" hidden (change)="uploadDirect($event, s)" /></label>
               }
@@ -56,6 +59,10 @@ import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.compo
                   @if (s === 'PDS') {
                     <button class="btn secondary" type="button" (click)="editPds(f, true)">Preview</button>
                     <button class="btn" type="button" (click)="editPds(f)">Edit</button>
+                  }
+                  @else if (s === 'SALN') {
+                    <button class="btn secondary" type="button" (click)="editSaln(f, true)">Preview</button>
+                    <button class="btn" type="button" (click)="editSaln(f)">Edit</button>
                   }
                   @else { <button class="btn secondary" type="button" (click)="preview.open(f.link, f.label)">Preview</button> }
                   <button class="btn secondary" type="button" (click)="download(f, s)" [disabled]="busy">Download</button>
@@ -97,6 +104,7 @@ export class TeacherManagerComponent implements OnInit {
   preview = inject(FilePreviewService);
   pds = inject(PdsEditorService);
   private previewSvc = inject(PdsPreviewService);
+  saln = inject(SalnEditorService);
 
   @Input({ required: true }) teacherId!: string;
   @Output() close = new EventEmitter<void>();
@@ -174,10 +182,40 @@ export class TeacherManagerComponent implements OnInit {
     this.error = '';
     try {
       const token = await this.drive.accessToken(this.auth.currentUser()?.depedEmail);
-      await downloadDriveFile(this.drive, token, f.link, f.label, section === 'PDS');
+      await downloadDriveFile(this.drive, token, f.link, f.label, section === 'PDS' ? 'pds' : section === 'SALN' ? 'saln' : false);
     } catch (e: any) {
       this.error = e?.message ?? 'Could not download.';
     }
+  }
+
+  openLocalSaln(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    this.saln.open({
+      title: `${this.teacherName} – ${file.name}`,
+      fileName: file.name,
+      load: () => file.arrayBuffer(),
+      save: { label: 'Save to my Drive', run: async (blob, name) => { await this.saveFile(blob, name, 'SALN'); return 'Saved to your Drive.'; } },
+    });
+  }
+
+  editSaln(f: { link: string; label: string }, readOnly = false) {
+    const id = DriveUploadService.fileId(f.link);
+    if (!id) { this.error = 'This entry has no Google Drive file to open.'; return; }
+    const email = this.auth.currentUser()?.depedEmail;
+    const load = async () => this.drive.download(await this.drive.accessToken(email), id);
+    if (readOnly) {
+      this.previewSvc.open({ title: `${this.teacherName} – ${f.label}`, kind: 'saln', load, download: () => this.download(f, 'SALN') });
+      return;
+    }
+    this.saln.open({
+      title: `${this.teacherName} – ${f.label}`,
+      fileName: `${f.label}.docx`,
+      load,
+      save: { label: 'Save to my Drive', run: async (blob) => { await this.drive.replaceContent(await this.drive.accessToken(email), id, blob); return 'Saved to your Google Drive.'; } },
+    });
   }
 
   editPds(f: { link: string; label: string }, readOnly = false) {

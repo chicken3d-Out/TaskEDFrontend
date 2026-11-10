@@ -8,6 +8,7 @@ import { FilePreviewService } from '../../shared/file-preview/file-preview.servi
 import { AuthService } from '../../core/services/auth.service';
 import { downloadDriveFile } from '../../shared/pds/pds-download';
 import { PdsEditorService } from '../../shared/pds/pds-editor.service';
+import { SalnEditorService } from '../../shared/saln/saln-editor.service';
 import { PdsPreviewService } from '../../shared/pds/pds-preview.service';
 import { DriveUploadService, MAX_UPLOAD_BYTES } from '../../core/services/drive-upload.service';
 
@@ -34,11 +35,14 @@ export const WORKING_TYPES = ['PDS', 'Service Record', 'Service Credit', 'SALN',
           <h3>{{ t }}</h3>
           @if (t === 'PDS') {
             <label class="btn pick" [class.disabled]="saving">Upload PDS<input type="file" accept=".xlsx" hidden (change)="openLocalPds($event)" /></label>
+          } @else if (t === 'SALN') {
+            <label class="btn pick" [class.disabled]="saving">Upload SALN<input type="file" accept=".docx" hidden (change)="openLocalSaln($event)" /></label>
           } @else {
             <label class="btn pick" [class.disabled]="saving">Upload {{ t }}<input type="file" hidden (change)="uploadDirect($event, t)" /></label>
           }
         </div>
         @if (t === 'PDS') { <p class="muted">Upload your filled PDS (CS Form 212, Revised 2026 .xlsx). TaskEd reads it into simple sections you can edit, then saves it back into the official form.</p> }
+        @if (t === 'SALN') { <p class="muted">Upload your filled SALN (the 2025 SALN Form, .docx). TaskEd reads it into simple sections you can edit, computes the totals, and saves it back into the official form. The date beside your signature is the day you download or save. The "subscribed and sworn" part is left for the administering officer.</p> }
         @for (f of filesOf(t); track f.id) {
           <div class="frow">
             <div class="info"><strong>{{ f.label }}</strong><small>Added {{ f.createdAt | date: 'MMM d, y' }}</small></div>
@@ -46,6 +50,10 @@ export const WORKING_TYPES = ['PDS', 'Service Record', 'Service Credit', 'SALN',
               @if (t === 'PDS') {
                 <button class="btn secondary" type="button" (click)="editPds(f, true)">Preview</button>
                 <button class="btn" type="button" (click)="editPds(f)">Edit</button>
+              }
+              @else if (t === 'SALN') {
+                <button class="btn secondary" type="button" (click)="editSaln(f, true)">Preview</button>
+                <button class="btn" type="button" (click)="editSaln(f)">Edit</button>
               }
               @else { <button class="btn secondary" type="button" (click)="preview.open(f.link, f.label)">Preview</button> }
               <button class="btn secondary" type="button" (click)="download(f, t)" [disabled]="saving">Download</button>
@@ -65,6 +73,7 @@ export class WorkingFilesComponent implements OnInit {
   preview = inject(FilePreviewService);
   pds = inject(PdsEditorService);
   private previewSvc = inject(PdsPreviewService);
+  saln = inject(SalnEditorService);
 
   types = WORKING_TYPES;
   files: MyFile[] = [];
@@ -112,7 +121,7 @@ export class WorkingFilesComponent implements OnInit {
     this.saving = true; this.msg = 'Preparing the download…';
     try {
       const token = await this.drive.accessToken(this.auth.currentUser()?.depedEmail);
-      await downloadDriveFile(this.drive, token, f.link, f.label, type === 'PDS');
+      await downloadDriveFile(this.drive, token, f.link, f.label, type === 'PDS' ? 'pds' : type === 'SALN' ? 'saln' : false);
       this.msg = '';
     } catch (e: any) {
       this.msg = '';
@@ -139,6 +148,48 @@ export class WorkingFilesComponent implements OnInit {
       fileName: `${f.label}.xlsx`,
       load: async () => this.drive.download(await this.drive.accessToken(email), id),
       save: { label: 'Save to my Drive', run: async (blob) => { await this.drive.replaceContent(await this.drive.accessToken(email), id, blob); return 'Saved to your Google Drive.'; } },
+    });
+  }
+
+  editSaln(f: MyFile, readOnly = false) {
+    const id = DriveUploadService.fileId(f.link);
+    if (!id) { this.error = 'This entry has no Google Drive file to open.'; return; }
+    const email = this.auth.currentUser()?.depedEmail;
+    const load = async () => this.drive.download(await this.drive.accessToken(email), id);
+    if (readOnly) {
+      this.previewSvc.open({ title: f.label, kind: 'saln', load, download: () => this.download(f, 'SALN') });
+      return;
+    }
+    this.saln.open({
+      title: f.label,
+      fileName: `${f.label}.docx`,
+      load,
+      save: { label: 'Save to my Drive', run: async (blob) => { await this.drive.replaceContent(await this.drive.accessToken(email), id, blob); return 'Saved to your Google Drive.'; } },
+    });
+  }
+
+  openLocalSaln(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    const email = this.auth.currentUser()?.depedEmail;
+    const base = file.name.replace(/\.docx$/i, '');
+    this.saln.open({
+      title: file.name,
+      fileName: file.name,
+      load: () => file.arrayBuffer(),
+      save: {
+        label: 'Save a copy to my Drive',
+        run: async (blob, name) => {
+          const token = await this.drive.accessToken(email);
+          const parent = await this.drive.ensurePath(token, ['Working Directory', 'SALN']);
+          const up = await this.drive.upload(token, parent, new File([blob], name, { type: blob.type }), () => {});
+          await firstValueFrom(this.api.add(base, 'SALN', up.link, this.currentYear, 'working'));
+          this.load();
+          return 'Saved to your Google Drive (Working Directory › SALN).';
+        },
+      },
     });
   }
 

@@ -4,6 +4,7 @@ export interface PdsPreviewRequest {
   title: string;
   load: () => Promise<ArrayBuffer>;
   download?: () => Promise<void>;
+  kind?: 'xlsx' | 'saln'; // saln = Word document
 }
 
 @Injectable({ providedIn: 'root' })
