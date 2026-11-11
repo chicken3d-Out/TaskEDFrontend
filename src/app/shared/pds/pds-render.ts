@@ -144,8 +144,10 @@ function formatNumber(n: number, code: string | undefined, id: number): string {
     const { y, m, d } = serialToDate(n);
     const pad = (v: number) => String(v).padStart(2, '0');
     if (code && id >= 164) {
-      return code.replace(/"[^"]*"|\\.|\[[^\]]*\]/g, '').replace(/yyyy|yy|mmmm|mmm|mm|m|dd|d/gi, (t) => {
-        const k = t.toLowerCase();
+      return code.split(';')[0].replace(/"([^"]*)"|\\(.)|\[[^\]]*\]|_.|yyyy|yy|mmmm|mmm|mm|m|dd|d|@/gi, (tok: string, q?: string, esc?: string) => {
+        if (q !== undefined) return q;
+        if (esc !== undefined) return esc;
+        const k = tok.toLowerCase();
         if (k === 'yyyy') return String(y);
         if (k === 'yy') return pad(y % 100);
         if (k === 'mmmm') return MONTHS[m - 1];
@@ -153,7 +155,8 @@ function formatNumber(n: number, code: string | undefined, id: number): string {
         if (k === 'mm') return pad(m);
         if (k === 'm') return String(m);
         if (k === 'dd') return pad(d);
-        return String(d);
+        if (k === 'd') return String(d);
+        return '';
       });
     }
     return `${pad(m)}/${pad(d)}/${y}`;
@@ -262,7 +265,7 @@ export async function renderPdsPages(buf: ArrayBuffer): Promise<PdsPage[]> {
     ranges.push([start, r2]);
 
     // controls (tick boxes, drop-down) and text boxes, by cell anchors
-    interface Over { col: number; colOff: number; row: number; rowOff: number; col2: number; colOff2: number; row2: number; rowOff2: number; html: string; label?: string }
+    interface Over { col: number; colOff: number; row: number; rowOff: number; col2: number; colOff2: number; row2: number; rowOff2: number; html: string; label?: string; pic?: boolean }
     const overlays: Over[] = [];
     const vmlRel = Array.from(rels.values()).find((r) => r.type.endsWith('/vmlDrawing'));
     const vml = vmlRel ? await text(zip, vmlRel.target) : '';
@@ -305,9 +308,28 @@ export async function renderPdsPages(buf: ArrayBuffer): Promise<PdsPage[]> {
     const drRel = Array.from(rels.values()).find((r) => r.type.endsWith('/drawing'));
     if (drRel) {
       const dd = parse(await text(zip, drRel.target));
+      const drRels = await relsOf(zip, drRel.target);
       for (const anc of Array.from(dd.documentElement.children)) {
         const sp = Array.from(anc.children).find((c) => c.localName === 'sp');
         const from = kid(anc, 'from'), to = kid(anc, 'to');
+        const pic = Array.from(anc.children).find((c) => c.localName === 'pic');
+        if (pic && from && to) {
+          const blip = pic.getElementsByTagNameNS(A, 'blip')[0];
+          const emb = blip?.getAttributeNS(REL, 'embed');
+          const target = emb ? drRels.get(emb)?.target : '';
+          const file = target ? zip.file(target) : null;
+          if (file) {
+            const b64 = await file.async('base64');
+            const ext = (target ?? '').toLowerCase().endsWith('png') ? 'png' : 'jpeg';
+            const gg = (e: Element, n: string) => Number(kid(e, n)?.textContent ?? 0);
+            overlays.push({
+              col: gg(from, 'col') + 1, colOff: gg(from, 'colOff') / EMU, row: gg(from, 'row') + 1, rowOff: gg(from, 'rowOff') / EMU,
+              col2: gg(to, 'col') + 1, colOff2: gg(to, 'colOff') / EMU, row2: gg(to, 'row') + 1, rowOff2: gg(to, 'rowOff') / EMU,
+              html: `<img src="data:image/${ext};base64,${b64}" style="width:100%;height:100%;object-fit:contain" alt="">`, pic: true,
+            });
+          }
+          continue;
+        }
         if (!sp || !from || !to) continue;
         const paras = Array.from(sp.getElementsByTagNameNS(A, 'p')).map((p) => Array.from(p.getElementsByTagNameNS(A, 't')).map((t) => t.textContent).join(''));
         const t = paras.join('\n').trim();
@@ -377,6 +399,11 @@ export async function renderPdsPages(buf: ArrayBuffer): Promise<PdsPage[]> {
         const x = (lefts.get(o.col) ?? 0) + o.colOff;
         const y = (tops.get(o.row) ?? 0) + o.rowOff;
         const x2 = (lefts.get(Math.min(o.col2, c2 + 1)) ?? totalW) + o.colOff2;
+        if (o.pic) {
+          const y2 = (tops.get(Math.min(o.row2, rb)) ?? totalH) + o.rowOff2;
+          html += `<div class="ov" style="left:${x}px;top:${y}px;width:${Math.max(12, x2 - x)}px;height:${Math.max(12, y2 - y)}px">${o.html}</div>`;
+          continue;
+        }
         html += `<div class="ov" style="left:${x}px;top:${y}px;width:${Math.max(12, x2 - x)}px">${o.html}</div>`;
       }
       pages.push({

@@ -1,5 +1,6 @@
 import { PdsEditorComponent } from './shared/pds/pds-editor.component';
 import { PdsPreviewComponent } from './shared/pds/pds-preview.component';
+import { SrEditorComponent } from './shared/service-record/sr-editor.component';
 import { SalnEditorComponent } from './shared/saln/saln-editor.component';
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
@@ -12,7 +13,7 @@ import { AuthService } from './core/services/auth.service';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, LegalModalComponent, FilePreviewComponent, PdsEditorComponent, PdsPreviewComponent, SalnEditorComponent],
+  imports: [RouterOutlet, LegalModalComponent, FilePreviewComponent, PdsEditorComponent, PdsPreviewComponent, SalnEditorComponent, SrEditorComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
