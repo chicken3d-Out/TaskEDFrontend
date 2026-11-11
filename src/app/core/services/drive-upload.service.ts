@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment';
 
 declare const google: any;
@@ -24,8 +25,27 @@ export interface UploadedFile {
 @Injectable({ providedIn: 'root' })
 export class DriveUploadService {
   private http = inject(HttpClient);
+  private auth = inject(AuthService);
   private clientId: string | null = null;
-  private token: { value: string; until: number } | null = null;
+  // The Google token lives only in this browser (never sent to our server). Keeping it for its
+  // lifetime means a page refresh or a second Edit does not open the Google window again.
+  private tokenValue: { value: string; until: number } | null = null;
+  private get token(): { value: string; until: number } | null {
+    if (!this.tokenValue) {
+      try {
+        const raw = localStorage.getItem('tasked_drive_token');
+        if (raw) this.tokenValue = JSON.parse(raw);
+      } catch { /* storage unavailable */ }
+    }
+    return this.tokenValue;
+  }
+  private set token(v: { value: string; until: number } | null) {
+    this.tokenValue = v;
+    try {
+      if (v) localStorage.setItem('tasked_drive_token', JSON.stringify(v));
+      else localStorage.removeItem('tasked_drive_token');
+    } catch { /* storage unavailable */ }
+  }
   private scriptLoad?: Promise<void>;
   private folderCache = new Map<string, string>();
 
@@ -60,7 +80,7 @@ export class DriveUploadService {
       const client = google.accounts.oauth2.initTokenClient({
         client_id: this.clientId,
         scope: SCOPE,
-        hint: emailHint || undefined,
+        hint: emailHint || this.auth.currentUser()?.depedEmail || undefined,
         callback: (r: any) => {
           if (r?.error || !r?.access_token) {
             reject(new Error(r?.error === 'access_denied' ? 'Permission was not given, so nothing was uploaded.' : 'Could not get permission from Google.'));
@@ -71,7 +91,8 @@ export class DriveUploadService {
         },
         error_callback: () => reject(new Error('The Google window was closed before permission was given.')),
       });
-      client.requestAccessToken({ prompt: this.token ? '' : undefined });
+      // prompt '' = no account chooser and no consent screen unless Google truly needs one
+      client.requestAccessToken({ prompt: '' });
     });
   }
 
