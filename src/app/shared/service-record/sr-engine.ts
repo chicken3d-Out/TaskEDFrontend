@@ -27,8 +27,7 @@ export const FIELDS: FieldDef[] = [
   { id: 'mi', label: 'M.I.', section: 'employee' },
   { id: 'birthDate', label: 'Date of birth', section: 'employee', type: 'date' },
   { id: 'birthPlace', label: 'Place of birth', section: 'employee' },
-  { id: 'purpose1', label: 'Issued for the following purposes (line 1)', section: 'cert', wide: true },
-  { id: 'purpose2', label: 'Issued for the following purposes (line 2)', section: 'cert', wide: true },
+  { id: 'purpose1', label: 'Issued for the following purposes (one line, centered)', section: 'cert', wide: true },
   { id: 'preparedName', label: 'Prepared by – name', section: 'cert' },
   { id: 'preparedPos', label: 'Prepared by – position', section: 'cert' },
   { id: 'verifiedName', label: 'Verified & checked by – name', section: 'cert' },
@@ -52,7 +51,7 @@ export const COLS: { key: string; label: string; type?: 'date' | 'dateOrPresent'
 
 const CELL: Record<string, string> = {
   employeeNo: 'I11', surname: 'B13', first: 'D13', mi: 'F13', birthDate: 'B16', birthPlace: 'D16',
-  purpose1: 'E31', purpose2: 'E32',
+  purpose1: 'E31',
   preparedName: 'A37', preparedPos: 'A38', verifiedName: 'H37', verifiedPos: 'H38',
   certName: 'F45', certPos: 'F46', certExtra1: 'F48', certExtra2: 'F49',
 };
@@ -167,7 +166,7 @@ function lastTableRow(pkg: SrPackage): number {
 function findPurposeRow(pkg: SrPackage): number {
   for (const r of kids(sheetData(pkg.doc), 'row')) {
     const n = Number(r.getAttribute('r'));
-    if (n >= FIRST && /ISSUED FOR THE FOLLOWING/i.test(readCell(pkg, `E${n}`).text)) return n;
+    if (n >= FIRST && (/ISSUED FOR THE FOLLOWING/i.test(readCell(pkg, `E${n}`).text) || /ISSUED FOR THE FOLLOWING/i.test(readCell(pkg, `A${n}`).text))) return n;
   }
   return FIRST + CAP;
 }
@@ -183,8 +182,7 @@ export function readSr(pkg: SrPackage): SrData {
   }
   // purposes sit on the two rows after the label row
   const pr = findPurposeRow(pkg);
-  fields['purpose1'] = readCell(pkg, `E${pr + 1}`).text.trim();
-  fields['purpose2'] = readCell(pkg, `E${pr + 2}`).text.trim();
+  fields['purpose1'] = [`A${pr + 1}`, `E${pr + 1}`, `E${pr + 2}`].map((r) => readCell(pkg, r).text.trim()).filter(Boolean).join(' ');
   const rows: Row[] = [];
   for (let r = FIRST; r <= lastTableRow(pkg); r++) {
     const row: Row = {};
@@ -240,6 +238,48 @@ function ensureLines(pkg: SrPackage, need: number) {
   if (mcs) mcs.setAttribute('count', String(els(pkg.doc, 'mergeCell').length));
 }
 
+// "Issued for the following purposes" and its text go on one line, centered
+// across the whole table; long text shrinks to fit instead of wrapping.
+async function centerPurposes(pkg: SrPackage, pr: number, text: string) {
+  const doc = pkg.doc;
+  const stylesPath = 'xl/styles.xml';
+  const holder = pkg as unknown as { origStyles?: string };
+  holder.origStyles ??= await pkg.zip.file(stylesPath)!.async('string');
+  const sdoc = new DOMParser().parseFromString(holder.origStyles, 'application/xml');
+  const xfs = els(sdoc, 'cellXfs')[0];
+  const make = (baseRef: string, shrink: boolean) => {
+    const base = Number(cellEl(doc, baseRef)?.getAttribute('s') ?? 0);
+    const xf = kids(xfs, 'xf')[base].cloneNode(true) as Element;
+    for (const a of kids(xf, 'alignment')) xf.removeChild(a);
+    const al = sdoc.createElementNS(MAIN, 'alignment');
+    al.setAttribute('horizontal', 'center');
+    al.setAttribute('vertical', 'center');
+    if (shrink) al.setAttribute('shrinkToFit', '1');
+    xf.appendChild(al);
+    xf.setAttribute('applyAlignment', '1');
+    xfs.appendChild(xf);
+    xfs.setAttribute('count', String(kids(xfs, 'xf').length));
+    return String(kids(xfs, 'xf').length - 1);
+  };
+  const header = readCell(pkg, `E${pr}`).text || readCell(pkg, `A${pr}`).text || 'ISSUED FOR THE FOLLOWING PURPOSES:';
+  const hs = make(`E${pr}`, false);
+  const ts = make(`E${pr + 1}`, true);
+  for (const c of ['E', 'A']) for (const r of [pr, pr + 1, pr + 2]) writeCell(doc, `${c}${r}`, null);
+  writeCell(doc, `A${pr}`, header);
+  cellEl(doc, `A${pr}`, true)!.setAttribute('s', hs);
+  writeCell(doc, `A${pr + 1}`, text);
+  cellEl(doc, `A${pr + 1}`, true)!.setAttribute('s', ts);
+  const mcs = els(doc, 'mergeCells')[0];
+  if (mcs) {
+    for (const r of [pr, pr + 1]) {
+      const ref = `A${r}:J${r}`;
+      if (!els(doc, 'mergeCell').some((m) => m.getAttribute('ref') === ref)) { const mc = doc.createElementNS(MAIN, 'mergeCell'); mc.setAttribute('ref', ref); mcs.appendChild(mc); }
+    }
+    mcs.setAttribute('count', String(els(doc, 'mergeCell').length));
+  }
+  pkg.zip.file(stylesPath, new XMLSerializer().serializeToString(sdoc));
+}
+
 // ---------- build ----------
 export async function buildSr(pkg: SrPackage, data: SrData, today = new Date()): Promise<Blob> {
   const xml = new XMLSerializer().serializeToString(pkg.doc);
@@ -253,14 +293,13 @@ export async function buildSr(pkg: SrPackage, data: SrData, today = new Date()):
 
   const f = data.fields;
   for (const [k, ref] of Object.entries(CELL)) {
-    if (k === 'purpose1' || k === 'purpose2') continue;
+    if (k === 'purpose1') continue;
     const v = (f[k] ?? '').trim();
     if (k === 'birthDate') writeCell(doc, ref, ISO.test(v) ? serial(v) : v);
     else if (k === 'employeeNo') writeCell(doc, at(ref), /^\d+$/.test(v) ? Number(v) : v);
     else writeCell(doc, at(ref), v);
   }
-  writeCell(doc, `E${pr + 1}`, (f['purpose1'] ?? '').trim());
-  writeCell(doc, `E${pr + 2}`, (f['purpose2'] ?? '').trim());
+  await centerPurposes(work, pr, (f['purpose1'] ?? '').trim());
 
   const total = lastTableRow(work);
   // the Separation column (date + cause) is one merged cell on every line

@@ -68,7 +68,7 @@ function tint(hex: string, t: number) {
 interface Edge { style: string; color: string }
 interface Xf {
   numFmt: number; font: number; fill: number; border: number;
-  h?: string; v?: string; wrap: boolean; rot: number; indent: number;
+  h?: string; v?: string; wrap: boolean; rot: number; indent: number; shrink?: boolean;
 }
 interface Styles {
   fonts: { b: boolean; i: boolean; u: boolean; sz: number; color: string; name: string }[];
@@ -118,6 +118,7 @@ function parseStyles(x: string, theme: string[]): Styles {
       h: al?.getAttribute('horizontal') ?? undefined, v: al?.getAttribute('vertical') ?? undefined,
       wrap: al?.getAttribute('wrapText') === '1' || al?.getAttribute('wrapText') === 'true',
       rot: Number(al?.getAttribute('textRotation') ?? 0), indent: Number(al?.getAttribute('indent') ?? 0),
+      shrink: al?.getAttribute('shrinkToFit') === '1' || al?.getAttribute('shrinkToFit') === 'true',
     } as Xf;
   });
   return { fonts, fills, borders, xfs, fmts };
@@ -386,9 +387,17 @@ export async function renderPdsPages(buf: ArrayBuffer): Promise<PdsPage[]> {
             edgeCss('top', bTop) + edgeCss('left', bLeft) + edgeCss('right', bRight) + edgeCss('bottom', bBottom) +
             (xf?.wrap ? 'white-space:pre-wrap;overflow:hidden;' : 'white-space:pre;') +
             (xf?.indent ? `padding-left:${xf.indent * 9}px;` : '');
+          let shrinkCss = '';
+          if (xf?.shrink && cell?.v) {
+            let wpx = 0;
+            for (let k = c; k <= (mg ? Math.min(mg.c2, c2) : c); k++) wpx += pxCol(k);
+            const fontPx = ((font?.sz ?? 10) * 96) / 72;
+            const fit = (wpx - 8) / (cell.v.length * 0.66);
+            if (fit < fontPx) shrinkCss = `font-size:${Math.max(4, fit).toFixed(1)}px;`;
+          }
           const span = mg ? ` colspan="${Math.min(mg.c2, c2) - c + 1}" rowspan="${Math.min(mg.r2, rb) - r + 1}"` : '';
           const v = cell?.v ?? '';
-          html += `<td${span} style="${css}">${rot ? `<div style="${rot}">${esc(v)}</div>` : esc(v)}</td>`;
+          html += `<td${span} style="${css}${shrinkCss}">${rot ? `<div style="${rot}">${esc(v)}</div>` : esc(v)}</td>`;
         }
         html += '</tr>';
       }
