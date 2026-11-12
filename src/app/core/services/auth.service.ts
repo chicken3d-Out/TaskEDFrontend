@@ -144,6 +144,7 @@ export class AuthService {
 
   logout() {
     this.clearToken();
+    try { sessionStorage.removeItem('tasked_drive_token'); localStorage.removeItem('tasked_drive_token'); } catch { /* ignore */ }
     this.currentUserSig.set(null);
     this.router.navigate(['/login']);
   }

@@ -1,3 +1,10 @@
+@if (auth.loading()) {
+  <div class="boot" role="status">
+    <div class="spin"></div>
+    <p>Loading TaskEd…</p>
+    @if (slow()) { <small>The server is waking up after being idle. This can take a minute on the first visit, please wait.</small> }
+  </div>
+}
 <router-outlet></router-outlet>
 <app-legal-modal />
 <app-file-preview />
