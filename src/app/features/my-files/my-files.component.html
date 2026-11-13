@@ -6,12 +6,15 @@
   </p>
 
   <div class="tabs">
-    <button type="button" [class.on]="tab === 'working'" (click)="tab = 'working'">Working Directory Files</button>
-    <button type="button" [class.on]="tab === 'storage'" (click)="tab = 'storage'">File Storage</button>
+    <button type="button" [class.on]="tab === 'working'" (click)="go('working')">Working Directory Files</button>
+    <button type="button" [class.on]="tab === 'storage'" (click)="go('storage')">File Storage</button>
+    @if (canTravel) { <button type="button" [class.on]="tab === 'travel'" (click)="go('travel')">Travel Authority</button> }
   </div>
 
   @if (tab === 'working') {
     <app-working-files />
+  } @else if (tab === 'travel') {
+    <app-travel-authority />
   } @else {
   @if (loading) {
     <app-loading [compact]="true" />

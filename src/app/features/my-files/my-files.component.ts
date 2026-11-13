@@ -1,4 +1,5 @@
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -10,6 +11,7 @@ import { CATEGORIES, DriveUploadService, MAX_UPLOAD_BYTES } from '../../core/ser
 import { Capacitor } from '@capacitor/core';
 import { LoadingComponent } from '../../shared/loading/loading.component';
 import { WorkingFilesComponent } from './working-files.component';
+import { TravelAuthorityComponent } from './travel-authority.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 
 interface YearGroup {
@@ -22,7 +24,7 @@ interface YearGroup {
 @Component({
   selector: 'app-my-files',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, LoadingComponent, IconComponent, WorkingFilesComponent],
+  imports: [CommonModule, FormsModule, DatePipe, LoadingComponent, IconComponent, WorkingFilesComponent, TravelAuthorityComponent],
   templateUrl: './my-files.component.html',
   styleUrl: './my-files.component.scss',
 })
@@ -31,7 +33,11 @@ export class MyFilesComponent implements OnInit {
   preview = inject(FilePreviewService);
   auth = inject(AuthService);
   drive = inject(DriveUploadService);
-  tab: 'working' | 'storage' = 'working';
+  tab: 'working' | 'storage' | 'travel' = 'working';
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  get canTravel() { return this.auth.currentUser()?.role !== 'school'; }
+  go(t: 'working' | 'storage' | 'travel') { this.tab = t; this.router.navigate([], { queryParams: { tab: t }, replaceUrl: true }); }
   categories = [...CATEGORIES];
   schoolYear = '';
   // upload state
@@ -66,6 +72,10 @@ export class MyFilesComponent implements OnInit {
   editLink = '';
 
   ngOnInit() {
+    this.route.queryParamMap.subscribe((m) => {
+      const t = m.get('tab');
+      if (t === 'working' || t === 'storage' || (t === 'travel' && this.canTravel)) this.tab = t;
+    });
     this.load();
   }
 

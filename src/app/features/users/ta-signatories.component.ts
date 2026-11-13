@@ -17,14 +17,16 @@ interface Part { text: string; userId: string | null; name: string }
   template: `
     <details class="card box">
       <summary><strong>Travel Authority signatories</strong> <span class="muted">District Supervisor and Schools Division Superintendent</span></summary>
-      <p class="muted">Within Leyte, the Recommending authority is the School Head of the employee's school and the Approving authority is the District Supervisor. Outside the Division, the Recommending authority is the District Supervisor and the Approving authority is the Schools Division Superintendent. Pick the TaskEd account that will sign, and type the name as it should be printed.</p>
+      <p class="muted">Within Leyte, the Recommending authority is the School Head of the employee's school and the Approving authority is the District Supervisor. Outside the Division, the School Head countersigns first, the District Supervisor is the Recommending authority, and the Schools Division Superintendent is the Approving authority (by email). Pick the District Supervisor's TaskEd account, and type the names as they should be printed.</p>
       @for (k of keys; track k.id) {
         <div class="grid">
           <strong class="lbl">{{ k.label }}</strong>
-          <label>TaskEd account (type a name or email)
-            <input [name]="k.id + 'u'" [(ngModel)]="parts[k.id].text" (ngModelChange)="pickUser(k.id)" [attr.list]="'tau-' + k.id" placeholder="Search accounts…" />
-            <datalist [id]="'tau-' + k.id">@for (o of options; track o.id) { <option [value]="label(o)"></option> }</datalist>
-          </label>
+          @if (k.account) {
+            <label>TaskEd account (type a name or email)
+              <input [name]="k.id + 'u'" [(ngModel)]="parts[k.id].text" (ngModelChange)="pickUser(k.id)" [attr.list]="'tau-' + k.id" placeholder="Search accounts…" />
+              <datalist [id]="'tau-' + k.id">@for (o of options; track o.id) { <option [value]="label(o)"></option> }</datalist>
+            </label>
+          } @else { <p class="muted lbl">Not an account: the Superintendent does not e-sign. The signed form is emailed to travel.authority&#64;deped.gov.ph for the Superintendent.</p> }
           <label>Name printed on the form
             <input [name]="k.id + 'n'" [(ngModel)]="parts[k.id].name" placeholder="e.g. JUAN D. DELA CRUZ, PhD" />
           </label>
@@ -47,7 +49,7 @@ interface Part { text: string; userId: string | null; name: string }
 export class TaSignatoriesComponent implements OnInit {
   private api = inject(TravelAuthorityService);
   private users = inject(UsersService);
-  keys = [{ id: 'ds', label: 'District Supervisor' }, { id: 'sds', label: 'Schools Division Superintendent' }];
+  keys = [{ id: 'ds', label: 'District Supervisor', account: true }, { id: 'sds', label: 'Schools Division Superintendent', account: false }];
   parts: Record<string, Part> = { ds: { text: '', userId: null, name: '' }, sds: { text: '', userId: null, name: '' } };
   options: User[] = [];
   busy = false;

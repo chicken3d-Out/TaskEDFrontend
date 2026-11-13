@@ -80,15 +80,30 @@
   <aside class="sidebar" [class.open]="sidebarOpen()">
     <nav>
       @for (item of navItems; track item.link) {
-        <a
-          [routerLink]="item.link"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: item.link === '/tasks' }"
-          (click)="closeSidebarOnMobile()"
-        >
-          <app-icon [name]="item.icon" [size]="20" />
-          <span>{{ item.label }}</span>
-        </a>
+        @if (item.link === '/my-files') {
+          <div class="navgroup">
+            <a routerLink="/my-files" [queryParams]="{ tab: 'working' }" [class.active]="filesTab !== ''" (click)="filesOpen.set(true); closeSidebarOnMobile()">
+              <app-icon [name]="item.icon" [size]="20" />
+              <span>{{ item.label }}</span>
+              <button type="button" class="chev" (click)="$event.preventDefault(); $event.stopPropagation(); filesOpen.set(!filesOpen())" [attr.aria-label]="filesOpen() ? 'Collapse My files' : 'Expand My files'">{{ filesOpen() ? '▾' : '▸' }}</button>
+            </a>
+            @if (filesOpen()) {
+              @for (c of filesChildren; track c.tab) {
+                <a class="sub" routerLink="/my-files" [queryParams]="{ tab: c.tab }" [class.on]="filesTab === c.tab" (click)="closeSidebarOnMobile()"><span>{{ c.label }}</span></a>
+              }
+            }
+          </div>
+        } @else {
+          <a
+            [routerLink]="item.link"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: item.link === '/tasks' }"
+            (click)="closeSidebarOnMobile()"
+          >
+            <app-icon [name]="item.icon" [size]="20" />
+            <span>{{ item.label }}</span>
+          </a>
+        }
       }
     </nav>
     <div class="side-foot">

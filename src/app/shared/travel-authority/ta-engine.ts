@@ -195,7 +195,7 @@ function setSign(doc: Document, tc: Element, who: string, name: string, date: st
 }
 
 export interface TaSig { img: string; x: number; y: number; at: string }
-export interface TaSigs { requester?: TaSig | null; recommending?: TaSig | null; approving?: TaSig | null }
+export interface TaSigs { requester?: TaSig | null; countersign?: TaSig | null; recommending?: TaSig | null; approving?: TaSig | null }
 
 export const SIG_BOX_IN = { w: 1.5, h: 0.7 }; // a signature is fitted inside this box (inches)
 
@@ -240,7 +240,7 @@ export async function buildTa(pkg: TaPackage, data: TaData, sigs?: TaSigs, image
   setSign(doc, cellsOf(rows[10])[0], 'Approving Authority', data.approving.trim(), dt(sigs?.approving, data.approvingDate));
 
   const z = await JSZip.loadAsync(await pkg.zip.generateAsync({ type: 'arraybuffer' }));
-  const list = [sigs?.requester, sigs?.recommending, sigs?.approving].filter((x): x is TaSig => !!x);
+  const list = [sigs?.requester, sigs?.countersign, sigs?.recommending, sigs?.approving].filter((x): x is TaSig => !!x);
   if (list.length && images) await addSignatures(z, doc, list, pageSizeIn(pkg));
   z.file('word/document.xml', new XMLSerializer().serializeToString(doc));
   return z.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', compression: 'DEFLATE' });

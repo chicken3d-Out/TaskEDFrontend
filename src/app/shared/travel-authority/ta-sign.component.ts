@@ -9,7 +9,9 @@ import { TaSignService } from './ta-sign.service';
 import { fileLabel, hasDriveToken, openTemplate, recordToDocx, syncToDrive } from './ta-doc';
 import { TaPackage, pageSizeIn, pngSizeOf, sigSizeIn } from './ta-engine';
 
-const ROLE_WORD = { requester: 'the employee', recommending: 'the recommending authority', approving: 'the approving authority' };
+function b64(buf: ArrayBuffer): string { const a = new Uint8Array(buf); let s = ''; for (let i = 0; i < a.length; i += 0x8000) s += String.fromCharCode(...a.subarray(i, i + 0x8000)); return btoa(s); }
+
+const ROLE_WORD = { requester: 'the employee', countersign: 'the School Head (countersigning)', recommending: 'the recommending authority', approving: 'the approving authority' };
 
 @Component({
   selector: 'app-ta-sign',
@@ -36,6 +38,12 @@ const ROLE_WORD = { requester: 'the employee', recommending: 'the recommending a
         @if (rec?.myTurn && mySig) {
           <p class="tip pad">Signing as {{ roleWord() }}. <strong>Tap the form where your signature should go</strong>{{ placed() ? ' (tap again to move it)' : '' }}, then press “Sign this document”.</p>
         }
+        @if (rec?.attachments?.length) {
+          <div class="pad att"><strong>Attachments:</strong>
+            @for (a of rec!.attachments!; track a.id) { <a href="javascript:void(0)" (click)="openAtt(a.id, a.name)">{{ a.name }}</a> }
+          </div>
+        }
+        @if (rec?.myTurn === 'recommending' && rec?.approvingByEmail) { <p class="pad muted">After you sign, the signed form and its attachments are emailed to the Travel Authority mailbox for the Schools Division Superintendent.</p> }
         <div class="scroll" #scroll>
           @if (loading) { <p class="muted pad">Opening the form…</p> }
           <div class="host" #host></div>
@@ -54,6 +62,7 @@ const ROLE_WORD = { requester: 'the employee', recommending: 'the recommending a
     .tip { background: #f0fdf4; color: #166534; }
     .scroll { flex: 1; overflow: auto; padding: .8rem; }
     .host { width: max-content; margin: 0 auto; }
+    .att { display: flex; gap: .8rem; flex-wrap: wrap; font-size: .88rem; } .att a { color: #15803d; }
     .muted { color: #6b7280; } .ok { color: #166534; } .error { color: #b91c1c; }
     :host ::ng-deep .host section.docx { position: relative; cursor: crosshair; box-shadow: 0 2px 10px rgba(0,0,0,.2); margin-bottom: 12px; }
     :host ::ng-deep .host .docx-wrapper { background: transparent !important; padding: 0 !important; }
@@ -117,7 +126,7 @@ export class TaSignComponent {
       page.appendChild(el);
       return el;
     };
-    for (const s of [rec.sigs?.requester, rec.sigs?.recommending, rec.sigs?.approving]) if (s) addImg(s.img, s.x, s.y, 'tasig');
+    for (const s of [rec.sigs?.requester, rec.sigs?.countersign, rec.sigs?.recommending, rec.sigs?.approving]) if (s) addImg(s.img, s.x, s.y, 'tasig');
     let ghost: HTMLImageElement | null = null;
     if (rec.myTurn && this.mySig) {
       page.addEventListener('click', (e) => {
@@ -139,9 +148,17 @@ export class TaSignComponent {
     if (!this.rec || !this.pos) return;
     this.busy = true; this.error = '';
     try {
-      const rec = await firstValueFrom(this.api.sign(this.rec.id, this.pos.x, this.pos.y));
+      // the District Supervisor's signature is the last e-signature on an outside-division request:
+      // the finished Word file is sent with it so the server can email it
+      let docx: string | undefined;
+      if (this.rec.approvingByEmail && this.rec.myTurn === 'recommending' && this.mySig) {
+        const sigs = { ...(this.rec.sigs ?? { requester: null, countersign: null, recommending: null, approving: null }), recommending: { img: this.mySig, x: this.pos.x, y: this.pos.y, at: new Date().toISOString() } };
+        docx = b64(await (await recordToDocx({ ...this.rec, sigs }, true, this.pkg ?? undefined)).arrayBuffer());
+      }
+      const rec = await firstValueFrom(this.api.sign(this.rec.id, this.pos.x, this.pos.y, docx));
       this.api.bump();
-      this.msg = rec.status === 'approved' ? 'Signed. The Travel Authority is now fully signed.' : `Signed. It now goes to ${rec.status === 'awaiting_recommending' ? rec.recommendingName : rec.approvingName}.`;
+      const next = rec.status === 'awaiting_countersign' ? rec.countersignName : rec.status === 'awaiting_recommending' ? rec.recommendingName : rec.approvingName;
+      this.msg = rec.status === 'emailed' ? 'Signed. The Travel Authority was emailed to the Travel Authority mailbox for the Schools Division Superintendent.' : rec.status === 'approved' ? 'Signed. The Travel Authority is now fully signed.' : `Signed. It now goes to ${next}.`;
       this.rec = rec; this.pos = null; this.placed.set(false);
       await this.paint();
       if (rec.isOwner && hasDriveToken()) {
@@ -149,6 +166,14 @@ export class TaSignComponent {
       }
     } catch (e: any) { this.error = e?.error?.message ?? e?.message ?? 'Could not sign.'; }
     this.busy = false;
+  }
+
+  async openAtt(aid: string, name: string) {
+    try {
+      const a = await firstValueFrom(this.api.getAttachment(this.rec!.id, aid));
+      const bin = Uint8Array.from(atob(a.data), (c) => c.charCodeAt(0));
+      DriveUploadService.saveBlob(new Blob([bin], { type: a.mime }), name);
+    } catch (e: any) { this.error = e?.error?.message ?? 'Could not open the attachment.'; }
   }
 
   async download() {

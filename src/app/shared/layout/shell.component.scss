@@ -204,6 +204,10 @@
     }
   }
 }
+.navgroup { display: flex; flex-direction: column; gap: 0.1rem; }
+.navgroup .chev { margin-left: auto; background: none; border: 0; cursor: pointer; font-size: 0.9rem; color: inherit; padding: 0 0.3rem; }
+nav a.sub { padding: 0.45rem 0.85rem 0.45rem 3.1rem; font-size: 0.85rem; font-weight: 500; }
+nav a.sub.on { background: var(--primary-soft); color: var(--primary-strong); font-weight: 700; }
 .side-foot {
   padding: 0.8rem;
   border-top: 1px solid var(--border);

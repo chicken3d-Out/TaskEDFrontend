@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { DriveUploadService } from '../../core/services/drive-upload.service';
-import { TaForm, TaRecord, TaRoute, TravelAuthorityService } from '../../core/services/travel-authority.service';
+import { TaAttachment, TaForm, TaRecord, TaRoute, TravelAuthorityService } from '../../core/services/travel-authority.service';
 import { TaEditorService } from './ta-editor.service';
 import { TaSignService } from './ta-sign.service';
 import { syncToDrive } from './ta-doc';
@@ -64,10 +64,21 @@ const EMPTY: TaForm = { name: '', position: '', station: '', purpose: '', host: 
             <h3>Signatories</h3>
             <div class="route">
               <div><small>Requesting employee</small><strong>{{ f.name || '—' }}</strong></div>
+              @if (route?.countersign) { <div><small>Countersigned first by (School Head)</small><strong>{{ route!.countersign!.name || '—' }}</strong>@if (route!.countersign!.note) { <em>{{ route!.countersign!.note }}</em> }</div> }
               <div><small>Recommending authority</small><strong>{{ route?.recommending?.name || '—' }}</strong>@if (route?.recommending?.note) { <em>{{ route!.recommending!.note }}</em> }</div>
-              <div><small>Approving authority</small><strong>{{ route?.approving?.name || '—' }}</strong>@if (route?.approving?.note) { <em>{{ route!.approving.note }}</em> }</div>
+              <div><small>Approving authority{{ route?.approvingByEmail ? ' (not e-signed)' : '' }}</small><strong>{{ route?.approving?.name || '—' }}</strong>@if (route?.approving?.note) { <em>{{ route!.approving.note }}</em> }</div>
             </div>
-            <p class="muted">Chosen for you from the destination. After you sign, it goes to the recommending authority, then to the approving authority, who each tap the form to place their signature.</p>
+            <p class="muted">Chosen for you from the destination. @if (route?.approvingByEmail) { After you sign{{ route?.countersign ? ', the School Head countersigns,' : '' }} and the District Supervisor signs, the signed form and your attachments are emailed to the Travel Authority mailbox (travel.authority&#64;deped.gov.ph) for the Schools Division Superintendent. } @else { After you sign, it goes to the School Head, then to the District Supervisor, who each tap the form to place their signature. }</p>
+
+            <h3>Attachments <span class="muted">(optional)</span></h3>
+            <p class="muted">Supporting documents such as the memorandum or invitation. Up to 5 files, 4 MB each. The signers can open them, and they are emailed with the signed form for travel outside the Division.</p>
+            @for (a of saved; track a.id) {
+              <div class="att"><span>{{ a.name }} <small class="muted">({{ kb(a.size) }})</small></span><button type="button" class="btn secondary" (click)="dropSaved(a)">Remove</button></div>
+            }
+            @for (p of pending; track $index) {
+              <div class="att"><span>{{ p.name }} <small class="muted">({{ kb(p.size) }}) – attaches when you save</small></span><button type="button" class="btn secondary" (click)="pending.splice($index, 1); touch()">Remove</button></div>
+            }
+            @if (saved.length + pending.length < 5) { <label class="btn secondary pick">Add attachment<input type="file" hidden multiple (change)="addFiles($event)" /></label> }
           </div>
         }
       </div>
@@ -90,6 +101,7 @@ const EMPTY: TaForm = { name: '', position: '', station: '', purpose: '', host: 
     input:not([type=checkbox]), textarea { padding: .5rem .6rem; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; font-weight: 400; }
     .route { display: grid; gap: .5rem; } .route div { display: flex; flex-direction: column; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: .5rem .8rem; }
     .route small { color: #6b7280; } .route em { color: #b45309; font-size: .82rem; }
+    .att { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .35rem 0; border-bottom: 1px solid #f3f4f6; } .pick { cursor: pointer; display: inline-block; margin-top: .5rem; }
     .muted { color: #6b7280; font-size: .85rem; } .ok { color: #166534; } .error { color: #b91c1c; }
   `],
 })
@@ -110,10 +122,13 @@ export class TaEditorComponent {
   msg = '';
   manualDates = false;
   dirty = signal(false);
+  saved: TaAttachment[] = [];
+  pending: File[] = [];
 
   constructor() {
     effect(() => {
       const r = this.svc.current();
+      this.saved = []; this.pending = [];
       this.rec = null; this.ready = false; this.error = ''; this.msg = ''; this.route = null; this.manualDates = false; this.dirty.set(false);
       if (!r) return;
       if (r.record) {
@@ -121,6 +136,7 @@ export class TaEditorComponent {
         this.f = { ...EMPTY, ...r.record.data };
         this.outside = r.record.outside;
         this.manualDates = !!r.record.data.dates;
+        firstValueFrom(this.api.get(r.record.id)).then((x) => (this.saved = x.attachments ?? [])).catch(() => {});
       } else {
         const u = this.auth.currentUser();
         if (r.forTeacher) this.f = { ...EMPTY, name: r.forTeacher.name, position: r.forTeacher.position, station: r.forTeacher.station };
@@ -145,6 +161,30 @@ export class TaEditorComponent {
   loadRoute() {
     firstValueFrom(this.api.route(this.outside, this.requesterId())).then((r) => (this.route = r)).catch(() => (this.route = null));
   }
+  kb(n: number) { return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
+  addFiles(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    this.error = '';
+    for (const f of Array.from(input.files ?? [])) {
+      if (this.saved.length + this.pending.length >= 5) { this.error = 'At most 5 attachments.'; break; }
+      if (f.size > 4 * 1024 * 1024) { this.error = `${f.name} is bigger than 4 MB.`; continue; }
+      this.pending.push(f);
+    }
+    input.value = '';
+    this.touch();
+  }
+  async dropSaved(a: TaAttachment) {
+    if (!this.rec) return;
+    try { this.saved = await firstValueFrom(this.api.removeAttachment(this.rec.id, a.id)); } catch (e: any) { this.error = e?.error?.message ?? 'Could not remove it.'; }
+  }
+  private async uploadPending(id: string) {
+    for (const f of [...this.pending]) {
+      const buf = new Uint8Array(await f.arrayBuffer());
+      let s = ''; for (let i = 0; i < buf.length; i += 0x8000) s += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+      this.saved = await firstValueFrom(this.api.addAttachment(id, f.name, f.type || 'application/octet-stream', btoa(s)));
+      this.pending.splice(this.pending.indexOf(f), 1);
+    }
+  }
   routeChanged() { this.touch(); this.loadRoute(); }
   touch() { this.dirty.set(true); this.msg = ''; }
   dates() { if (!this.manualDates) this.f.dates = rangeText(this.f.dateFrom, this.f.dateTo); this.touch(); }
@@ -159,6 +199,7 @@ export class TaEditorComponent {
         ? await firstValueFrom(this.api.update(this.rec.id, body))
         : await firstValueFrom(this.api.create({ ...body, forTeacherId: this.svc.current()?.forTeacher?.id }));
       this.rec = fresh;
+      await this.uploadPending(fresh.id);
       this.dirty.set(false);
       let latest = fresh;
       if (then === 'send') latest = await firstValueFrom(this.api.send(fresh.id));

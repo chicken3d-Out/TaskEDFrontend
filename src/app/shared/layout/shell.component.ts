@@ -35,6 +35,17 @@ export class ShellComponent implements OnInit {
   showUserMenu = false;
   showActive = false;
   sidebarOpen = signal(true);
+  filesOpen = signal(true);
+  // which My files section is showing (?tab=working|travel|storage)
+  get filesTab(): string { const u = this.router.parseUrl(this.router.url); return u.root.children['primary']?.segments[0]?.path === 'my-files' ? (u.queryParams['tab'] ?? 'working') : ''; }
+  get filesChildren() {
+    const r = this.role;
+    return [
+      { label: 'Working Directory', tab: 'working' },
+      { label: 'Travel Authority', tab: 'travel', show: r !== Role.SCHOOL },
+      { label: 'File Storage', tab: 'storage' },
+    ].filter((c) => c.show !== false);
+  }
 
   constructor(
     public auth: AuthService,
@@ -121,7 +132,7 @@ export class ShellComponent implements OnInit {
       { label: 'Calendar & Announcements', icon: 'calendar', link: '/calendar', show: true },
       { label: 'Forum', icon: 'forum', link: '/forum', show: r === Role.ADMIN_OFFICER || r === Role.ADMINISTRATOR },
       { label: 'Weather', icon: 'weather', link: '/weather', show: true },
-      { label: 'Assistant', icon: 'bot', link: '/chat', show: true },
+      { label: 'TaskEd AI Assistant', icon: 'bot', link: '/chat', show: true },
     ].filter((i) => i.show);
   }
 }
