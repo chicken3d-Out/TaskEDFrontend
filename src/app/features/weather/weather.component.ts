@@ -1,3 +1,4 @@
+import { retry } from 'rxjs';
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -115,10 +116,20 @@ export class WeatherComponent implements OnInit {
     }
   }
 
+  last: { lat: number; lon: number } | null = null;
+
+  // The "Try again" button: reload the last place, or ask for the location again.
+  retry() {
+    if (this.last) { this.errorMessage = ''; this.load(this.last.lat, this.last.lon); } else this.useMyLocation();
+  }
+
   private load(lat: number, lon: number) {
+    this.last = { lat, lon };
+    this.errorMessage = '';
     this.state = 'loading';
     this.buildMapUrl(lat, lon);
-    this.weatherApi.getForecast(lat, lon).subscribe({
+    // a sleeping server or a slow network often works on the second go: try twice more by itself first
+    this.weatherApi.getForecast(lat, lon).pipe(retry({ count: 2, delay: 1500 })).subscribe({
       next: (f) => {
         this.forecast = f;
         this.selectedDay = 0;
@@ -126,7 +137,7 @@ export class WeatherComponent implements OnInit {
         setTimeout(() => this.scrollToNow(), 80);
       },
       error: () => {
-        this.errorMessage = 'Could not load the forecast right now. Please try again.';
+        this.errorMessage = 'Could not load the forecast right now (the weather service is slow or unreachable). Check your connection, then press Try again.';
         this.state = 'error';
       },
     });

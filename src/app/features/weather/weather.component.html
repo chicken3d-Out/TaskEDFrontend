@@ -62,7 +62,7 @@
 
   @if (tab === 'forecast') {
   @if (errorMessage && state !== 'requesting') {
-    <div class="error-card"><p>{{ errorMessage }}</p></div>
+    <div class="error-card"><p>{{ errorMessage }}</p>@if (state === 'error' || last) { <button class="btn" type="button" (click)="retry()">Try again</button> }</div>
   }
 
   @if (state === 'requesting') {
