@@ -23,8 +23,8 @@ const ROLE_WORD = { requester: 'the employee', countersign: 'the School Head (co
       <div class="panel" role="dialog" aria-modal="true" aria-label="Travel Authority">
         <header>
           <div>
-            <h2>{{ rec ? 'Travel Authority' : 'Opening…' }}</h2>
-            @if (rec) { <small>{{ rec.data.name }} · {{ status(rec) }}</small> }
+            <h2>{{ rec ? (svc.current()?.draft ? 'Preview' : 'Travel Authority') : 'Opening…' }}</h2>
+            @if (rec) { <small>{{ rec.data.name }}{{ svc.current()?.draft ? ' · as typed so far, not saved yet' : ' · ' + status(rec) }}</small> }
           </div>
           <div class="hbtns">
             @if (rec) { <button class="btn secondary" type="button" (click)="download()" [disabled]="busy">Download .docx</button> }
@@ -94,12 +94,18 @@ export class TaSignComponent {
       this.rec = null; this.error = ''; this.msg = ''; this.pos = null; this.placed.set(false); this.mySig = null;
       if (!r) return;
       this.loading = true;
-      this.load(r.id).catch((e) => (this.error = e?.error?.message ?? e?.message ?? 'Could not open it.')).finally(() => (this.loading = false));
+      (r.draft ? this.loadDraft(r.draft) : this.load(r.id)).catch((e) => (this.error = e?.error?.message ?? e?.message ?? 'Could not open it.')).finally(() => (this.loading = false));
     }, { allowSignalWrites: true });
   }
 
   status(r: TaRecord) { return STATUS_LABEL[r.status]; }
   roleWord() { return this.rec?.myTurn ? ROLE_WORD[this.rec.myTurn] : ''; }
+
+  private async loadDraft(draft: TaRecord) {
+    this.rec = draft;
+    this.pkg = this.pkg ?? (await openTemplate());
+    await this.paint();
+  }
 
   private async load(id: string) {
     const rec = await firstValueFrom(this.api.get(id));

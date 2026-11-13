@@ -35,6 +35,7 @@ const EMPTY: TaForm = { name: '', position: '', station: '', purpose: '', host: 
             <small>{{ forName() ? 'For ' + forName() + ' · ' : '' }}DepEd Order No. 043, s. 2022</small>
           </div>
           <div class="hbtns">
+            <button class="btn secondary" type="button" (click)="preview()" [disabled]="!ready">Preview</button>
             <button class="btn secondary" type="button" (click)="save('draft')" [disabled]="busy || !ready">{{ busy ? 'Saving…' : 'Save draft' }}</button>
             @if (isSelf()) { <button class="btn" type="button" (click)="save('sign')" [disabled]="busy || !ready">Save &amp; sign</button> }
             @else { <button class="btn" type="button" (click)="save('send')" [disabled]="busy || !ready">Save &amp; send to {{ firstName() }} to sign</button> }
@@ -184,6 +185,16 @@ export class TaEditorComponent {
       this.saved = await firstValueFrom(this.api.addAttachment(id, f.name, f.type || 'application/octet-stream', btoa(s)));
       this.pending.splice(this.pending.indexOf(f), 1);
     }
+  }
+  preview() {
+    const r = this.route;
+    const draft = {
+      id: '', status: 'draft', outside: this.outside, data: { ...this.f },
+      countersignName: r?.countersign?.name ?? '', recommendingName: r?.recommending?.name ?? '', approvingName: r?.approving?.name ?? '',
+      approvingByEmail: !!r?.approvingByEmail, sigs: this.rec?.sigs ?? undefined, myTurn: null, attachments: [],
+      requesterName: this.f.name, ownerName: '', isOwner: true,
+    } as unknown as TaRecord;
+    this.sign.preview(draft);
   }
   routeChanged() { this.touch(); this.loadRoute(); }
   touch() { this.dirty.set(true); this.msg = ''; }
