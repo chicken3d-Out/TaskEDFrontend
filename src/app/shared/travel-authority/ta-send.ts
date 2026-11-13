@@ -2,7 +2,8 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { DriveUploadService } from '../../core/services/drive-upload.service';
 import { TaRecord, TravelAuthorityService } from '../../core/services/travel-authority.service';
-import { fileLabel, recordToDocx } from './ta-doc';
+import { fileLabel, openTemplate } from './ta-doc';
+import { buildPdf } from './ta-pdf';
 import { TRAVEL_MAILBOX, sendViaGmail } from './ta-mail';
 
 // The applicant emails the e-signed Travel Authority (and attachments) to the Travel Authority
@@ -13,8 +14,8 @@ export async function sendToTravelMailbox(drive: DriveUploadService, api: Travel
   if (!user?.depedEmail) throw new Error('Your DepEd email is not set in your profile.');
   const gtoken = await drive.gmailToken(user.depedEmail);
   const full = await firstValueFrom(api.get(rec.id));
-  const signed = new Uint8Array(await (await recordToDocx(full)).arrayBuffer());
-  const files = [{ filename: `${fileLabel(full)}.docx`, mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', bytes: signed }];
+  const signed = new Uint8Array(await (await buildPdf(full, await openTemplate())).arrayBuffer());
+  const files = [{ filename: `${fileLabel(full)}.pdf`, mime: 'application/pdf', bytes: signed }];
   for (const a of full.attachments ?? []) {
     const got = await firstValueFrom(api.getAttachment(full.id, a.id));
     files.push({ filename: got.name, mime: got.mime, bytes: Uint8Array.from(atob(got.data), (c) => c.charCodeAt(0)) });

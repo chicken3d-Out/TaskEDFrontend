@@ -1,6 +1,7 @@
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
+import { blackenPng } from './blacken';
 import { TravelAuthorityService } from '../../core/services/travel-authority.service';
 
 const W = 600, H = 220;
@@ -99,7 +100,7 @@ export class SignaturePadComponent implements OnInit {
     firstValueFrom(this.api.getSignature()).then((r) => (this.current = r.signature)).catch(() => {}).finally(() => (this.loaded = true));
   }
 
-  private ctx() { const c = this.padRef.nativeElement.getContext('2d')!; c.lineWidth = 3.2; c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = '#111827'; return c; }
+  private ctx() { const c = this.padRef.nativeElement.getContext('2d')!; c.lineWidth = 3.6; c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = '#000000'; return c; }
   private pt(e: PointerEvent) { const r = this.padRef.nativeElement.getBoundingClientRect(); return { x: ((e.clientX - r.left) / r.width) * W, y: ((e.clientY - r.top) / r.height) * H }; }
   down(e: PointerEvent) { this.drawing = true; this.dirty = true; this.imported = null; this.padRef.nativeElement.setPointerCapture(e.pointerId); const p = this.pt(e); const c = this.ctx(); c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(p.x + .01, p.y + .01); c.stroke(); }
   move(e: PointerEvent) { if (!this.drawing) return; const p = this.pt(e); const c = this.ctx(); c.lineTo(p.x, p.y); c.stroke(); }
@@ -137,7 +138,7 @@ export class SignaturePadComponent implements OnInit {
     const png = this.imported ?? (this.dirty ? toSignaturePng(this.padRef.nativeElement, false) : null);
     if (!png) { this.error = 'Draw your signature or import a picture first.'; return; }
     // keep the file small
-    let out = png;
+    let out = await blackenPng(png);
     if (out.length > 300_000) { this.error = 'That signature is too large. Draw it smaller or use a simpler picture.'; return; }
     this.busy = true;
     try {

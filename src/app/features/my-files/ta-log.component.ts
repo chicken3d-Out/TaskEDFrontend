@@ -7,7 +7,8 @@ import { STATUS_LABEL, TaRecord, TravelAuthorityService } from '../../core/servi
 import { TaEditorService } from '../../shared/travel-authority/ta-editor.service';
 import { TaSignService } from '../../shared/travel-authority/ta-sign.service';
 import { sendToTravelMailbox } from '../../shared/travel-authority/ta-send';
-import { fileLabel, hasDriveToken, monthKey, recordToDocx, syncToDrive } from '../../shared/travel-authority/ta-doc';
+import { fileLabel, hasDriveToken, monthKey, openTemplate, syncToDrive } from '../../shared/travel-authority/ta-doc';
+import { buildPdf } from '../../shared/travel-authority/ta-pdf';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -65,11 +66,8 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
                 @if (r.isOwner && r.status === 'awaiting_email') { <button class="btn" type="button" (click)="sendMail(r)" [disabled]="busy">Send to Travel Authority</button> }
                 <button class="btn secondary" type="button" (click)="open(r)">{{ r.myTurn ? 'Review & sign' : 'Preview' }}</button>
                 @if (r.isOwner && (r.status === 'draft' || r.status === 'awaiting_requester')) { <button class="btn" type="button" (click)="edit(r)">Edit</button> }
-                @if (r.isOwner && r.status === 'draft') {
-                  <button class="btn" type="button" (click)="r.requesterId === meId ? open(r) : send(r)">{{ r.requesterId === meId ? 'Sign' : 'Send to sign' }}</button>
-                }
+                @if (r.isOwner && r.status === 'draft' && r.requesterId !== meId) { <button class="btn" type="button" (click)="send(r)">Send to sign</button> }
                 <button class="btn secondary" type="button" (click)="download(r)" [disabled]="busy">Download</button>
-                @if (r.driveLink) { <a class="btn secondary" [href]="r.driveLink" target="_blank" rel="noopener noreferrer">Drive</a> }
                 @if (r.isOwner) { <button class="btn danger" type="button" (click)="remove(r)">Delete</button> }
               </div>
             </div>
@@ -182,7 +180,7 @@ export class TaLogComponent implements OnInit {
     this.busy = true; this.error = '';
     try {
       const full = await firstValueFrom(this.api.get(r.id));
-      DriveUploadService.saveBlob(await recordToDocx(full), `${fileLabel(full)}.docx`);
+      DriveUploadService.saveBlob(await buildPdf(full, await openTemplate()), `${fileLabel(full)}.pdf`);
     } catch (e: any) { this.error = e?.message ?? 'Could not build the file.'; }
     this.busy = false;
   }

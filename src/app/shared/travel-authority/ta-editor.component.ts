@@ -144,8 +144,9 @@ export class TaEditorComponent {
         else {
           const mi = u?.middleName?.trim() ? u.middleName.trim()[0].toUpperCase() + '. ' : '';
           const name = u?.lastName ? `${u.firstName ?? ''} ${mi}${u.lastName}`.trim() : (u?.name ?? '');
-          const school = u?.school?.name ?? '';
-          this.f = { ...EMPTY, name: name.toUpperCase(), position: u?.designation ?? '', station: school ? `DepEd Leyte Division / ${school}${u?.school?.district ? ' ' + u.school.district + ' District' : ''}` : 'DepEd Leyte Division' };
+          const sch = u?.school ?? u?.assignedSchools?.[0];
+          const school = sch?.name ?? '';
+          this.f = { ...EMPTY, name: name.toUpperCase(), position: u?.designation ?? '', station: school ? `DepEd Leyte Division / ${school}${sch?.district ? ' ' + sch.district + ' District' : ''}` : 'DepEd Leyte Division' };
         }
         this.outside = false;
       }
@@ -220,7 +221,7 @@ export class TaEditorComponent {
       catch (e: any) { this.msg = `Saved. Your Drive copy was not updated (${e?.message ?? 'error'}); it will update next time you open the log.`; }
       if (then === 'sign') { this.svc.close(); this.sign.open(latest.id); }
       else if (then === 'send') { this.svc.close(); }
-      else { this.msg = this.msg || 'Draft saved to your Google Drive.'; }
+      else { this.msg = this.msg || 'Draft saved to your Google Drive (as a PDF).'; }
     } catch (e: any) {
       this.error = e?.error?.message ?? e?.message ?? 'Could not save.';
     }

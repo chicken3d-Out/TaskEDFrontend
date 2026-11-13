@@ -180,6 +180,10 @@ export class DriveUploadService {
   }
 
   // Replaces the content of a file TaskEd put in the person's Drive.
+  async rename(token: string, fileId: string, name: string): Promise<void> {
+    await this.api(token, `files/${fileId}?fields=id`, { method: 'PATCH', body: JSON.stringify({ name }) });
+  }
+
   async replaceContent(token: string, fileId: string, blob: Blob): Promise<void> {
     const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
       method: 'PATCH',

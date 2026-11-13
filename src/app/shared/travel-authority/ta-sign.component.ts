@@ -4,9 +4,10 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { DriveUploadService } from '../../core/services/drive-upload.service';
 import { STATUS_LABEL, TaRecord, TravelAuthorityService } from '../../core/services/travel-authority.service';
-import { renderSalnPreview } from '../saln/saln-preview';
+import { blackenPng } from '../signature/blacken';
+import { buildPdf, renderBasePage } from './ta-pdf';
 import { TaSignService } from './ta-sign.service';
-import { fileLabel, hasDriveToken, openTemplate, recordToDocx, syncToDrive } from './ta-doc';
+import { fileLabel, hasDriveToken, openTemplate, syncToDrive } from './ta-doc';
 import { TaPackage, pageSizeIn, pngSizeOf, sigSizeIn } from './ta-engine';
 
 function b64(buf: ArrayBuffer): string { const a = new Uint8Array(buf); let s = ''; for (let i = 0; i < a.length; i += 0x8000) s += String.fromCharCode(...a.subarray(i, i + 0x8000)); return btoa(s); }
@@ -27,7 +28,7 @@ const ROLE_WORD = { requester: 'the employee', countersign: 'the School Head (co
             @if (rec) { <small>{{ rec.data.name }}{{ svc.current()?.draft ? ' · as typed so far, not saved yet' : ' · ' + status(rec) }}</small> }
           </div>
           <div class="hbtns">
-            @if (rec) { <button class="btn secondary" type="button" (click)="download()" [disabled]="busy">Download .docx</button> }
+            @if (rec) { <button class="btn secondary" type="button" (click)="download()" [disabled]="busy || loading">Download PDF</button> }
             @if (rec?.myTurn && placed()) { <button class="btn" type="button" (click)="doSign()" [disabled]="busy">{{ busy ? 'Saving…' : 'Save signature' }}</button> }
             <button class="btn secondary" type="button" (click)="close()">Close</button>
           </div>
@@ -45,7 +46,7 @@ const ROLE_WORD = { requester: 'the employee', countersign: 'the School Head (co
         }
         @if (rec?.myTurn === 'recommending' && rec?.approvingByEmail) { <p class="pad muted">After you sign, {{ rec!.ownerName }} (who applied) emails the signed form and its attachments to the Travel Authority mailbox for the Schools Division Superintendent.</p> }
         <div class="scroll" #scroll>
-          @if (loading) { <p class="muted pad">Opening the form…</p> }
+          @if (loading) { <p class="muted pad">Laying out the form…</p> }
           <div class="host" #host></div>
         </div>
       </div>
@@ -64,8 +65,7 @@ const ROLE_WORD = { requester: 'the employee', countersign: 'the School Head (co
     .host { width: max-content; margin: 0 auto; }
     .att { display: flex; gap: .8rem; flex-wrap: wrap; font-size: .88rem; } .att a { color: #15803d; }
     .muted { color: #6b7280; } .ok { color: #166534; } .error { color: #b91c1c; }
-    :host ::ng-deep .host section.docx { position: relative; cursor: crosshair; box-shadow: 0 2px 10px rgba(0,0,0,.2); margin-bottom: 12px; }
-    :host ::ng-deep .host .docx-wrapper { background: transparent !important; padding: 0 !important; }
+    :host ::ng-deep .host .pg { position: relative; cursor: crosshair; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.2); margin-bottom: 12px; }
     :host ::ng-deep .host img.tasig { position: absolute; pointer-events: none; transform: translate(-50%, -50%); }
     :host ::ng-deep .host img.tasig.ghost { opacity: .75; outline: 1px dashed #16a34a; }
   `],
@@ -87,6 +87,7 @@ export class TaSignComponent {
   placed = signal(false);
   private pos: { x: number; y: number } | null = null;
   private pkg: TaPackage | null = null;
+  private base: HTMLCanvasElement | null = null;
 
   constructor() {
     effect(() => {
@@ -118,29 +119,40 @@ export class TaSignComponent {
   private async paint() {
     const rec = this.rec!;
     await new Promise((r) => setTimeout(r));
-    const buf = await (await recordToDocx(rec, true, this.pkg!, false)).arrayBuffer();
+    this.loading = true;
+    let base: HTMLCanvasElement;
+    try { base = await renderBasePage(rec, this.pkg!); } finally { this.loading = false; }
     const host = this.host!.nativeElement;
-    await renderSalnPreview(buf, host);
-    const page = host.querySelector('section.docx') as HTMLElement | null;
-    if (!page) return;
+    host.innerHTML = '';
     const size = pageSizeIn(this.pkg!);
-    const addImg = (img: string, x: number, y: number, cls: string) => {
+    // the fixed page: a picture of the finished form. Signatures are tapped onto it.
+    const page = document.createElement('div');
+    page.className = 'pg';
+    page.style.width = `${size.w * 96}px`;
+    page.style.height = `${size.h * 96}px`;
+    const bg = new Image();
+    bg.src = base.toDataURL('image/jpeg', 0.92);
+    bg.style.cssText = 'width:100%;height:100%;display:block;pointer-events:none';
+    page.appendChild(bg);
+    host.appendChild(page);
+    this.base = base;
+    const addImg = async (img: string, x: number, y: number, cls: string) => {
       const px = pngSizeOf(img), s = sigSizeIn(px.w, px.h);
       const el = document.createElement('img');
-      el.src = img; el.className = cls;
+      el.src = await blackenPng(img); el.className = cls;
       el.style.left = `${x * 100}%`; el.style.top = `${y * 100}%`; el.style.width = `${(s.w / size.w) * 100}%`;
       page.appendChild(el);
       return el;
     };
-    for (const s of [rec.sigs?.requester, rec.sigs?.countersign, rec.sigs?.recommending, rec.sigs?.approving]) if (s) addImg(s.img, s.x, s.y, 'tasig');
+    for (const s of [rec.sigs?.requester, rec.sigs?.countersign, rec.sigs?.recommending, rec.sigs?.approving]) if (s) await addImg(s.img, s.x, s.y, 'tasig');
     let ghost: HTMLImageElement | null = null;
     if (rec.myTurn && this.mySig) {
-      page.addEventListener('click', (e) => {
+      page.addEventListener('click', async (e) => {
         const r = page.getBoundingClientRect();
         const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
         this.pos = { x: Math.min(1, Math.max(0, x)), y: Math.min(1, Math.max(0, y)) };
         ghost?.remove();
-        ghost = addImg(this.mySig!, this.pos.x, this.pos.y, 'tasig ghost') ?? null;
+        ghost = await addImg(this.mySig!, this.pos.x, this.pos.y, 'tasig ghost');
         this.placed.set(true);
       });
     }
@@ -177,8 +189,8 @@ export class TaSignComponent {
 
   async download() {
     if (!this.rec) return;
-    this.busy = true;
-    try { DriveUploadService.saveBlob(await recordToDocx(this.rec, true, this.pkg ?? undefined), `${fileLabel(this.rec)}.docx`); }
+    this.busy = true; this.error = '';
+    try { DriveUploadService.saveBlob(await buildPdf(this.rec, this.pkg!, this.base ?? undefined), `${fileLabel(this.rec)}.pdf`); }
     catch (e: any) { this.error = e?.message ?? 'Could not build the file.'; }
     this.busy = false;
   }
