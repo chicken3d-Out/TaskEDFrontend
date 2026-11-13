@@ -1,3 +1,4 @@
+import { TaSignatoriesComponent } from './ta-signatories.component';
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -33,7 +34,7 @@ interface Row {
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, LoadingComponent, AvatarComponent, IconComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, LoadingComponent, AvatarComponent, IconComponent, TaSignatoriesComponent],
   templateUrl: './users.component.html',
   styleUrl: './users.component.scss',
 })

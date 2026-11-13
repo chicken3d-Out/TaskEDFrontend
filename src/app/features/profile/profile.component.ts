@@ -3,12 +3,13 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { roleLabel } from '../../core/models/user.model';
 import { HrProfileFormComponent } from '../../shared/hr-profile-form/hr-profile-form.component';
+import { SignaturePadComponent } from '../../shared/signature/signature-pad.component';
 import { ProfileFormComponent } from '../../shared/profile-form/profile-form.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [ProfileFormComponent, HrProfileFormComponent, ReactiveFormsModule],
+  imports: [ProfileFormComponent, HrProfileFormComponent, ReactiveFormsModule, SignaturePadComponent],
   template: `
     <h1 class="page-title">My profile</h1>
     <div class="card box">
@@ -31,6 +32,13 @@ import { ProfileFormComponent } from '../../shared/profile-form/profile-form.com
       <div class="card box">
         <h2>Employment details</h2>
         <app-hr-profile-form userId="me" />
+      </div>
+    }
+
+    @if (canSign()) {
+      <div class="card box">
+        <h2>My signature</h2>
+        <app-signature-pad />
       </div>
     }
 
@@ -65,6 +73,7 @@ import { ProfileFormComponent } from '../../shared/profile-form/profile-form.com
         max-width: 760px;
         padding: 1.75rem;
       }
+      .box + .box { margin-top: 1rem; }
       .pw {
         margin-top: 1rem;
         h2 {
@@ -113,6 +122,7 @@ export class ProfileComponent {
   public auth = inject(AuthService);
   private fb = inject(FormBuilder);
   roleLabel = roleLabel;
+  canSign() { const r = this.auth.currentUser()?.role; return r === 'teacher' || r === 'school_head' || r === 'admin_officer' || r === 'publisher'; }
 
   pwForm = this.fb.group({
     current: ['', Validators.required],

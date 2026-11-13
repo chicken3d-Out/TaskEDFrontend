@@ -1,3 +1,4 @@
+import { TaLogComponent } from '../../features/my-files/ta-log.component';
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -18,7 +19,7 @@ import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.compo
 @Component({
   selector: 'app-teacher-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, HrProfileFormComponent],
+  imports: [CommonModule, FormsModule, DatePipe, HrProfileFormComponent, TaLogComponent],
   template: `
     <div class="backdrop" (click)="close.emit()"></div>
     <div class="panel" role="dialog" aria-modal="true">
@@ -29,10 +30,14 @@ import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.compo
       <div class="tabs">
         <button type="button" [class.on]="tab === 'profile'" (click)="tab = 'profile'">Employment details</button>
         <button type="button" [class.on]="tab === 'files'" (click)="tab = 'files'">Documents</button>
+        <button type="button" [class.on]="tab === 'travel'" (click)="tab = 'travel'">Travel Authority</button>
       </div>
 
       @if (tab === 'profile') {
         <app-hr-profile-form [userId]="teacherId" />
+      } @else if (tab === 'travel') {
+        <p class="muted">Apply a Travel Authority for {{ teacherName }}. It is saved in <strong>your Google Drive</strong>; {{ teacherName }} is asked to sign first, then it goes to the recommending and approving authorities.</p>
+        <app-ta-log [teacher]="teacherInfo" />
       } @else {
         <p class="muted">
           Your own copy, saved in <strong>your Google Drive</strong> under <em>TaskEd Files › {{ folderTeachers }} › {{ teacherName }}</em>.
@@ -117,7 +122,14 @@ export class TeacherManagerComponent implements OnInit {
   @Input({ required: true }) teacherId!: string;
   @Output() close = new EventEmitter<void>();
 
-  tab: 'profile' | 'files' = 'profile';
+  tab: 'profile' | 'files' | 'travel' = 'profile';
+  private ti: { id: string; name: string; position: string; station: string } | null = null;
+  get teacherInfo() {
+    const name = (this.teacherName ?? '').toUpperCase();
+    const station = this.schoolName ? `DepEd Leyte Division / ${this.schoolName} STA. FE District` : 'DepEd Leyte Division';
+    if (!this.ti || this.ti.id !== this.teacherId || this.ti.name !== name || this.ti.station !== station) this.ti = { id: this.teacherId, name, position: '', station };
+    return this.ti;
+  }
   view: TeacherFilesView | null = null;
   sections = ['PDS', 'Service Record', 'Service Credit', 'SALN', 'Other'];
   section = 'PDS';
