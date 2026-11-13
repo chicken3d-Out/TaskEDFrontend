@@ -96,6 +96,37 @@ export class DriveUploadService {
     });
   }
 
+  // A separate, short-lived permission to send ONE email from the person's own DepEd mailbox
+  // (used only when a District Supervisor signs a Travel Authority for travel outside the Division).
+  // Must be called straight from a click. Kept in memory only.
+  private gmail: { value: string; until: number } | null = null;
+  async gmailToken(emailHint?: string | null): Promise<string> {
+    if (this.gmail && this.gmail.until > Date.now() + 30_000) return this.gmail.value;
+    if (this.clientId === null) {
+      const cfg = await firstValueFrom(this.http.get<{ clientId: string }>(`${environment.apiUrl}/my-files/drive-config`));
+      this.clientId = cfg.clientId ?? '';
+    }
+    if (!this.clientId) throw new Error('Google sign-in is not set up on the server yet.');
+    await this.loadScript();
+    return new Promise<string>((resolve, reject) => {
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: this.clientId,
+        scope: 'https://www.googleapis.com/auth/gmail.send',
+        hint: emailHint || this.auth.currentUser()?.depedEmail || undefined,
+        callback: (r: any) => {
+          if (r?.error || !r?.access_token) {
+            reject(new Error(r?.error === 'access_denied' ? 'Permission to send the email was not given, so nothing was signed.' : 'Could not get permission from Google to send the email.'));
+            return;
+          }
+          this.gmail = { value: r.access_token, until: Date.now() + Number(r.expires_in ?? 3000) * 1000 };
+          resolve(r.access_token);
+        },
+        error_callback: () => reject(new Error('The Google window was closed before permission was given.')),
+      });
+      client.requestAccessToken({ prompt: '' });
+    });
+  }
+
   private async api(token: string, path: string, init?: RequestInit) {
     const res = await fetch(`https://www.googleapis.com/drive/v3/${path}`, {
       ...init,

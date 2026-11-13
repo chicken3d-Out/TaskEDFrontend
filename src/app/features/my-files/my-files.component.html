@@ -5,12 +5,6 @@
     this list is private: nobody else, including the Administrator, can see or open your files.
   </p>
 
-  <div class="tabs">
-    <button type="button" [class.on]="tab === 'working'" (click)="go('working')">Working Directory Files</button>
-    <button type="button" [class.on]="tab === 'storage'" (click)="go('storage')">File Storage</button>
-    @if (canTravel) { <button type="button" [class.on]="tab === 'travel'" (click)="go('travel')">Travel Authority</button> }
-  </div>
-
   @if (tab === 'working') {
     <app-working-files />
   } @else if (tab === 'travel') {
