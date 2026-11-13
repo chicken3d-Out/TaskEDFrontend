@@ -1,12 +1,14 @@
 import { DriveUploadService } from '../../core/services/drive-upload.service';
 import { TaRecord, TravelAuthorityService } from '../../core/services/travel-authority.service';
-import { TEMPLATE_URL, TaPackage, buildTa, emptyTa, openTa } from './ta-engine';
+import { TaPackage, buildTa, emptyTa, openTa } from './ta-engine';
 import { firstValueFrom } from 'rxjs';
 
 export async function openTemplate(): Promise<TaPackage> {
-  const r = await fetch(TEMPLATE_URL);
-  if (!r.ok) throw new Error('Could not load the blank Travel Authority form.');
-  return openTa(await r.arrayBuffer());
+  const { TEMPLATE_B64 } = await import('./ta-template');
+  const bin = atob(TEMPLATE_B64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return openTa(bytes.buffer);
 }
 
 export function taData(rec: TaRecord) {
