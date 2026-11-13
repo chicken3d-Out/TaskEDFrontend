@@ -28,7 +28,7 @@ const ROLE_WORD = { requester: 'the employee', countersign: 'the School Head (co
           </div>
           <div class="hbtns">
             @if (rec) { <button class="btn secondary" type="button" (click)="download()" [disabled]="busy">Download .docx</button> }
-            @if (rec?.myTurn && placed()) { <button class="btn" type="button" (click)="doSign()" [disabled]="busy">{{ busy ? 'Signing…' : 'Sign this document' }}</button> }
+            @if (rec?.myTurn && placed()) { <button class="btn" type="button" (click)="doSign()" [disabled]="busy">{{ busy ? 'Saving…' : 'Save signature' }}</button> }
             <button class="btn secondary" type="button" (click)="close()">Close</button>
           </div>
         </header>
@@ -36,14 +36,14 @@ const ROLE_WORD = { requester: 'the employee', countersign: 'the School Head (co
         @if (msg) { <p class="ok pad">{{ msg }}</p> }
         @if (rec?.myTurn && !mySig) { <p class="error pad">You have no signature yet. Add one in <strong>My profile</strong>, then come back.</p> }
         @if (rec?.myTurn && mySig) {
-          <p class="tip pad">Signing as {{ roleWord() }}. <strong>Tap the form where your signature should go</strong>{{ placed() ? ' (tap again to move it)' : '' }}, then press “Sign this document”.</p>
+          <p class="tip pad">Signing as {{ roleWord() }}. <strong>Tap the form where your signature should go</strong>{{ placed() ? ' (tap again to move it)' : '' }}, then press “Save signature”. It goes to the next signatory.</p>
         }
         @if (rec?.attachments?.length) {
           <div class="pad att"><strong>Attachments:</strong>
             @for (a of rec!.attachments!; track a.id) { <a href="javascript:void(0)" (click)="openAtt(a.id, a.name)">{{ a.name }}</a> }
           </div>
         }
-        @if (rec?.myTurn === 'recommending' && rec?.approvingByEmail) { <p class="pad muted">After you sign, the signed form and its attachments are emailed to the Travel Authority mailbox for the Schools Division Superintendent.</p> }
+        @if (rec?.myTurn === 'recommending' && rec?.approvingByEmail) { <p class="pad muted">After you sign, {{ rec!.ownerName }} (who applied) emails the signed form and its attachments to the Travel Authority mailbox for the Schools Division Superintendent.</p> }
         <div class="scroll" #scroll>
           @if (loading) { <p class="muted pad">Opening the form…</p> }
           <div class="host" #host></div>
@@ -148,17 +148,10 @@ export class TaSignComponent {
     if (!this.rec || !this.pos) return;
     this.busy = true; this.error = '';
     try {
-      // the District Supervisor's signature is the last e-signature on an outside-division request:
-      // the finished Word file is sent with it so the server can email it
-      let docx: string | undefined;
-      if (this.rec.approvingByEmail && this.rec.myTurn === 'recommending' && this.mySig) {
-        const sigs = { ...(this.rec.sigs ?? { requester: null, countersign: null, recommending: null, approving: null }), recommending: { img: this.mySig, x: this.pos.x, y: this.pos.y, at: new Date().toISOString() } };
-        docx = b64(await (await recordToDocx({ ...this.rec, sigs }, true, this.pkg ?? undefined)).arrayBuffer());
-      }
-      const rec = await firstValueFrom(this.api.sign(this.rec.id, this.pos.x, this.pos.y, docx));
+      const rec = await firstValueFrom(this.api.sign(this.rec.id, this.pos.x, this.pos.y));
       this.api.bump();
       const next = rec.status === 'awaiting_countersign' ? rec.countersignName : rec.status === 'awaiting_recommending' ? rec.recommendingName : rec.approvingName;
-      this.msg = rec.status === 'emailed' ? 'Signed. The Travel Authority was emailed to the Travel Authority mailbox for the Schools Division Superintendent.' : rec.status === 'approved' ? 'Signed. The Travel Authority is now fully signed.' : `Signed. It now goes to ${next}.`;
+      this.msg = rec.status === 'awaiting_email' ? `Signed. ${rec.ownerName} will now email it to the Travel Authority mailbox for the Schools Division Superintendent.` : rec.status === 'approved' ? 'Signed. The Travel Authority is now fully signed.' : `Signed. It now goes to ${next}.`;
       this.rec = rec; this.pos = null; this.placed.set(false);
       await this.paint();
       if (rec.isOwner && hasDriveToken()) {

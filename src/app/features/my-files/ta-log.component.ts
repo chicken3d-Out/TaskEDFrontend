@@ -6,6 +6,7 @@ import { DriveUploadService } from '../../core/services/drive-upload.service';
 import { STATUS_LABEL, TaRecord, TravelAuthorityService } from '../../core/services/travel-authority.service';
 import { TaEditorService } from '../../shared/travel-authority/ta-editor.service';
 import { TaSignService } from '../../shared/travel-authority/ta-sign.service';
+import { sendToTravelMailbox } from '../../shared/travel-authority/ta-send';
 import { fileLabel, hasDriveToken, monthKey, recordToDocx, syncToDrive } from '../../shared/travel-authority/ta-doc';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -25,7 +26,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 
     @if (!teacher && inbox.length) {
       <section class="card todo">
-        <h3>For my signature ({{ inbox.length }})</h3>
+        <h3>For my action ({{ inbox.length }})</h3>
         @for (r of inbox; track r.id) {
           <div class="frow">
             <div class="info">
@@ -33,7 +34,10 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
               <small>{{ summary(r) }}</small>
               <small class="st">{{ status(r) }}</small>
             </div>
-            <div class="acts"><button class="btn" type="button" (click)="open(r)">Review &amp; sign</button></div>
+            <div class="acts">
+              @if (r.status === 'awaiting_email') { <button class="btn" type="button" (click)="sendMail(r)" [disabled]="busy">Send to Travel Authority</button> }
+              @else { <button class="btn" type="button" (click)="open(r)">Review &amp; sign</button> }
+            </div>
           </div>
         }
       </section>
@@ -58,6 +62,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
                   @if (r.isOwner && r.needsDriveSync) { · <a href="javascript:void(0)" (click)="syncOne(r)">Update my Drive copy</a> }</small>
               </div>
               <div class="acts">
+                @if (r.isOwner && r.status === 'awaiting_email') { <button class="btn" type="button" (click)="sendMail(r)" [disabled]="busy">Send to Travel Authority</button> }
                 <button class="btn secondary" type="button" (click)="open(r)">{{ r.myTurn ? 'Review & sign' : 'Preview' }}</button>
                 @if (r.isOwner && (r.status === 'draft' || r.status === 'awaiting_requester')) { <button class="btn" type="button" (click)="edit(r)">Edit</button> }
                 @if (r.isOwner && r.status === 'draft') {
@@ -155,6 +160,16 @@ export class TaLogComponent implements OnInit {
     this.error = '';
     try { await firstValueFrom(this.api.send(r.id)); this.api.bump(); this.msg = 'Sent to the employee to sign.'; }
     catch (e: any) { this.error = e?.error?.message ?? 'Could not send.'; }
+  }
+
+  async sendMail(r: TaRecord) {
+    this.error = ''; this.msg = ''; this.busy = true;
+    try {
+      await sendToTravelMailbox(this.drive, this.api, this.auth, r);
+      this.msg = 'Emailed to travel.authority@deped.gov.ph from your DepEd email.';
+      this.api.bump();
+    } catch (e: any) { this.error = e?.error?.message ?? e?.message ?? 'Could not send the email.'; }
+    this.busy = false;
   }
 
   async syncOne(r: TaRecord) {

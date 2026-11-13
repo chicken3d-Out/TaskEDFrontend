@@ -36,7 +36,7 @@ export const STATUS_LABEL: Record<TaStatus, string> = {
   awaiting_countersign: 'Waiting for the School Head to countersign',
   awaiting_recommending: 'Waiting for the recommending authority',
   awaiting_approving: 'Waiting for the approving authority',
-  awaiting_email: 'Ready to email',
+  awaiting_email: 'Signed. Waiting for the applicant to email it to the Travel Authority mailbox',
   approved: 'Fully signed',
   emailed: 'Signed and emailed to the Travel Authority mailbox',
 };
@@ -59,7 +59,8 @@ export class TravelAuthorityService {
   create(body: { data: Partial<TaForm>; outside: boolean; forTeacherId?: string }): Observable<TaRecord> { return this.http.post<TaRecord>(this.base, body); }
   update(id: string, body: { data: Partial<TaForm>; outside: boolean }): Observable<TaRecord> { return this.http.patch<TaRecord>(`${this.base}/${id}`, body); }
   send(id: string): Observable<TaRecord> { return this.http.post<TaRecord>(`${this.base}/${id}/send`, {}); }
-  sign(id: string, x: number, y: number, docx?: string): Observable<TaRecord> { return this.http.post<TaRecord>(`${this.base}/${id}/sign`, { x, y, docx }); }
+  sign(id: string, x: number, y: number): Observable<TaRecord> { return this.http.post<TaRecord>(`${this.base}/${id}/sign`, { x, y }); }
+  markEmailed(id: string): Observable<TaRecord> { return this.http.post<TaRecord>(`${this.base}/${id}/emailed`, {}); }
   addAttachment(id: string, name: string, mime: string, data: string): Observable<TaAttachment[]> { return this.http.post<TaAttachment[]>(`${this.base}/${id}/attachments`, { name, mime, data }); }
   getAttachment(id: string, aid: string): Observable<{ name: string; mime: string; data: string }> { return this.http.get<{ name: string; mime: string; data: string }>(`${this.base}/${id}/attachments/${aid}`); }
   removeAttachment(id: string, aid: string): Observable<TaAttachment[]> { return this.http.delete<TaAttachment[]>(`${this.base}/${id}/attachments/${aid}`); }
