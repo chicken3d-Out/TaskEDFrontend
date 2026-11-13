@@ -17,8 +17,8 @@ interface Part { text: string; userId: string | null; name: string }
   imports: [CommonModule, FormsModule, SignaturePadComponent],
   template: `
     <details class="card box">
-      <summary><strong>Travel Authority signatories</strong> <span class="muted">District Supervisor and Schools Division Superintendent</span></summary>
-      <p class="muted">Within Leyte, the Recommending authority is the School Head of the employee's school and the Approving authority is the District Supervisor. Outside the Division, the School Head countersigns first, the District Supervisor is the Recommending authority, and the Schools Division Superintendent is the Approving authority (by email). Pick the District Supervisor's TaskEd account (a District Supervisor account), and type the names as they should be printed. The DS Secretary signs for the District Supervisor with the signature uploaded below.</p>
+      <summary><strong>Travel Authority signatories</strong> <span class="muted">District Supervisor, Superintendent, CID Chief, Assistant Superintendent</span></summary>
+      <p class="muted">Teacher, AO, Publisher and DS Secretary: within Leyte the School Head recommends and the District Supervisor approves; outside the Division the School Head countersigns, the District Supervisor recommends and the Superintendent approves (by email). School Head: within Leyte only the District Supervisor approves; outside, the District Supervisor recommends and the Superintendent approves (by email). District Supervisor: within Leyte the CID Chief recommends and the Assistant Superintendent approves; outside, the Assistant Superintendent recommends and the Superintendent approves (all by email, nobody e-signs). Pick the District Supervisor's TaskEd account (a District Supervisor account), and type the names as they should be printed. The DS Secretary signs for the District Supervisor with the signature uploaded below.</p>
       @for (k of keys; track k.id) {
         <div class="grid">
           <strong class="lbl">{{ k.label }}</strong>
@@ -27,7 +27,7 @@ interface Part { text: string; userId: string | null; name: string }
               <input [name]="k.id + 'u'" [(ngModel)]="parts[k.id].text" (ngModelChange)="pickUser(k.id)" [attr.list]="'tau-' + k.id" placeholder="Search accounts…" />
               <datalist [id]="'tau-' + k.id">@for (o of options; track o.id) { <option [value]="label(o)"></option> }</datalist>
             </label>
-          } @else { <p class="muted lbl">Not an account: the Superintendent does not e-sign. The signed form is emailed to travel.authority&#64;deped.gov.ph for the Superintendent.</p> }
+          } @else { <p class="muted lbl">Not an account: this person does not e-sign. The signed form is emailed to travel.authority&#64;deped.gov.ph.</p> }
           <label>Name printed on the form
             <input [name]="k.id + 'n'" [(ngModel)]="parts[k.id].name" placeholder="e.g. JUAN D. DELA CRUZ, PhD" />
           </label>
@@ -52,8 +52,8 @@ interface Part { text: string; userId: string | null; name: string }
 export class TaSignatoriesComponent implements OnInit {
   private api = inject(TravelAuthorityService);
   private users = inject(UsersService);
-  keys = [{ id: 'ds', label: 'District Supervisor', account: true }, { id: 'sds', label: 'Schools Division Superintendent', account: false }];
-  parts: Record<string, Part> = { ds: { text: '', userId: null, name: '' }, sds: { text: '', userId: null, name: '' } };
+  keys = [{ id: 'ds', label: 'District Supervisor', account: true }, { id: 'sds', label: 'Schools Division Superintendent', account: false }, { id: 'cid', label: 'CID Chief (recommends a District Supervisor’s travel within the Division)', account: false }, { id: 'asds', label: 'Assistant Schools Division Superintendent (approves a District Supervisor’s travel within the Division; recommends it outside)', account: false }];
+  parts: Record<string, Part> = { ds: { text: '', userId: null, name: '' }, sds: { text: '', userId: null, name: '' }, cid: { text: '', userId: null, name: '' }, asds: { text: '', userId: null, name: '' } };
   options: User[] = [];
   busy = false;
   msg = '';
@@ -62,7 +62,7 @@ export class TaSignatoriesComponent implements OnInit {
   dsIntro = 'Upload the District Supervisor’s signature (draw it or import a picture). The DS Secretary uses it to sign Travel Authorities on the District Supervisor’s behalf. Save the signatories above first.';
   loadDsSig = async () => (await firstValueFrom(this.api.settings())).districtSupervisor.signature ?? null;
   saveDsSig = async (png: string | null) => {
-    const s = await firstValueFrom(this.api.saveSettings({ districtSupervisor: { userId: this.parts['ds'].userId, name: this.parts['ds'].name, signature: png }, sds: { userId: this.parts['sds'].userId, name: this.parts['sds'].name } }));
+    const s = await firstValueFrom(this.api.saveSettings({ districtSupervisor: { userId: this.parts['ds'].userId, name: this.parts['ds'].name, signature: png }, sds: { userId: this.parts['sds'].userId, name: this.parts['sds'].name }, cidChief: { name: this.parts['cid'].name }, asds: { name: this.parts['asds'].name } }));
     return s.districtSupervisor.signature ?? null;
   };
 
@@ -75,7 +75,7 @@ export class TaSignatoriesComponent implements OnInit {
       const fill = (id: string, p: { userId: string | null; userName: string; email: string; name: string }) => {
         this.parts[id] = { userId: p.userId, text: p.userId ? `${p.userName} — ${p.email}` : '', name: p.name };
       };
-      fill('ds', s.districtSupervisor); fill('sds', s.sds);
+      fill('ds', s.districtSupervisor); fill('sds', s.sds); fill('cid', s.cidChief); fill('asds', s.asds);
     } catch (e: any) { this.error = e?.error?.message ?? 'Could not load the signatories.'; }
   }
 
@@ -92,6 +92,8 @@ export class TaSignatoriesComponent implements OnInit {
       await firstValueFrom(this.api.saveSettings({
         districtSupervisor: { userId: this.parts['ds'].userId, name: this.parts['ds'].name },
         sds: { userId: this.parts['sds'].userId, name: this.parts['sds'].name },
+        cidChief: { name: this.parts['cid'].name },
+        asds: { name: this.parts['asds'].name },
       }));
       this.msg = 'Saved.';
     } catch (e: any) { this.error = e?.error?.message ?? 'Could not save.'; }

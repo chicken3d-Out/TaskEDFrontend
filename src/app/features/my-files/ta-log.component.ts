@@ -126,7 +126,7 @@ export class TaLogComponent implements OnInit {
   private get role() { return this.auth.currentUser()?.role ?? ''; }
   // School Heads, District Supervisors and DS Secretaries have a separate "Pending for Signature" tab
   private get hasPendingTab() { return ['school_head', 'district_supervisor', 'ds_secretary'].includes(this.role); }
-  canApply() { return this.role !== 'district_supervisor'; }
+  canApply() { return true; }
   private isSigning(r: TaRecord) { return r.myTurn === 'countersign' || r.myTurn === 'recommending' || r.myTurn === 'approving'; }
   get todo(): TaRecord[] {
     if (this.mode === 'pending') return this.inbox.filter((r) => this.isSigning(r));

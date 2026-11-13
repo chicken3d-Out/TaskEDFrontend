@@ -154,7 +154,8 @@ function resetPara(doc: Document, p: Element, indent: number): void {
   for (const t of kids(ppr, 'tabs')) ppr.removeChild(t);
   for (const t of kids(ppr, 'ind')) ppr.removeChild(t);
   const tabs = adopt(doc, mk('tabs'));
-  tabs.appendChild(adopt(doc, mk('tab', { val: 'left', pos: '6000' })));
+  // the date (and the word "Date" under it) is centred on the line: centre tab 6870 twips in
+  tabs.appendChild(adopt(doc, mk('tab', { val: 'center', pos: '6870' })));
   const ind = adopt(doc, mk('ind', { left: String(indent) }));
   // schema order: ... tabs ... spacing, ind, jc, rPr
   const before = kids(ppr, 'spacing')[0] ?? kids(ppr, 'ind')[0] ?? kids(ppr, 'jc')[0] ?? kids(ppr, 'rPr')[0] ?? null;

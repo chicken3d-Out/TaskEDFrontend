@@ -31,7 +31,7 @@ export interface TaRoute {
   approving: { name: string; userId: string | null; note?: string };
 }
 export interface TaSettingsPart { userId: string | null; userName: string; email: string; name: string; signature?: string | null }
-export interface TaSettings { districtSupervisor: TaSettingsPart; sds: TaSettingsPart }
+export interface TaSettings { districtSupervisor: TaSettingsPart; sds: TaSettingsPart; cidChief: TaSettingsPart; asds: TaSettingsPart }
 
 export const STATUS_LABEL: Record<TaStatus, string> = {
   draft: 'Draft',
@@ -75,5 +75,5 @@ export class TravelAuthorityService {
   getSignature(): Observable<{ signature: string | null }> { return this.http.get<{ signature: string | null }>(`${this.base}/signature`); }
   setSignature(signature: string | null) { return this.http.put<{ signature: string | null }>(`${this.base}/signature`, { signature }); }
   settings(): Observable<TaSettings> { return this.http.get<TaSettings>(`${this.base}/settings`); }
-  saveSettings(b: { districtSupervisor: { userId: string | null; name: string; signature?: string | null }; sds: { userId: string | null; name: string } }) { return this.http.put<TaSettings>(`${this.base}/settings`, b); }
+  saveSettings(b: { districtSupervisor: { userId: string | null; name: string; signature?: string | null }; sds: { userId: string | null; name: string }; cidChief: { name: string }; asds: { name: string } }) { return this.http.put<TaSettings>(`${this.base}/settings`, b); }
 }

@@ -45,7 +45,7 @@ const ROLE_WORD = { requester: 'the employee', countersign: 'the School Head (co
             @for (a of rec!.attachments!; track a.id) { <a href="javascript:void(0)" (click)="openAtt(a)">{{ a.name }}</a> }
           </div>
         }
-        @if (rec?.myTurn === 'recommending' && rec?.approvingByEmail) { <p class="pad muted">After you sign, {{ rec!.ownerName }} (who applied) emails the signed form and its attachments to the Travel Authority mailbox for the Schools Division Superintendent.</p> }
+        @if (rec?.myTurn === 'recommending' && rec?.approvingByEmail) { <p class="pad muted">After you sign, {{ rec!.ownerName }} (who applied) emails the signed form and its attachments to the Travel Authority mailbox for the remaining authority.</p> }
         <div class="scroll" #scroll>
           @if (loading) { <p class="muted pad">Laying out the form…</p> }
           <div class="host" #host></div>
@@ -171,7 +171,7 @@ export class TaSignComponent {
       const rec = await firstValueFrom(this.api.sign(this.rec.id, this.pos.x, this.pos.y));
       this.api.bump();
       const next = rec.status === 'awaiting_countersign' ? rec.countersignName : rec.status === 'awaiting_recommending' ? rec.recommendingName : rec.approvingName;
-      this.msg = rec.status === 'awaiting_email' ? `Signed. ${rec.ownerName} will now email it to the Travel Authority mailbox for the Schools Division Superintendent.` : rec.status === 'approved' ? 'Signed. The Travel Authority is now fully signed.' : `Signed. It now goes to ${next}.`;
+      this.msg = rec.status === 'awaiting_email' ? `Signed. ${rec.ownerName} will now email it to the Travel Authority mailbox.` : rec.status === 'approved' ? 'Signed. The Travel Authority is now fully signed.' : `Signed. It now goes to ${next}.`;
       this.rec = rec; this.pos = null; this.placed.set(false);
       await this.paint();
       if (rec.isOwner && hasDriveToken()) {

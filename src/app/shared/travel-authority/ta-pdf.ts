@@ -32,20 +32,27 @@ export async function renderBasePage(rec: TaRecord, pkg: TaPackage): Promise<HTM
   } finally { host.remove(); }
 }
 
-// The on-screen layout turns a tab into one space. In the signature blocks the Word form has a tab
-// stop 6000 twips (300 pt) in, which lines up the date line and the word "Date": put that back.
+// The on-screen layout turns a tab into one space. In the signature blocks the Word form has a centre
+// tab stop 6870 twips (343.5 pt) in, which centres the date over its line and the word "Date" under
+// it: put that back.
 function alignTabs(page: HTMLElement) {
   for (const p of Array.from(page.querySelectorAll('p'))) {
-    const text = p.textContent ?? '';
-    if (!(text.includes('Name and Signature of') || text.includes('____'))) continue;
+    const isCaption = (p.textContent ?? '').includes('Name and Signature of');
+    const isName = parseFloat(p.style.marginLeft) === 18;
+    if (!isCaption && !isName) continue;
     const gap = Array.from(p.querySelectorAll('span > span')).find((s) => /^[\s\u00a0]+$/.test(s.textContent ?? '') && s.children.length === 0) as HTMLElement | undefined;
     const prev = gap?.parentElement?.previousElementSibling as HTMLElement | null | undefined;
-    if (!gap || !prev) continue;
+    const next = gap?.parentElement?.nextElementSibling as HTMLElement | null | undefined;
+    if (!gap || !prev || !next) continue;
     const pr = p.getBoundingClientRect();
     const margin = parseFloat(getComputedStyle(p).marginLeft) || 0;
-    const target = pr.left - margin + (300 * 96) / 72;
-    const w = target - prev.getBoundingClientRect().right;
+    const centre = pr.left - margin + (343.5 * 96) / 72;
+    const w = centre - next.getBoundingClientRect().width / 2 - prev.getBoundingClientRect().right;
     if (w > 0) { gap.style.cssText = `display:inline-block;width:${w}px`; gap.textContent = ''; }
+  }
+  // the form has two rules under the letterhead; only the one under SCHOOLS DIVISION OF LEYTE stays
+  for (const p of Array.from(page.querySelectorAll('header p'))) {
+    if ((p.textContent ?? '').trim() === 'REGION VIII') (p as HTMLElement).style.borderBottom = 'none';
   }
 }
 

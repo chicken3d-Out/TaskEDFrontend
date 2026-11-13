@@ -22,7 +22,7 @@ export async function attachmentBytes(api: TravelAuthorityService, taId: string,
   const got = await firstValueFrom(api.getAttachment(taId, a.id));
   if (got.url) {
     const r = await fetch(got.url);
-    if (!r.ok) throw new Error(`Could not read ${got.name}`);
+    if (!r.ok) throw new Error(`Could not read ${got.name}. If it is a PDF, open Cloudinary › Settings › Security and tick “PDF and ZIP files delivery”.`);
     return { name: got.name, mime: got.mime, bytes: new Uint8Array(await r.arrayBuffer()) };
   }
   return { name: got.name, mime: got.mime, bytes: Uint8Array.from(atob(got.data ?? ''), (c) => c.charCodeAt(0)) };
