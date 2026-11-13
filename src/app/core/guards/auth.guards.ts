@@ -87,6 +87,6 @@ export const myFilesGuard: CanActivateFn = async () => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const user = await ensureUserLoaded(auth);
-  const ok = user?.role === Role.TEACHER || user?.role === Role.SCHOOL_HEAD || user?.role === Role.ADMIN_OFFICER || user?.role === Role.PUBLISHER || user?.role === Role.SCHOOL;
+  const ok = user?.role === Role.TEACHER || user?.role === Role.SCHOOL_HEAD || user?.role === Role.ADMIN_OFFICER || user?.role === Role.PUBLISHER || user?.role === Role.DISTRICT_SUPERVISOR || user?.role === Role.DS_SECRETARY || user?.role === Role.SCHOOL;
   return ok ? true : router.createUrlTree(['/dashboard']);
 };

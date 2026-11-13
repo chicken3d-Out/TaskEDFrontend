@@ -4,7 +4,8 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export type TaStatus = 'draft' | 'awaiting_requester' | 'awaiting_countersign' | 'awaiting_recommending' | 'awaiting_approving' | 'awaiting_email' | 'approved' | 'emailed';
-export interface TaAttachment { id: string; name: string; mime: string; size: number }
+export interface TaAttachment { id: string; name: string; mime: string; size: number; url?: string | null }
+export interface TaNumbering { id: string; name: string; destination: string; dates: string; requesterName: string; taNumber: string | null; taNumberedAt: string | null; approvedAt: string }
 export interface TaSigRec { img: string; x: number; y: number; at: string }
 export interface TaForm {
   name: string; position: string; station: string; purpose: string; host: string;
@@ -13,6 +14,8 @@ export interface TaForm {
 export interface TaRecord {
   id: string; status: TaStatus; outside: boolean; data: TaForm;
   ownerId: string; ownerName: string; requesterId: string; requesterName: string;
+  taNumber?: string | null;
+  signAs?: string | null;
   countersignName: string; recommendingName: string; approvingName: string; approvingByEmail: boolean; emailedAt: string | null; driveLink: string | null;
   attachments?: TaAttachment[];
   rev: number; driveRev: number; needsDriveSync: boolean;
@@ -27,7 +30,7 @@ export interface TaRoute {
   recommending: { name: string; userId: string | null; note?: string } | null;
   approving: { name: string; userId: string | null; note?: string };
 }
-export interface TaSettingsPart { userId: string | null; userName: string; email: string; name: string }
+export interface TaSettingsPart { userId: string | null; userName: string; email: string; name: string; signature?: string | null }
 export interface TaSettings { districtSupervisor: TaSettingsPart; sds: TaSettingsPart }
 
 export const STATUS_LABEL: Record<TaStatus, string> = {
@@ -61,13 +64,16 @@ export class TravelAuthorityService {
   send(id: string): Observable<TaRecord> { return this.http.post<TaRecord>(`${this.base}/${id}/send`, {}); }
   sign(id: string, x: number, y: number): Observable<TaRecord> { return this.http.post<TaRecord>(`${this.base}/${id}/sign`, { x, y }); }
   markEmailed(id: string): Observable<TaRecord> { return this.http.post<TaRecord>(`${this.base}/${id}/emailed`, {}); }
-  addAttachment(id: string, name: string, mime: string, data: string): Observable<TaAttachment[]> { return this.http.post<TaAttachment[]>(`${this.base}/${id}/attachments`, { name, mime, data }); }
-  getAttachment(id: string, aid: string): Observable<{ name: string; mime: string; data: string }> { return this.http.get<{ name: string; mime: string; data: string }>(`${this.base}/${id}/attachments/${aid}`); }
+  uploadSignature(): Observable<{ uploadUrl: string; fields: Record<string, string> }> { return this.http.post<{ uploadUrl: string; fields: Record<string, string> }>(`${this.base}/upload-signature`, {}); }
+  addAttachment(id: string, body: { name: string; mime: string; size: number; url: string; publicId: string }): Observable<TaAttachment[]> { return this.http.post<TaAttachment[]>(`${this.base}/${id}/attachments`, body); }
+  getAttachment(id: string, aid: string): Observable<{ name: string; mime: string; url: string | null; data: string | null }> { return this.http.get<{ name: string; mime: string; url: string | null; data: string | null }>(`${this.base}/${id}/attachments/${aid}`); }
+  numbering(): Observable<TaNumbering[]> { return this.http.get<TaNumbering[]>(`${this.base}/numbering`); }
+  setNumber(id: string, b: { level: string; month: number; seq: number | string }) { return this.http.put<{ id: string; taNumber: string }>(`${this.base}/${id}/number`, b); }
   removeAttachment(id: string, aid: string): Observable<TaAttachment[]> { return this.http.delete<TaAttachment[]>(`${this.base}/${id}/attachments/${aid}`); }
   setDrive(id: string, link: string, rev: number) { return this.http.patch(`${this.base}/${id}/drive`, { link, rev }); }
   remove(id: string) { return this.http.delete(`${this.base}/${id}`); }
   getSignature(): Observable<{ signature: string | null }> { return this.http.get<{ signature: string | null }>(`${this.base}/signature`); }
   setSignature(signature: string | null) { return this.http.put<{ signature: string | null }>(`${this.base}/signature`, { signature }); }
   settings(): Observable<TaSettings> { return this.http.get<TaSettings>(`${this.base}/settings`); }
-  saveSettings(b: { districtSupervisor: { userId: string | null; name: string }; sds: { userId: string | null; name: string } }) { return this.http.put<TaSettings>(`${this.base}/settings`, b); }
+  saveSettings(b: { districtSupervisor: { userId: string | null; name: string; signature?: string | null }; sds: { userId: string | null; name: string } }) { return this.http.put<TaSettings>(`${this.base}/settings`, b); }
 }

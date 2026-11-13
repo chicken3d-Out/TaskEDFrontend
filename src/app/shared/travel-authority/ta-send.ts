@@ -4,6 +4,7 @@ import { DriveUploadService } from '../../core/services/drive-upload.service';
 import { TaRecord, TravelAuthorityService } from '../../core/services/travel-authority.service';
 import { fileLabel, openTemplate } from './ta-doc';
 import { buildPdf } from './ta-pdf';
+import { attachmentBytes } from './ta-attach';
 import { TRAVEL_MAILBOX, sendViaGmail } from './ta-mail';
 
 // The applicant emails the e-signed Travel Authority (and attachments) to the Travel Authority
@@ -17,8 +18,8 @@ export async function sendToTravelMailbox(drive: DriveUploadService, api: Travel
   const signed = new Uint8Array(await (await buildPdf(full, await openTemplate())).arrayBuffer());
   const files = [{ filename: `${fileLabel(full)}.pdf`, mime: 'application/pdf', bytes: signed }];
   for (const a of full.attachments ?? []) {
-    const got = await firstValueFrom(api.getAttachment(full.id, a.id));
-    files.push({ filename: got.name, mime: got.mime, bytes: Uint8Array.from(atob(got.data), (c) => c.charCodeAt(0)) });
+    const got = await attachmentBytes(api, full.id, a);
+    files.push({ filename: got.name, mime: got.mime, bytes: got.bytes });
   }
   const d = full.data;
   const text = [

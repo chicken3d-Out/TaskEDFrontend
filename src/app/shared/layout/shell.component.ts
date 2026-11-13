@@ -1,7 +1,8 @@
-import { Component, HostListener, OnInit, signal } from '@angular/core';
+import { Component, HostListener, OnInit, effect, inject, signal, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs';
+import { filter, firstValueFrom } from 'rxjs';
+import { TravelAuthorityService } from '../../core/services/travel-authority.service';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationsService } from '../../core/services/notifications.service';
 import { LegalService } from '../legal/legal.service';
@@ -36,6 +37,8 @@ export class ShellComponent implements OnInit {
   showActive = false;
   sidebarOpen = signal(true);
   filesOpen = signal(true);
+  private ta = inject(TravelAuthorityService);
+  pendingCount = signal(0); // Travel Authorities waiting for this person's signature
   // which My files section is showing (?tab=working|travel|storage)
   get filesTab(): string { const u = this.router.parseUrl(this.router.url); return u.root.children['primary']?.segments[0]?.path === 'my-files' ? (u.queryParams['tab'] ?? 'working') : ''; }
   get filesChildren() {
@@ -43,6 +46,8 @@ export class ShellComponent implements OnInit {
     return [
       { label: 'Working Directory', tab: 'working' },
       { label: 'Travel Authority', tab: 'travel', show: r !== Role.SCHOOL },
+      { label: 'Pending for Signature', tab: 'pending', show: r === Role.SCHOOL_HEAD || r === Role.DISTRICT_SUPERVISOR || r === Role.DS_SECRETARY },
+      { label: 'TA Number', tab: 'number', show: r === Role.DS_SECRETARY },
       { label: 'File Storage', tab: 'storage' },
     ].filter((c) => c.show !== false);
   }
@@ -56,6 +61,7 @@ export class ShellComponent implements OnInit {
     private router: Router,
   ) {
     // On phones the panel is an overlay: close it after navigating.
+    effect(() => { this.ta.version(); untracked(() => this.loadPending()); });
     this.router.events
       .pipe(filter((e) => e instanceof NavigationEnd))
       .subscribe(() => {
@@ -64,6 +70,12 @@ export class ShellComponent implements OnInit {
         this.showActive = false;
         if (!this.isDesktop()) this.sidebarOpen.set(false);
       });
+  }
+
+  private loadPending() {
+    const r = this.role;
+    if (r !== Role.SCHOOL_HEAD && r !== Role.DISTRICT_SUPERVISOR && r !== Role.DS_SECRETARY) { this.pendingCount.set(0); return; }
+    firstValueFrom(this.ta.inbox()).then((rows) => this.pendingCount.set(rows.filter((x) => x.myTurn === 'countersign' || x.myTurn === 'recommending' || x.myTurn === 'approving').length)).catch(() => {});
   }
 
   ngOnInit() {
@@ -125,7 +137,7 @@ export class ShellComponent implements OnInit {
       { label: 'Tasks', icon: 'ticket', link: '/tasks', show: hasTickets },
       { label: 'New Task', icon: 'plus', link: '/tasks/new', show: r === Role.TEACHER },
       { label: r === Role.ADMIN_OFFICER ? 'My Schools' : 'My School', icon: 'school', link: '/school', show: r === Role.SCHOOL || r === Role.SCHOOL_HEAD || r === Role.ADMIN_OFFICER },
-      { label: 'My files', icon: 'folder', link: '/my-files', show: r === Role.TEACHER || r === Role.SCHOOL_HEAD || r === Role.ADMIN_OFFICER || r === Role.PUBLISHER || r === Role.SCHOOL },
+      { label: 'My files', icon: 'folder', link: '/my-files', show: r === Role.TEACHER || r === Role.SCHOOL_HEAD || r === Role.ADMIN_OFFICER || r === Role.PUBLISHER || r === Role.DISTRICT_SUPERVISOR || r === Role.DS_SECRETARY || r === Role.SCHOOL },
       { label: 'Users', icon: 'users', link: '/users', show: r === Role.ADMINISTRATOR },
       { label: 'Schools', icon: 'school', link: '/schools', show: r === Role.ADMINISTRATOR },
       { label: 'School documents', icon: 'folder', link: '/document-types', show: r === Role.ADMINISTRATOR },

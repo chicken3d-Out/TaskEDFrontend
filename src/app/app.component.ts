@@ -1,6 +1,7 @@
 import { PdsEditorComponent } from './shared/pds/pds-editor.component';
 import { PdsPreviewComponent } from './shared/pds/pds-preview.component';
 import { SrEditorComponent } from './shared/service-record/sr-editor.component';
+import { TaAttPreviewComponent } from './shared/travel-authority/ta-att-preview.component';
 import { TaSignComponent } from './shared/travel-authority/ta-sign.component';
 import { TaEditorComponent } from './shared/travel-authority/ta-editor.component';
 import { SalnEditorComponent } from './shared/saln/saln-editor.component';
@@ -15,7 +16,7 @@ import { AuthService } from './core/services/auth.service';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, LegalModalComponent, FilePreviewComponent, PdsEditorComponent, PdsPreviewComponent, SalnEditorComponent, SrEditorComponent, TaEditorComponent, TaSignComponent],
+  imports: [RouterOutlet, LegalModalComponent, FilePreviewComponent, PdsEditorComponent, PdsPreviewComponent, SalnEditorComponent, SrEditorComponent, TaEditorComponent, TaSignComponent, TaAttPreviewComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })

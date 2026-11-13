@@ -12,6 +12,8 @@ import { Capacitor } from '@capacitor/core';
 import { LoadingComponent } from '../../shared/loading/loading.component';
 import { WorkingFilesComponent } from './working-files.component';
 import { TravelAuthorityComponent } from './travel-authority.component';
+import { TaLogComponent } from './ta-log.component';
+import { TaNumberingComponent } from './ta-numbering.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 
 interface YearGroup {
@@ -24,7 +26,7 @@ interface YearGroup {
 @Component({
   selector: 'app-my-files',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, LoadingComponent, IconComponent, WorkingFilesComponent, TravelAuthorityComponent],
+  imports: [CommonModule, FormsModule, DatePipe, LoadingComponent, IconComponent, WorkingFilesComponent, TravelAuthorityComponent, TaLogComponent, TaNumberingComponent],
   templateUrl: './my-files.component.html',
   styleUrl: './my-files.component.scss',
 })
@@ -33,11 +35,11 @@ export class MyFilesComponent implements OnInit {
   preview = inject(FilePreviewService);
   auth = inject(AuthService);
   drive = inject(DriveUploadService);
-  tab: 'working' | 'storage' | 'travel' = 'working';
+  tab: 'working' | 'storage' | 'travel' | 'pending' | 'number' = 'working';
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   get canTravel() { return this.auth.currentUser()?.role !== 'school'; }
-  go(t: 'working' | 'storage' | 'travel') { this.tab = t; this.router.navigate([], { queryParams: { tab: t }, replaceUrl: true }); }
+  go(t: 'working' | 'storage' | 'travel' | 'pending' | 'number') { this.tab = t; this.router.navigate([], { queryParams: { tab: t }, replaceUrl: true }); }
   categories = [...CATEGORIES];
   schoolYear = '';
   // upload state
@@ -74,7 +76,10 @@ export class MyFilesComponent implements OnInit {
   ngOnInit() {
     this.route.queryParamMap.subscribe((m) => {
       const t = m.get('tab');
+      const r = this.auth.currentUser()?.role;
       if (t === 'working' || t === 'storage' || (t === 'travel' && this.canTravel)) this.tab = t;
+      else if (t === 'pending' && (r === 'school_head' || r === 'district_supervisor' || r === 'ds_secretary')) this.tab = t;
+      else if (t === 'number' && r === 'ds_secretary') this.tab = t;
     });
     this.load();
   }

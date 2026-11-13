@@ -8,6 +8,8 @@ import { TaAttachment, TaForm, TaRecord, TaRoute, TravelAuthorityService } from 
 import { TaEditorService } from './ta-editor.service';
 import { TaSignService } from './ta-sign.service';
 import { syncToDrive } from './ta-doc';
+import { TaAttPreviewService } from './ta-att-preview.component';
+import { TA_ATTACH_MAX, TA_ATTACH_TYPES, uploadTaAttachment } from './ta-attach';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 function rangeText(from: string, to: string): string {
@@ -54,8 +56,9 @@ const EMPTY: TaForm = { name: '', position: '', station: '', purpose: '', host: 
               <label class="wide">Purpose of travel (must be supported by attachments)<textarea rows="2" name="purpose" [(ngModel)]="f.purpose" (ngModelChange)="touch()"></textarea></label>
               <label>Host of activity<input name="host" [(ngModel)]="f.host" (ngModelChange)="touch()" /></label>
               <label>Fund source<input name="fund" [(ngModel)]="f.fund" (ngModelChange)="touch()" placeholder="e.g. Local Funds / Local MOOE" /></label>
-              <label>Travel from<input type="date" name="from" [(ngModel)]="f.dateFrom" (ngModelChange)="dates()" /></label>
-              <label>Travel to<input type="date" name="to" [(ngModel)]="f.dateTo" (ngModelChange)="dates()" /></label>
+              <label>Travel from<input type="date" name="from" [(ngModel)]="f.dateFrom" [max]="f.dateTo || null" (ngModelChange)="dates()" /></label>
+              <label>Travel to<input type="date" name="to" [(ngModel)]="f.dateTo" [min]="f.dateFrom || null" (ngModelChange)="dates()" /></label>
+              @if (badDates()) { <p class="error wide">The end date cannot be before the start date.</p> }
               <label class="wide">Inclusive dates (as printed on the form)<input name="dates" [(ngModel)]="f.dates" (ngModelChange)="manualDates = true; touch()" placeholder="e.g. May 21, 26, 28, 2026" /></label>
               <label class="wide">Destination<input name="destination" [(ngModel)]="f.destination" (ngModelChange)="touch()" /></label>
             </div>
@@ -72,14 +75,14 @@ const EMPTY: TaForm = { name: '', position: '', station: '', purpose: '', host: 
             <p class="muted">Chosen for you from the destination. @if (route?.approvingByEmail) { After you sign{{ route?.countersign ? ', the School Head countersigns,' : '' }} and the District Supervisor signs, the signed form and your attachments are emailed to the Travel Authority mailbox (travel.authority&#64;deped.gov.ph) for the Schools Division Superintendent. } @else { After you sign, it goes to the School Head, then to the District Supervisor, who each tap the form to place their signature. }</p>
 
             <h3>Attachments <span class="muted">(optional)</span></h3>
-            <p class="muted">Supporting documents such as the memorandum or invitation. Up to 5 files, 4 MB each. The signers can open them, and they are emailed with the signed form for travel outside the Division.</p>
+            <p class="muted">Supporting documents such as the memorandum or invitation. JPG, PNG or PDF, up to 5 files, 4 MB each. They are kept in the cloud and can be previewed inside TaskEd. The signers can open them, and they are emailed with the signed form for travel outside the Division.</p>
             @for (a of saved; track a.id) {
-              <div class="att"><span>{{ a.name }} <small class="muted">({{ kb(a.size) }})</small></span><button type="button" class="btn secondary" (click)="dropSaved(a)">Remove</button></div>
+              <div class="att"><span><a href="javascript:void(0)" (click)="viewSaved(a)">{{ a.name }}</a> <small class="muted">({{ kb(a.size) }})</small></span><button type="button" class="btn secondary" (click)="dropSaved(a)">Remove</button></div>
             }
             @for (p of pending; track $index) {
               <div class="att"><span>{{ p.name }} <small class="muted">({{ kb(p.size) }}) – attaches when you save</small></span><button type="button" class="btn secondary" (click)="pending.splice($index, 1); touch()">Remove</button></div>
             }
-            @if (saved.length + pending.length < 5) { <label class="btn secondary pick">Add attachment<input type="file" hidden multiple (change)="addFiles($event)" /></label> }
+            @if (saved.length + pending.length < 5) { <label class="btn secondary pick">Add attachment<input type="file" hidden multiple accept="image/jpeg,image/png,application/pdf" (change)="addFiles($event)" /></label> }
           </div>
         }
       </div>
@@ -102,6 +105,7 @@ const EMPTY: TaForm = { name: '', position: '', station: '', purpose: '', host: 
     input:not([type=checkbox]), textarea { padding: .5rem .6rem; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; font-weight: 400; }
     .route { display: grid; gap: .5rem; } .route div { display: flex; flex-direction: column; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: .5rem .8rem; }
     .route small { color: #6b7280; } .route em { color: #b45309; font-size: .82rem; }
+    .att a { color: #15803d; }
     .att { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .35rem 0; border-bottom: 1px solid #f3f4f6; } .pick { cursor: pointer; display: inline-block; margin-top: .5rem; }
     .muted { color: #6b7280; font-size: .85rem; } .ok { color: #166534; } .error { color: #b91c1c; }
   `],
@@ -112,6 +116,7 @@ export class TaEditorComponent {
   private auth = inject(AuthService);
   private drive = inject(DriveUploadService);
   private sign = inject(TaSignService);
+  private attPreview = inject(TaAttPreviewService);
 
   f: TaForm = { ...EMPTY };
   outside = false;
@@ -146,7 +151,7 @@ export class TaEditorComponent {
           const name = u?.lastName ? `${u.firstName ?? ''} ${mi}${u.lastName}`.trim() : (u?.name ?? '');
           const sch = u?.school ?? u?.assignedSchools?.[0];
           const school = sch?.name ?? '';
-          this.f = { ...EMPTY, name: name.toUpperCase(), position: u?.designation ?? '', station: school ? `DepEd Leyte Division / ${school}${sch?.district ? ' ' + sch.district + ' District' : ''}` : 'DepEd Leyte Division' };
+          this.f = { ...EMPTY, name: name.toUpperCase(), position: u?.designation ?? '', station: school ? `DepEd Leyte Division / ${school}${sch?.district ? ' ' + (/district\s*$/i.test(sch.district) ? sch.district : sch.district + ' District') : ''}` : 'DepEd Leyte Division' };
         }
         this.outside = false;
       }
@@ -169,7 +174,8 @@ export class TaEditorComponent {
     this.error = '';
     for (const f of Array.from(input.files ?? [])) {
       if (this.saved.length + this.pending.length >= 5) { this.error = 'At most 5 attachments.'; break; }
-      if (f.size > 4 * 1024 * 1024) { this.error = `${f.name} is bigger than 4 MB.`; continue; }
+      if (!TA_ATTACH_TYPES.includes(f.type)) { this.error = `${f.name}: only JPG, PNG or PDF files.`; continue; }
+      if (f.size > TA_ATTACH_MAX) { this.error = `${f.name} is bigger than 4 MB.`; continue; }
       this.pending.push(f);
     }
     input.value = '';
@@ -181,12 +187,11 @@ export class TaEditorComponent {
   }
   private async uploadPending(id: string) {
     for (const f of [...this.pending]) {
-      const buf = new Uint8Array(await f.arrayBuffer());
-      let s = ''; for (let i = 0; i < buf.length; i += 0x8000) s += String.fromCharCode(...buf.subarray(i, i + 0x8000));
-      this.saved = await firstValueFrom(this.api.addAttachment(id, f.name, f.type || 'application/octet-stream', btoa(s)));
+      this.saved = await uploadTaAttachment(this.api, id, f);
       this.pending.splice(this.pending.indexOf(f), 1);
     }
   }
+  viewSaved(a: TaAttachment) { if (this.rec) void this.attPreview.open(this.rec.id, a); }
   preview() {
     const r = this.route;
     const draft = {
@@ -199,11 +204,13 @@ export class TaEditorComponent {
   }
   routeChanged() { this.touch(); this.loadRoute(); }
   touch() { this.dirty.set(true); this.msg = ''; }
+  badDates() { return !!(this.f.dateFrom && this.f.dateTo && this.f.dateTo < this.f.dateFrom); }
   dates() { if (!this.manualDates) this.f.dates = rangeText(this.f.dateFrom, this.f.dateTo); this.touch(); }
 
   async save(then: 'draft' | 'sign' | 'send') {
     this.error = ''; this.msg = '';
     if (!this.f.name.trim() || !this.f.purpose.trim() || !this.f.destination.trim()) { this.error = 'Please fill in the name, purpose of travel and destination.'; return; }
+    if (this.badDates()) { this.error = 'The end date cannot be before the start date.'; return; }
     this.busy = true;
     try {
       const body = { data: this.f, outside: this.outside };

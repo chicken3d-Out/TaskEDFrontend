@@ -89,7 +89,7 @@
             </a>
             @if (filesOpen()) {
               @for (c of filesChildren; track c.tab) {
-                <a class="sub" routerLink="/my-files" [queryParams]="{ tab: c.tab }" [class.on]="filesTab === c.tab" (click)="closeSidebarOnMobile()"><span>{{ c.label }}</span></a>
+                <a class="sub" routerLink="/my-files" [queryParams]="{ tab: c.tab }" [class.on]="filesTab === c.tab" (click)="closeSidebarOnMobile()"><span>{{ c.label }}</span>@if (c.tab === 'pending' && pendingCount() > 0) { <b class="cnt">{{ pendingCount() }}</b> }</a>
               }
             }
           </div>

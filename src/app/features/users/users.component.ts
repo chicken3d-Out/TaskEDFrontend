@@ -49,7 +49,7 @@ export class UsersComponent implements OnInit {
   AccountStatus = AccountStatus;
   // Administrator is not offered here: administrators are created with
   // "Add user" and sign in with a username and password.
-  roles = [Role.TEACHER, Role.ADMIN_OFFICER, Role.SCHOOL_HEAD, Role.SCHOOL, Role.PUBLISHER].map((r) => ({
+  roles = [Role.TEACHER, Role.ADMIN_OFFICER, Role.SCHOOL_HEAD, Role.SCHOOL, Role.PUBLISHER, Role.DISTRICT_SUPERVISOR, Role.DS_SECRETARY].map((r) => ({
     value: r,
     label: ROLE_LABELS[r],
   }));

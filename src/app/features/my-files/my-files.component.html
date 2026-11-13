@@ -9,6 +9,10 @@
     <app-working-files />
   } @else if (tab === 'travel') {
     <app-travel-authority />
+  } @else if (tab === 'pending') {
+    <app-ta-log mode="pending" />
+  } @else if (tab === 'number') {
+    <app-ta-numbering />
   } @else {
   @if (loading) {
     <app-loading [compact]="true" />

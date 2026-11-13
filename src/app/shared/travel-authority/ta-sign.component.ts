@@ -2,8 +2,9 @@ import { Component, ElementRef, ViewChild, effect, inject, signal } from '@angul
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
+import { TaAttPreviewService } from './ta-att-preview.component';
 import { DriveUploadService } from '../../core/services/drive-upload.service';
-import { STATUS_LABEL, TaRecord, TravelAuthorityService } from '../../core/services/travel-authority.service';
+import { STATUS_LABEL, TaAttachment, TaRecord, TravelAuthorityService } from '../../core/services/travel-authority.service';
 import { blackenPng } from '../signature/blacken';
 import { buildPdf, renderBasePage } from './ta-pdf';
 import { TaSignService } from './ta-sign.service';
@@ -35,13 +36,13 @@ const ROLE_WORD = { requester: 'the employee', countersign: 'the School Head (co
         </header>
         @if (error) { <p class="error pad">{{ error }}</p> }
         @if (msg) { <p class="ok pad">{{ msg }}</p> }
-        @if (rec?.myTurn && !mySig) { <p class="error pad">You have no signature yet. Add one in <strong>My profile</strong>, then come back.</p> }
+        @if (rec?.myTurn && !mySig) { <p class="error pad">{{ rec?.myTurn === 'recommending' || rec?.myTurn === 'approving' ? 'There is no signature to place yet. Add yours in My profile (or, for the District Supervisor’s step, ask the Administrator to upload the District Supervisor’s signature), then come back.' : 'You have no signature yet. Add one in My profile, then come back.' }}</p> }
         @if (rec?.myTurn && mySig) {
           <p class="tip pad">Signing as {{ roleWord() }}. <strong>Tap the form where your signature should go</strong>{{ placed() ? ' (tap again to move it)' : '' }}, then press “Save signature”. It goes to the next signatory.</p>
         }
         @if (rec?.attachments?.length) {
           <div class="pad att"><strong>Attachments:</strong>
-            @for (a of rec!.attachments!; track a.id) { <a href="javascript:void(0)" (click)="openAtt(a.id, a.name)">{{ a.name }}</a> }
+            @for (a of rec!.attachments!; track a.id) { <a href="javascript:void(0)" (click)="openAtt(a)">{{ a.name }}</a> }
           </div>
         }
         @if (rec?.myTurn === 'recommending' && rec?.approvingByEmail) { <p class="pad muted">After you sign, {{ rec!.ownerName }} (who applied) emails the signed form and its attachments to the Travel Authority mailbox for the Schools Division Superintendent.</p> }
@@ -75,6 +76,7 @@ export class TaSignComponent {
   private api = inject(TravelAuthorityService);
   private auth = inject(AuthService);
   private drive = inject(DriveUploadService);
+  private attPreview = inject(TaAttPreviewService);
   @ViewChild('host') host?: ElementRef<HTMLElement>;
   @ViewChild('scroll') scroll?: ElementRef<HTMLElement>;
 
@@ -111,7 +113,7 @@ export class TaSignComponent {
   private async load(id: string) {
     const rec = await firstValueFrom(this.api.get(id));
     this.rec = rec;
-    if (rec.myTurn) this.mySig = (await firstValueFrom(this.api.getSignature())).signature;
+    if (rec.myTurn) this.mySig = rec.signAs ?? (await firstValueFrom(this.api.getSignature())).signature;
     this.pkg = this.pkg ?? (await openTemplate());
     await this.paint();
   }
@@ -179,13 +181,7 @@ export class TaSignComponent {
     this.busy = false;
   }
 
-  async openAtt(aid: string, name: string) {
-    try {
-      const a = await firstValueFrom(this.api.getAttachment(this.rec!.id, aid));
-      const bin = Uint8Array.from(atob(a.data), (c) => c.charCodeAt(0));
-      DriveUploadService.saveBlob(new Blob([bin], { type: a.mime }), name);
-    } catch (e: any) { this.error = e?.error?.message ?? 'Could not open the attachment.'; }
-  }
+  openAtt(a: TaAttachment) { void this.attPreview.open(this.rec!.id, a); }
 
   async download() {
     if (!this.rec) return;

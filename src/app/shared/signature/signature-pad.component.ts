@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, Input, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { blackenPng } from './blacken';
@@ -44,9 +44,9 @@ function toSignaturePng(src: HTMLCanvasElement, removeWhite: boolean): string | 
   standalone: true,
   imports: [CommonModule],
   template: `
-    <p class="muted">Your signature is used when you sign a Travel Authority. Draw it, or import a picture of it (the white paper is removed and it is saved as a PNG).</p>
+    <p class="muted">{{ intro || 'Your signature is used when you sign a Travel Authority. Draw it, or import a picture of it (the white paper is removed and it is saved as a PNG).' }}</p>
     @if (current) {
-      <div class="cur"><span>Your saved signature</span><img [src]="current" alt="Your signature" /></div>
+      <div class="cur"><span>Saved signature</span><img [src]="current" alt="Saved signature" /></div>
     } @else if (loaded) { <p class="muted">No signature saved yet.</p> }
 
     <div class="tabs2">
@@ -84,6 +84,10 @@ function toSignaturePng(src: HTMLCanvasElement, removeWhite: boolean): string | 
 export class SignaturePadComponent implements OnInit {
   private api = inject(TravelAuthorityService);
   @ViewChild('pad') padRef!: ElementRef<HTMLCanvasElement>;
+  // set these to keep somebody else's signature (the District Supervisor's, in admin)
+  @Input() intro = '';
+  @Input() loader?: () => Promise<string | null>;
+  @Input() saver?: (png: string | null) => Promise<string | null>;
   w = W; h = H;
   mode: 'draw' | 'import' = 'draw';
   current: string | null = null;
@@ -97,7 +101,7 @@ export class SignaturePadComponent implements OnInit {
   private imported: string | null = null;
 
   ngOnInit() {
-    firstValueFrom(this.api.getSignature()).then((r) => (this.current = r.signature)).catch(() => {}).finally(() => (this.loaded = true));
+    (this.loader ? this.loader() : firstValueFrom(this.api.getSignature()).then((r) => r.signature)).then((s) => (this.current = s)).catch(() => {}).finally(() => (this.loaded = true));
   }
 
   private ctx() { const c = this.padRef.nativeElement.getContext('2d')!; c.lineWidth = 3.6; c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = '#000000'; return c; }
@@ -142,16 +146,16 @@ export class SignaturePadComponent implements OnInit {
     if (out.length > 300_000) { this.error = 'That signature is too large. Draw it smaller or use a simpler picture.'; return; }
     this.busy = true;
     try {
-      const r = await firstValueFrom(this.api.setSignature(out));
-      this.current = r.signature; this.msg = 'Signature saved.'; this.imported = null; this.preview = null; this.clear(); this.msg = 'Signature saved.';
+      this.current = this.saver ? await this.saver(out) : (await firstValueFrom(this.api.setSignature(out))).signature;
+      this.msg = 'Signature saved.'; this.imported = null; this.preview = null; this.clear(); this.msg = 'Signature saved.';
     } catch (e: any) { this.error = e?.error?.message ?? 'Could not save.'; }
     this.busy = false;
   }
 
   async remove() {
-    if (!confirm('Remove your saved signature?')) return;
+    if (!confirm('Remove the saved signature?')) return;
     this.busy = true;
-    try { await firstValueFrom(this.api.setSignature(null)); this.current = null; this.msg = 'Signature removed.'; } catch (e: any) { this.error = e?.error?.message ?? 'Could not remove.'; }
+    try { if (this.saver) await this.saver(null); else await firstValueFrom(this.api.setSignature(null)); this.current = null; this.msg = 'Signature removed.'; } catch (e: any) { this.error = e?.error?.message ?? 'Could not remove.'; }
     this.busy = false;
   }
 }

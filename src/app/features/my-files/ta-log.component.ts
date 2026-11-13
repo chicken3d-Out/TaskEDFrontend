@@ -3,8 +3,9 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { DriveUploadService } from '../../core/services/drive-upload.service';
-import { STATUS_LABEL, TaRecord, TravelAuthorityService } from '../../core/services/travel-authority.service';
+import { STATUS_LABEL, TaAttachment, TaRecord, TravelAuthorityService } from '../../core/services/travel-authority.service';
 import { TaEditorService } from '../../shared/travel-authority/ta-editor.service';
+import { TaAttPreviewService } from '../../shared/travel-authority/ta-att-preview.component';
 import { TaSignService } from '../../shared/travel-authority/ta-sign.service';
 import { sendToTravelMailbox } from '../../shared/travel-authority/ta-send';
 import { fileLabel, hasDriveToken, monthKey, openTemplate, syncToDrive } from '../../shared/travel-authority/ta-doc';
@@ -19,21 +20,25 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
   standalone: true,
   imports: [CommonModule, DatePipe],
   template: `
-    <div class="top">
-      <button class="btn" type="button" (click)="apply()">{{ teacher ? 'Apply Travel Authority for ' + firstName() : 'Apply Travel Authority' }}</button>
-    </div>
+    @if (mode === 'log' && canApply()) {
+      <div class="top">
+        <button class="btn" type="button" (click)="apply()">{{ teacher ? 'Apply Travel Authority for ' + firstName() : 'Apply Travel Authority' }}</button>
+      </div>
+    }
     @if (error) { <p class="error">{{ error }}</p> }
     @if (msg) { <p class="muted">{{ msg }}</p> }
 
-    @if (!teacher && inbox.length) {
+    @if (mode === 'pending' && !todo.length) { <p class="muted">Nothing is waiting for your signature right now.</p> }
+    @if (!teacher && todo.length) {
       <section class="card todo">
-        <h3>For my action ({{ inbox.length }})</h3>
-        @for (r of inbox; track r.id) {
+        <h3>{{ mode === 'pending' ? 'Pending for signature' : 'For my action' }} ({{ todo.length }})</h3>
+        @for (r of todo; track r.id) {
           <div class="frow">
             <div class="info">
               <strong>{{ r.data.name }}</strong>
               <small>{{ summary(r) }}</small>
               <small class="st">{{ status(r) }}</small>
+              @if (r.attachments?.length) { <small class="atts">Attachments: @for (a of r.attachments!; track a.id) { <a href="javascript:void(0)" (click)="viewAtt(r, a)">{{ a.name }}</a> }</small> }
             </div>
             <div class="acts">
               @if (r.status === 'awaiting_email') { <button class="btn" type="button" (click)="sendMail(r)" [disabled]="busy">Send to Travel Authority</button> }
@@ -44,6 +49,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
       </section>
     }
 
+    @if (mode === 'log') {
     <h3 class="logh">Travel Authority log</h3>
     @for (g of groups; track g.key) {
       <section class="card year">
@@ -58,7 +64,9 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
               <div class="info">
                 <strong>Travel Authority – {{ r.data.name }}</strong>
                 <small>{{ summary(r) }}</small>
+                @if (r.attachments?.length) { <small class="atts">Attachments: @for (a of r.attachments!; track a.id) { <a href="javascript:void(0)" (click)="viewAtt(r, a)">{{ a.name }}</a> }</small> }
                 <small><span class="chip" [class.ok]="r.status === 'approved'">{{ status(r) }}</span>
+                  @if (r.taNumber) { <span class="chip ok">No. {{ r.taNumber }}</span> }
                   @if (!r.isOwner) { · prepared by {{ r.ownerName }} }
                   @if (r.isOwner && r.needsDriveSync) { · <a href="javascript:void(0)" (click)="syncOne(r)">Update my Drive copy</a> }</small>
               </div>
@@ -75,6 +83,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
         }
       </section>
     } @empty { <p class="muted">{{ loaded ? 'No travel authorities yet.' : 'Loading…' }}</p> }
+    }
   `,
   styleUrl: './my-files.component.scss',
   styles: [`
@@ -84,16 +93,19 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
     .chev { width: 1rem; }
     .chip { background: #fef3c7; color: #92400e; border-radius: 999px; padding: .05rem .55rem; font-size: .75rem; } .chip.ok { background: #dcfce7; color: #166534; }
     .st { color: #92400e; }
+    .atts a { color: #15803d; margin-left: .5rem; text-decoration: underline; }
     .info { display: flex; flex-direction: column; gap: .1rem; min-width: 0; } .info small { color: #6b7280; }
   `],
 })
 export class TaLogComponent implements OnInit {
+  @Input() mode: 'log' | 'pending' = 'log';
   @Input() teacher: { id: string; name: string; position: string; station: string } | null = null;
   private api = inject(TravelAuthorityService);
   private auth = inject(AuthService);
   private drive = inject(DriveUploadService);
   private editor = inject(TaEditorService);
   private signer = inject(TaSignService);
+  private attPreview = inject(TaAttPreviewService);
 
   all: TaRecord[] = [];
   inbox: TaRecord[] = [];
@@ -111,6 +123,16 @@ export class TaLogComponent implements OnInit {
   }
   ngOnInit() { this.meId = this.auth.currentUser()?.id ?? ''; }
 
+  private get role() { return this.auth.currentUser()?.role ?? ''; }
+  // School Heads, District Supervisors and DS Secretaries have a separate "Pending for Signature" tab
+  private get hasPendingTab() { return ['school_head', 'district_supervisor', 'ds_secretary'].includes(this.role); }
+  canApply() { return this.role !== 'district_supervisor'; }
+  private isSigning(r: TaRecord) { return r.myTurn === 'countersign' || r.myTurn === 'recommending' || r.myTurn === 'approving'; }
+  get todo(): TaRecord[] {
+    if (this.mode === 'pending') return this.inbox.filter((r) => this.isSigning(r));
+    return this.hasPendingTab ? this.inbox.filter((r) => !this.isSigning(r)) : this.inbox;
+  }
+  viewAtt(r: TaRecord, a: TaAttachment) { void this.attPreview.open(r.id, a); }
   firstName() { return (this.teacher?.name ?? '').split(' ')[0]; }
   status(r: TaRecord) { return STATUS_LABEL[r.status]; }
   summary(r: TaRecord) { return `${r.data.dates || 'No dates yet'} · ${r.requesterName} → ${r.data.destination || 'No destination'}`; }

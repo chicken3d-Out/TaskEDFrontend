@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { TravelAuthorityService } from '../../core/services/travel-authority.service';
 import { UsersService } from '../../core/services/users.service';
 import { User } from '../../core/models/user.model';
+import { SignaturePadComponent } from '../../shared/signature/signature-pad.component';
 
 interface Part { text: string; userId: string | null; name: string }
 
@@ -13,11 +14,11 @@ interface Part { text: string; userId: string | null; name: string }
 @Component({
   selector: 'app-ta-signatories',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SignaturePadComponent],
   template: `
     <details class="card box">
       <summary><strong>Travel Authority signatories</strong> <span class="muted">District Supervisor and Schools Division Superintendent</span></summary>
-      <p class="muted">Within Leyte, the Recommending authority is the School Head of the employee's school and the Approving authority is the District Supervisor. Outside the Division, the School Head countersigns first, the District Supervisor is the Recommending authority, and the Schools Division Superintendent is the Approving authority (by email). Pick the District Supervisor's TaskEd account, and type the names as they should be printed.</p>
+      <p class="muted">Within Leyte, the Recommending authority is the School Head of the employee's school and the Approving authority is the District Supervisor. Outside the Division, the School Head countersigns first, the District Supervisor is the Recommending authority, and the Schools Division Superintendent is the Approving authority (by email). Pick the District Supervisor's TaskEd account (a District Supervisor account), and type the names as they should be printed. The DS Secretary signs for the District Supervisor with the signature uploaded below.</p>
       @for (k of keys; track k.id) {
         <div class="grid">
           <strong class="lbl">{{ k.label }}</strong>
@@ -33,6 +34,8 @@ interface Part { text: string; userId: string | null; name: string }
         </div>
       }
       <div class="row"><button class="btn" type="button" (click)="save()" [disabled]="busy">{{ busy ? 'Saving…' : 'Save signatories' }}</button></div>
+      <h4>District Supervisor's signature</h4>
+      <app-signature-pad [intro]="dsIntro" [loader]="loadDsSig" [saver]="saveDsSig" />
       @if (msg) { <p class="ok">{{ msg }}</p> }
       @if (error) { <p class="error">{{ error }}</p> }
     </details>
@@ -43,7 +46,7 @@ interface Part { text: string; userId: string | null; name: string }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem .8rem; margin: .8rem 0; } .lbl { grid-column: 1 / -1; }
     label { display: flex; flex-direction: column; gap: .2rem; font-size: .82rem; font-weight: 600; }
     input { padding: .5rem .6rem; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; font-weight: 400; }
-    .row { margin-top: .5rem; } @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+    h4 { margin: 1.2rem 0 .2rem; } .row { margin-top: .5rem; } @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
   `],
 })
 export class TaSignatoriesComponent implements OnInit {
@@ -56,12 +59,19 @@ export class TaSignatoriesComponent implements OnInit {
   msg = '';
   error = '';
 
+  dsIntro = 'Upload the District Supervisor’s signature (draw it or import a picture). The DS Secretary uses it to sign Travel Authorities on the District Supervisor’s behalf. Save the signatories above first.';
+  loadDsSig = async () => (await firstValueFrom(this.api.settings())).districtSupervisor.signature ?? null;
+  saveDsSig = async (png: string | null) => {
+    const s = await firstValueFrom(this.api.saveSettings({ districtSupervisor: { userId: this.parts['ds'].userId, name: this.parts['ds'].name, signature: png }, sds: { userId: this.parts['sds'].userId, name: this.parts['sds'].name } }));
+    return s.districtSupervisor.signature ?? null;
+  };
+
   label(u: User) { return `${u.name} — ${u.depedEmail ?? u.username ?? ''}`; }
 
   async ngOnInit() {
     try {
       const [all, s] = await Promise.all([firstValueFrom(this.users.all()), firstValueFrom(this.api.settings())]);
-      this.options = all.filter((u) => u.status === 'approved' && ['teacher', 'school_head', 'admin_officer', 'publisher'].includes(u.role ?? ''));
+      this.options = all.filter((u) => u.status === 'approved' && ['teacher', 'school_head', 'admin_officer', 'publisher', 'district_supervisor', 'ds_secretary'].includes(u.role ?? ''));
       const fill = (id: string, p: { userId: string | null; userName: string; email: string; name: string }) => {
         this.parts[id] = { userId: p.userId, text: p.userId ? `${p.userName} — ${p.email}` : '', name: p.name };
       };
