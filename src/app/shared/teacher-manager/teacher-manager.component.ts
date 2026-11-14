@@ -1,3 +1,5 @@
+import { ServiceCreditsComponent } from '../../features/my-files/service-credits.component';
+import { LeaveComponent } from '../../features/my-files/leave.component';
 import { TaLogComponent } from '../../features/my-files/ta-log.component';
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
@@ -19,7 +21,7 @@ import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.compo
 @Component({
   selector: 'app-teacher-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, HrProfileFormComponent, TaLogComponent],
+  imports: [CommonModule, FormsModule, DatePipe, HrProfileFormComponent, TaLogComponent, LeaveComponent, ServiceCreditsComponent],
   template: `
     <div class="backdrop" (click)="close.emit()"></div>
     <div class="panel" role="dialog" aria-modal="true">
@@ -31,6 +33,8 @@ import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.compo
         <button type="button" [class.on]="tab === 'profile'" (click)="tab = 'profile'">Employment details</button>
         <button type="button" [class.on]="tab === 'files'" (click)="tab = 'files'">Documents</button>
         <button type="button" [class.on]="tab === 'travel'" (click)="tab = 'travel'">Travel Authority</button>
+        <button type="button" [class.on]="tab === 'leave'" (click)="tab = 'leave'">Leave (Form 6)</button>
+        <button type="button" [class.on]="tab === 'credits'" (click)="tab = 'credits'">Service Credits</button>
       </div>
 
       @if (tab === 'profile') {
@@ -38,6 +42,11 @@ import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.compo
       } @else if (tab === 'travel') {
         <p class="muted">Apply a Travel Authority for {{ teacherName }}. It is saved in <strong>your Google Drive</strong>; {{ teacherName }} is asked to sign first, then it goes to the recommending and approving authorities.</p>
         <app-ta-log [teacher]="teacherInfo" />
+      } @else if (tab === 'credits') {
+        <app-service-credits [personId]="teacherId" />
+      } @else if (tab === 'leave') {
+        <p class="muted">Apply leave (Form 6) for {{ teacherName }}. {{ teacherName }} is asked to sign first, then it comes back to you for approval, and you send it to the School Head.</p>
+        <app-leave [person]="teacherInfo" />
       } @else {
         <p class="muted">
           Your own copy, saved in <strong>your Google Drive</strong> under <em>TaskEd Files › {{ folderTeachers }} › {{ teacherName }}</em>.
@@ -122,7 +131,7 @@ export class TeacherManagerComponent implements OnInit {
   @Input({ required: true }) teacherId!: string;
   @Output() close = new EventEmitter<void>();
 
-  tab: 'profile' | 'files' | 'travel' = 'profile';
+  tab: 'profile' | 'files' | 'travel' | 'leave' | 'credits' = 'profile';
   private ti: { id: string; name: string; position: string; station: string } | null = null;
   get teacherInfo() {
     const name = (this.teacherName ?? '').toUpperCase();

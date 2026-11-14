@@ -31,8 +31,8 @@ export class SchoolPortalService {
   }
 
   // teachers
-  teachers(id: string): Observable<User[]> {
-    return this.http.get<User[]>(`${this.base}/schools/${id}/teachers`);
+  teachers(id: string, group?: string): Observable<User[]> {
+    return this.http.get<User[]>(`${this.base}/schools/${id}/teachers`, { params: group ? { group } : {} });
   }
   addTeacher(id: string, dto: TeacherInput): Observable<User> {
     return this.http.post<User>(`${this.base}/schools/${id}/teachers`, dto);
@@ -43,8 +43,8 @@ export class SchoolPortalService {
   setTeacherStatus(id: string, userId: string, status: AccountStatus): Observable<User> {
     return this.http.post<User>(`${this.base}/schools/${id}/teachers/${userId}/status`, { status });
   }
-  approveTeacher(id: string, userId: string): Observable<User> {
-    return this.http.post<User>(`${this.base}/schools/${id}/teachers/${userId}/approve`, {});
+  approveTeacher(id: string, userId: string, role?: string): Observable<User> {
+    return this.http.post<User>(`${this.base}/schools/${id}/teachers/${userId}/approve`, role ? { role } : {});
   }
   rejectTeacher(id: string, userId: string): Observable<User> {
     return this.http.post<User>(`${this.base}/schools/${id}/teachers/${userId}/reject`, {});

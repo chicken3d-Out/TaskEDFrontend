@@ -75,6 +75,7 @@ export interface TeacherInput {
   contactNumber?: string;
   designation?: string;
   depedEmail?: string;
+  role?: string;
 }
 
 export type TeacherRow = User;

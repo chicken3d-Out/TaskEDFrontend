@@ -46,6 +46,8 @@ export class ShellComponent implements OnInit {
     return [
       { label: 'Working Directory', tab: 'working' },
       { label: 'Travel Authority', tab: 'travel', show: r !== Role.SCHOOL },
+      { label: 'Leave (Form 6)', tab: 'leave', show: r === Role.TEACHER || r === Role.DS_SECRETARY || r === Role.NON_TEACHING || r === Role.SCHOOL_HEAD || r === Role.ADMIN_OFFICER || r === Role.PUBLISHER || r === Role.DISTRICT_SUPERVISOR },
+      { label: 'Service Credits', tab: 'credits', show: r === Role.TEACHER || r === Role.DS_SECRETARY || r === Role.NON_TEACHING || r === Role.SCHOOL_HEAD || r === Role.ADMIN_OFFICER || r === Role.PUBLISHER },
       { label: 'Pending for Signature', tab: 'pending', show: r === Role.SCHOOL_HEAD || r === Role.DISTRICT_SUPERVISOR || r === Role.DS_SECRETARY },
       { label: 'TA Number', tab: 'number', show: r === Role.DS_SECRETARY },
       { label: 'File Storage', tab: 'storage' },
@@ -137,7 +139,7 @@ export class ShellComponent implements OnInit {
       { label: 'Tasks', icon: 'ticket', link: '/tasks', show: hasTickets },
       { label: 'New Task', icon: 'plus', link: '/tasks/new', show: r === Role.TEACHER },
       { label: r === Role.ADMIN_OFFICER ? 'My Schools' : 'My School', icon: 'school', link: '/school', show: r === Role.SCHOOL || r === Role.SCHOOL_HEAD || r === Role.ADMIN_OFFICER },
-      { label: 'My files', icon: 'folder', link: '/my-files', show: r === Role.TEACHER || r === Role.SCHOOL_HEAD || r === Role.ADMIN_OFFICER || r === Role.PUBLISHER || r === Role.DISTRICT_SUPERVISOR || r === Role.DS_SECRETARY || r === Role.SCHOOL },
+      { label: 'My files', icon: 'folder', link: '/my-files', show: r === Role.TEACHER || r === Role.SCHOOL_HEAD || r === Role.ADMIN_OFFICER || r === Role.PUBLISHER || r === Role.DISTRICT_SUPERVISOR || r === Role.DS_SECRETARY || r === Role.NON_TEACHING || r === Role.SCHOOL },
       { label: 'Users', icon: 'users', link: '/users', show: r === Role.ADMINISTRATOR },
       { label: 'Schools', icon: 'school', link: '/schools', show: r === Role.ADMINISTRATOR },
       { label: 'School documents', icon: 'folder', link: '/document-types', show: r === Role.ADMINISTRATOR },

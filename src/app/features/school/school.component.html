@@ -30,6 +30,9 @@
       <button [class.on]="tab === 'teachers'" (click)="setTab('teachers')">
         <app-icon name="users" [size]="16" /> Teachers
       </button>
+      <button [class.on]="tab === 'nonteaching'" (click)="setTab('nonteaching')">
+        <app-icon name="users" [size]="16" /> Non-Teaching
+      </button>
     </div>
   </div>
 
@@ -129,17 +132,17 @@
   }
 
   <!-- ================= TEACHERS ================= -->
-  @if (tab === 'teachers') {
+  @if (tab === 'teachers' || tab === 'nonteaching') {
     <div class="bar">
-      <p class="muted">Teachers of {{ overview.school.name }}. You can add, edit, approve and suspend them.</p>
+      <p class="muted">{{ noun }} of {{ overview.school.name }}. You can add, edit, approve and suspend them.</p>
       <button class="btn" (click)="showAdd = !showAdd">
-        <app-icon [name]="showAdd ? 'x' : 'plus'" [size]="18" /> {{ showAdd ? 'Cancel' : 'Add teacher' }}
+        <app-icon [name]="showAdd ? 'x' : 'plus'" [size]="18" /> {{ showAdd ? 'Cancel' : 'Add ' + one }}
       </button>
     </div>
 
     @if (showAdd) {
       <form class="card form" [formGroup]="addForm" (ngSubmit)="addTeacher()">
-        <p class="note wide">They will sign in with this DepEd email. No approval is needed for teachers you add.</p>
+        <p class="note wide">They will sign in with this DepEd email. No approval is needed for the people you add.</p>
         <label class="wide">DepEd email *<input formControlName="depedEmail" placeholder="name&#64;deped.gov.ph" /></label>
         <label>First name *<input formControlName="firstName" /></label>
         <label>Middle name<input formControlName="middleName" /></label>
@@ -150,7 +153,7 @@
           <p class="error wide">{{ addError }}</p>
         }
         <div class="row wide">
-          <button class="btn" type="submit" [disabled]="adding">{{ adding ? 'Adding…' : 'Add teacher' }}</button>
+          <button class="btn" type="submit" [disabled]="adding">{{ adding ? 'Adding…' : 'Add ' + one }}</button>
         </div>
       </form>
     }
@@ -170,7 +173,7 @@
                 @if (row.error) { <small class="error">{{ row.error }}</small> }
               </div>
               <div class="actions">
-                <button class="btn" [disabled]="row.busy" (click)="approve(row)">Approve as Teacher</button>
+                <button class="btn" [disabled]="row.busy" (click)="approve(row)">Approve as {{ nt ? 'Non-Teaching' : 'Teacher' }}</button>
                 <button class="btn danger" [disabled]="row.busy" (click)="reject(row)">Reject</button>
               </div>
             </div>
@@ -178,9 +181,9 @@
         </div>
       }
 
-      <h3 class="sec">Teachers ({{ members.length }})</h3>
+      <h3 class="sec">{{ noun }} ({{ members.length }})</h3>
       @if (members.length === 0) {
-        <div class="card empty">No teachers yet.</div>
+        <div class="card empty">None yet.</div>
       }
       <div class="list">
         @for (row of members; track row.user.id) {
@@ -189,7 +192,7 @@
               <app-avatar [url]="row.user.avatarUrl" [name]="row.user.name" [size]="44" />
               <div class="tinfo">
                 <strong>{{ row.user.name }}</strong>
-                <small>{{ row.user.depedEmail }} · {{ row.user.designation || 'No designation' }} · {{ row.user.contactNumber || 'No contact' }}</small>
+                <small>{{ roleLabel(row.user.role) ? roleLabel(row.user.role) + ' · ' : '' }}{{ row.user.depedEmail }} · {{ row.user.designation || 'No designation' }} · {{ row.user.contactNumber || 'No contact' }}</small>
                 @if (!row.user.googleId) { <small class="muted">Has not signed in yet</small> }
               </div>
               <span class="status" [class]="'s-' + row.user.status">{{ row.user.status }}</span>

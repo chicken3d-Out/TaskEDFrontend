@@ -122,7 +122,7 @@ export class ProfileComponent {
   public auth = inject(AuthService);
   private fb = inject(FormBuilder);
   roleLabel = roleLabel;
-  canSign() { const r = this.auth.currentUser()?.role; return r === 'teacher' || r === 'school_head' || r === 'admin_officer' || r === 'publisher' || r === 'district_supervisor' || r === 'ds_secretary'; }
+  canSign() { const r = this.auth.currentUser()?.role; return r === 'teacher' || r === 'school_head' || r === 'admin_officer' || r === 'publisher' || r === 'district_supervisor' || r === 'ds_secretary' || r === 'non_teaching'; }
 
   pwForm = this.fb.group({
     current: ['', Validators.required],

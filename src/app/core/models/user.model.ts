@@ -5,6 +5,7 @@ export enum Role {
   SCHOOL_HEAD = 'school_head',
   DISTRICT_SUPERVISOR = 'district_supervisor',
   DS_SECRETARY = 'ds_secretary',
+  NON_TEACHING = 'non_teaching',
   SCHOOL = 'school',
   ADMINISTRATOR = 'administrator',
 }
@@ -78,6 +79,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   [Role.SCHOOL_HEAD]: 'School Head',
   [Role.DISTRICT_SUPERVISOR]: 'District Supervisor',
   [Role.DS_SECRETARY]: 'DS Secretary',
+  [Role.NON_TEACHING]: 'Non-Teaching',
   [Role.SCHOOL]: 'School',
   [Role.ADMINISTRATOR]: 'Administrator',
 };

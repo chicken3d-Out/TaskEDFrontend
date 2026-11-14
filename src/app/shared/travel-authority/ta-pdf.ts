@@ -132,7 +132,7 @@ export async function buildPdf(rec: TaRecord, pkg: TaPackage, base?: HTMLCanvasE
   return pdfFromJpeg(jpeg, canvas.width, canvas.height, size.w * 72, size.h * 72);
 }
 
-function pdfFromJpeg(jpeg: Uint8Array, w: number, h: number, wPt: number, hPt: number): Blob {
+export function pdfFromJpeg(jpeg: Uint8Array, w: number, h: number, wPt: number, hPt: number): Blob {
   const enc = new TextEncoder();
   const chunks: Uint8Array[] = [];
   let len = 0;

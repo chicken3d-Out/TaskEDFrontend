@@ -1,4 +1,5 @@
 import { TaSignatoriesComponent } from './ta-signatories.component';
+import { CreditRequestsComponent } from './credit-requests.component';
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -34,7 +35,7 @@ interface Row {
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, LoadingComponent, AvatarComponent, IconComponent, TaSignatoriesComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, LoadingComponent, AvatarComponent, IconComponent, TaSignatoriesComponent, CreditRequestsComponent],
   templateUrl: './users.component.html',
   styleUrl: './users.component.scss',
 })
@@ -49,7 +50,7 @@ export class UsersComponent implements OnInit {
   AccountStatus = AccountStatus;
   // Administrator is not offered here: administrators are created with
   // "Add user" and sign in with a username and password.
-  roles = [Role.TEACHER, Role.ADMIN_OFFICER, Role.SCHOOL_HEAD, Role.SCHOOL, Role.PUBLISHER, Role.DISTRICT_SUPERVISOR, Role.DS_SECRETARY].map((r) => ({
+  roles = [Role.TEACHER, Role.ADMIN_OFFICER, Role.SCHOOL_HEAD, Role.SCHOOL, Role.PUBLISHER, Role.DISTRICT_SUPERVISOR, Role.DS_SECRETARY, Role.NON_TEACHING].map((r) => ({
     value: r,
     label: ROLE_LABELS[r],
   }));
@@ -160,7 +161,7 @@ export class UsersComponent implements OnInit {
 
   canSave(row: Row): boolean {
     if (!row.role) return false;
-    if ((row.role === Role.ADMIN_OFFICER || row.role === Role.SCHOOL || row.role === Role.SCHOOL_HEAD || row.role === Role.TEACHER) && !row.user.school) return false;
+    if ((row.role === Role.ADMIN_OFFICER || row.role === Role.SCHOOL || row.role === Role.SCHOOL_HEAD || row.role === Role.TEACHER || row.role === Role.NON_TEACHING) && !row.user.school) return false;
     return true;
   }
 
@@ -261,7 +262,7 @@ export class UsersComponent implements OnInit {
     if (!isSchool && (!v.firstName?.trim() || !v.lastName?.trim())) return false;
     if (this.addKind === 'admin') return !!v.username?.trim() && (v.password?.length ?? 0) >= 10;
     if (!v.depedEmail?.trim()) return false;
-    if ((v.role === Role.TEACHER || v.role === Role.SCHOOL || v.role === Role.SCHOOL_HEAD || v.role === Role.ADMIN_OFFICER) && !v.schoolId) return false;
+    if ((v.role === Role.TEACHER || v.role === Role.SCHOOL || v.role === Role.SCHOOL_HEAD || v.role === Role.ADMIN_OFFICER || v.role === Role.NON_TEACHING) && !v.schoolId) return false;
     return true;
   }
 

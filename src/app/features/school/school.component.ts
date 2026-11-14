@@ -12,7 +12,7 @@ import { LoadingComponent } from '../../shared/loading/loading.component';
 import { AvatarComponent } from '../../shared/avatar/avatar.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 
-type Tab = 'overview' | 'teachers';
+type Tab = 'overview' | 'teachers' | 'nonteaching';
 
 interface TeacherRow {
   user: User;
@@ -91,7 +91,7 @@ export class SchoolComponent implements OnInit {
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
     const tab = this.route.snapshot.queryParamMap.get('tab') as Tab | null;
-    if (tab === 'teachers') this.tab = tab;
+    if (tab === 'teachers' || tab === 'nonteaching') this.tab = tab;
     if (id) {
       this.portal.mine().subscribe({
         next: (list) => {
@@ -122,12 +122,16 @@ export class SchoolComponent implements OnInit {
     this.teachers = [];
     this.editingProfile = false;
     this.loadOverview();
-    if (this.tab === 'teachers') this.loadTeachers();
+    if (this.tab === 'teachers' || this.tab === 'nonteaching') this.loadTeachers();
   }
 
   setTab(t: Tab) {
+    const was = this.tab;
     this.tab = t;
-    if (t === 'teachers' && !this.teachersLoaded) this.loadTeachers();
+    if (t === 'teachers' || t === 'nonteaching') {
+      this.showAdd = false;
+      if (!this.teachersLoaded || was !== t) this.loadTeachers();
+    }
   }
 
   private loadOverview() {
@@ -188,7 +192,8 @@ export class SchoolComponent implements OnInit {
 
   // ---- teachers ----
   loadTeachers() {
-    this.portal.teachers(this.schoolId).subscribe((list) => {
+    this.teachersLoaded = false;
+    this.portal.teachers(this.schoolId, this.nt ? 'non_teaching' : undefined).subscribe((list) => {
       this.teachers = list.map((user) => ({
         user,
         editing: false,
@@ -206,6 +211,11 @@ export class SchoolComponent implements OnInit {
       this.teachersLoaded = true;
     });
   }
+
+  get nt() { return this.tab === 'nonteaching'; }
+  get noun() { return this.nt ? 'Non-Teaching staff' : 'Teachers'; }
+  get one() { return this.nt ? 'Non-Teaching staff' : 'teacher'; }
+  roleLabel(r: Role | null) { return r === Role.DS_SECRETARY ? 'DS Secretary' : r === Role.NON_TEACHING ? 'Non-Teaching' : ''; }
 
   get pending() {
     return this.teachers.filter((t) => !t.user.role);
@@ -230,7 +240,7 @@ export class SchoolComponent implements OnInit {
   }
 
   approve(row: TeacherRow) {
-    this.afterTeacherAction(row, this.portal.approveTeacher(this.schoolId, row.user.id));
+    this.afterTeacherAction(row, this.portal.approveTeacher(this.schoolId, row.user.id, this.nt ? 'non_teaching' : undefined));
   }
   reject(row: TeacherRow) {
     if (!confirm(`Reject ${row.user.name}?`)) return;
@@ -274,6 +284,7 @@ export class SchoolComponent implements OnInit {
         lastName: v.lastName!,
         contactNumber: v.contactNumber || undefined,
         designation: v.designation || undefined,
+        role: this.nt ? 'non_teaching' : undefined,
       })
       .subscribe({
         next: () => {
