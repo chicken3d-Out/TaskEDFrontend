@@ -32,7 +32,11 @@ const blank = (): LeaveData => ({ office: '', lastName: '', firstName: '', middl
             @if (a.filedBy && a.filedBy.id !== a.applicant.id) { <small class="muted"> · prepared by {{ a.filedBy.name }}</small> }</div>
           @if (a.kindLabel) { <small class="muted">Deducts from {{ a.kindLabel }}{{ a.deducted ? ' · deducted' : '' }}</small> }
         </div>
-        <button class="btn secondary" type="button" (click)="open(a.id)">Open</button>
+        <div class="cb">
+          <button class="btn secondary" type="button" (click)="open(a.id)">Open</button>
+          <button class="btn secondary" type="button" (click)="downloadCard(a)" [disabled]="busy">Download</button>
+          @if (a.applicant.id === me?.id || a.filedBy?.id === me?.id) { <button class="btn secondary danger" type="button" (click)="removeCard(a)" [disabled]="busy">Delete</button> }
+        </div>
       </div>
     } @empty { <p class="muted">{{ loaded ? (pendingOnly ? 'No leave applications are waiting for your signature.' : 'No leave applications yet.') : 'Loading…' }}</p> }
 
@@ -75,7 +79,7 @@ const blank = (): LeaveData => ({ office: '', lastName: '', firstName: '', middl
       <div class="pnl" role="dialog" aria-modal="true" aria-label="Form 6">
         <header>
           <div><h3>Form 6 · {{ cur.applicant.name }}</h3><small class="muted">{{ statusOf(cur) }}</small></div>
-          <div class="hb"><select class="paper" [ngModel]="paperId" (ngModelChange)="setPaper($event)" aria-label="Paper size">@for (p of papers; track p.id) { <option [value]="p.id">{{ p.label }}</option> }</select><button class="btn secondary" type="button" (click)="print()" [disabled]="busy">Print</button><button class="btn secondary" type="button" (click)="download()" [disabled]="busy">Download PDF</button><button class="btn secondary" type="button" (click)="close()">Close</button></div>
+          <div class="hb"><select class="paper" [ngModel]="paperId" (ngModelChange)="setPaper($event)" aria-label="Paper size">@for (p of papers; track p.id) { <option [value]="p.id">{{ p.label }}</option> }</select><button class="btn secondary" type="button" (click)="print()" [disabled]="busy">Print</button><button class="btn secondary" type="button" (click)="close()">Close</button></div>
         </header>
         @if (error) { <p class="error pad">{{ error }}</p> } @if (msg) { <p class="ok pad">{{ msg }}</p> }
         @if (cur.printed.signatoryNote && cur.status !== 'approved') { <p class="muted pad">{{ cur.printed.signatoryNote }}</p> }
@@ -94,7 +98,7 @@ const blank = (): LeaveData => ({ office: '', lastName: '', firstName: '', middl
             <button class="btn" type="button" (click)="doSign()" [disabled]="busy || (decision === 'disapproval' && cur.myTurn === 'signatory' && !reason)">{{ busy ? 'Saving…' : cur.myTurn === 'signatory' ? 'Sign and ' + (decision === 'approval' ? 'approve' : 'disapprove') : 'Sign and send to ' + cur.printed.signatoryTitle }}</button>
           }
           @if (cur.status === 'awaiting_applicant' && (cur.applicant.id === me?.id || cur.filedBy?.id === me?.id)) { <button class="btn secondary" type="button" (click)="startEdit()">Edit</button> }
-          @if (cur.applicant.id === me?.id || cur.filedBy?.id === me?.id) { <button class="btn secondary" type="button" (click)="remove()" [disabled]="busy">Delete</button> }
+
         </div>
         <div class="scroll" #scroll>
           <div class="host" #host></div>
@@ -109,6 +113,7 @@ const blank = (): LeaveData => ({ office: '', lastName: '', firstName: '', middl
     }
   `,
   styles: [`
+    .cb { display: flex; gap: .4rem; flex-wrap: wrap; justify-content: flex-end; } .danger { color: #b91c1c; border-color: #fca5a5; }
     .bar { margin-bottom: 1rem; } .muted { color: #6b7280; } .ok { color: #166534; } .error { color: #b91c1c; }
     .item { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .8rem 1rem; margin-bottom: .6rem; } .item.turn { border-left: 4px solid #16a34a; }
     .st { display: inline-block; font-size: .75rem; background: #fef3c7; color: #92400e; border-radius: 999px; padding: 0 .55rem; } .st.ok { background: #dcfce7; color: #166534; } .st.no { background: #fee2e2; color: #991b1b; }
@@ -215,10 +220,10 @@ export class LeaveComponent implements OnInit {
     this.editId = this.cur.id; this.f = { ...this.cur.data }; this.kind = this.cur.kind ?? ''; this.kinds = this.cur.kinds; this.error = ''; this.dlg = 'form';
   }
 
-  async remove() {
-    if (!this.cur || !confirm(this.cur.deducted ? 'Delete this application? The days deducted will be given back.' : 'Delete this application? It will also disappear for the signatory.')) return;
-    this.busy = true;
-    try { await firstValueFrom(this.api.remove(this.cur.id)); this.close(); await this.reload(); } catch (e: any) { this.error = e?.error?.message ?? 'Could not delete.'; }
+  async removeCard(a: LeaveView) {
+    if (!confirm(a.deducted ? 'Delete this application? The days deducted will be given back.' : 'Delete this application? It will also disappear for the signatory.')) return;
+    this.busy = true; this.error = '';
+    try { await firstValueFrom(this.api.remove(a.id)); if (this.cur?.id === a.id) this.close(); await this.reload(); this.changed.emit(); } catch (e: any) { this.error = e?.error?.message ?? 'Could not delete.'; }
     this.busy = false;
   }
 
@@ -274,11 +279,18 @@ export class LeaveComponent implements OnInit {
 
   private pages() { return Array.from(this.host?.nativeElement.querySelectorAll('.pg') ?? []) as HTMLElement[]; }
 
-  async download() {
-    const pages = this.pages();
-    if (!pages.length || !this.cur) return;
+  // Download straight from the list: the form is laid out off-screen, so the form need not be opened.
+  async downloadCard(a: LeaveView) {
     this.busy = true; this.error = '';
-    try { DriveUploadService.saveBlob(await form6Pdf(pages, paperOf(this.paperId)), `Form 6 - ${this.cur.applicant.name}.pdf`); } catch (e: any) { this.error = e?.message ?? 'Could not build the file.'; }
+    const holder = document.createElement('div');
+    holder.style.cssText = 'position:fixed;left:-10000px;top:0;';
+    document.body.appendChild(holder);
+    try {
+      const v = await firstValueFrom(this.api.get(a.id));
+      holder.appendChild(await buildForm6(v)); holder.appendChild(await buildForm6Back());
+      DriveUploadService.saveBlob(await form6Pdf(Array.from(holder.querySelectorAll('.pg')) as HTMLElement[], paperOf(this.paperId)), `Form 6 - ${a.applicant.name}.pdf`);
+    } catch (e: any) { this.error = e?.error?.message ?? e?.message ?? 'Could not build the file.'; }
+    holder.remove();
     this.busy = false;
   }
 
