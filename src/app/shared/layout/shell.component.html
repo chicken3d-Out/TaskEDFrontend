@@ -56,7 +56,7 @@
             <p class="empty">No notifications yet.</p>
           }
           @for (n of notifications.notifications(); track n.id) {
-            <div class="notif-item" [class.unread]="!n.read" (click)="notifications.markRead(n.id)">
+            <div class="notif-item" [class.unread]="!n.read" (click)="notifications.open(n); showNotifications = false">
               {{ n.message }}
             </div>
           }

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { environment } from '../../../environments/environment';
+import { NotificationsService } from './notifications.service';
 
 // Device push only exists in the native (Ionic/Capacitor) build - there's
 // no equivalent for a plain browser tab, so every method here is a no-op
@@ -12,7 +13,7 @@ import { environment } from '../../../environments/environment';
 export class PushNotificationsService {
   private registered = false;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private notifs: NotificationsService) {}
 
   async register(): Promise<void> {
     if (!Capacitor.isNativePlatform() || this.registered) return;
@@ -38,6 +39,12 @@ export class PushNotificationsService {
     });
     PushNotifications.addListener('registrationError', (err) => {
       console.error('Push registration failed', err);
+    });
+
+    // Tapping a banner opens the page it is about and marks it read.
+    PushNotifications.addListener('pushNotificationActionPerformed', (a) => {
+      const d: any = a.notification?.data ?? {};
+      this.notifs.openFromPush(d.type ?? '', a.notification?.body ?? '', d.relatedEntityId || null);
     });
 
     await PushNotifications.register();
