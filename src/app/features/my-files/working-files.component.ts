@@ -14,7 +14,7 @@ import { SalnEditorService } from '../../shared/saln/saln-editor.service';
 import { PdsPreviewService } from '../../shared/pds/pds-preview.service';
 import { DriveUploadService, MAX_UPLOAD_BYTES } from '../../core/services/drive-upload.service';
 
-export const WORKING_TYPES = ['PDS', 'Service Record', 'Service Credit', 'SALN', 'Other'];
+export const WORKING_TYPES = ['PDS', 'Service Record', 'SALN'];
 
 // Working Directory Files: the person's own working documents (PDS, Service
 // Record...) kept in their Drive under TaskEd Files / Working Directory / <type>.

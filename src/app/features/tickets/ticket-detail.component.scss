@@ -204,3 +204,13 @@ button:disabled {
   background: var(--surface-2);
   color: var(--muted);
 }
+
+h2 { display: flex; align-items: center; gap: 0.45rem; }
+.status { display: inline-flex; align-items: center; gap: 0.3rem; }
+.attachment-link { display: inline-flex; align-items: center; gap: 0.4rem; }
+button[type='submit'] { display: inline-flex; align-items: center; gap: 0.4rem; }
+.who { display: inline-flex; align-items: center; gap: 0.5rem; }
+.av { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--ok-bg); color: var(--ok-fg); font-size: 0.75rem; font-weight: 700; }
+.checkbox-row { gap: 0.5rem; }
+.checkbox-row input { flex: none; width: auto; margin: 0; }
+.checkbox-row app-icon { color: var(--ok-fg); }

@@ -1,3 +1,4 @@
+import { IconComponent } from '../icon/icon.component';
 import { Component, ElementRef, ViewChild, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
@@ -20,7 +21,7 @@ const ROLE_WORD = { requester: 'the employee', countersign: 'the School Head (co
 @Component({
   selector: 'app-ta-sign',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [IconComponent, CommonModule, FormsModule],
   template: `
     @if (svc.current()) {
       <div class="backdrop" (click)="close()"></div>
@@ -33,11 +34,11 @@ const ROLE_WORD = { requester: 'the employee', countersign: 'the School Head (co
           <div class="hbtns">
             @if (rec) {
               <select class="paper" [ngModel]="paperId" (ngModelChange)="setPaper($event)" aria-label="Paper size">@for (p of papers; track p.id) { <option [value]="p.id">{{ p.label }}</option> }</select>
-              <button class="btn secondary" type="button" (click)="print()" [disabled]="busy || loading">Print</button>
-              <button class="btn secondary" type="button" (click)="download()" [disabled]="busy || loading">Download PDF</button>
+              <button class="btn secondary t-info" type="button" (click)="print()" [disabled]="busy || loading"><app-icon name="file-text" [size]="16" /> Print</button>
+              <button class="btn secondary t-ok" type="button" (click)="download()" [disabled]="busy || loading"><app-icon name="download" [size]="16" /> Download PDF</button>
             }
             @if (rec?.myTurn && placed()) { <button class="btn" type="button" (click)="doSign()" [disabled]="busy">{{ busy ? 'Saving…' : 'Save signature' }}</button> }
-            <button class="btn secondary" type="button" (click)="close()">Close</button>
+            <button class="btn secondary t-close" type="button" (click)="close()"><app-icon name="x" [size]="16" /> Close</button>
           </div>
         </header>
         @if (error) { <p class="error pad">{{ error }}</p> }

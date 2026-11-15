@@ -1,6 +1,7 @@
 <div class="ticket-list-page">
   <div class="header-row">
     <h1>
+      <span class="title-ico"><app-icon name="ticket" [size]="22" /></span>
       @if (auth.currentUser()?.role === Role.ADMIN_OFFICER) {
         Tasks assigned to you
       } @else if (auth.currentUser()?.role === Role.TEACHER) {
@@ -10,7 +11,7 @@
       }
     </h1>
     @if (auth.currentUser()?.role === Role.TEACHER) {
-      <a routerLink="/tasks/new" class="new-btn">+ New Task</a>
+      <a routerLink="/tasks/new" class="new-btn"><app-icon name="plus" [size]="16" /> New Task</a>
     }
   </div>
 
@@ -22,6 +23,7 @@
     <div class="ticket-table">
       @for (ticket of tickets; track ticket.id) {
         <a class="ticket-row" [routerLink]="['/tasks', ticket.id]">
+          <span class="row-ico"><app-icon name="ticket" [size]="20" /></span>
           <div class="title-col">
             <strong>{{ ticket.title }}</strong>
             <span class="meta">
@@ -31,7 +33,7 @@
               }
             </span>
           </div>
-          <span class="status status-{{ ticket.status }}">{{ statusLabels[ticket.status] }}</span>
+          <span class="status status-{{ ticket.status }}"><app-icon [name]="statusIcons[ticket.status]" [size]="13" /> {{ statusLabels[ticket.status] }}</span>
         </a>
       }
     </div>

@@ -13,7 +13,7 @@ import { IconComponent } from '../icon/icon.component';
         <div class="dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
           <div class="bar">
             <strong class="title">{{ s.name }}</strong>
-            <a class="btn secondary" [href]="s.link" target="_blank" rel="noopener noreferrer">Open in new tab</a>
+            <a class="btn secondary t-info" [href]="s.link" target="_blank" rel="noopener noreferrer"><app-icon name="external" [size]="16" /> Open in new tab</a>
             <button type="button" class="x" (click)="preview.close()" aria-label="Close"><app-icon name="x" [size]="20" /></button>
           </div>
           <div class="body">
@@ -23,7 +23,7 @@ import { IconComponent } from '../icon/icon.component';
             } @else {
               <div class="nopreview">
                 <p>This kind of link (a folder, OneDrive or SharePoint) cannot be previewed inside TaskEd.</p>
-                <a class="btn" [href]="s.link" target="_blank" rel="noopener noreferrer">Open it in a new tab</a>
+                <a class="btn" [href]="s.link" target="_blank" rel="noopener noreferrer"><app-icon name="external" [size]="16" /> Open it in a new tab</a>
               </div>
             }
           </div>

@@ -1,6 +1,6 @@
 <div class="create-page">
   <form class="create-card" [formGroup]="form" (ngSubmit)="submit()">
-    <h1>File a new task</h1>
+    <h1 class="ttl"><span class="title-ico"><app-icon name="ticket" [size]="22" /></span> File a new task</h1>
     <p class="subtitle">This goes to your school's Administrative Officer.</p>
 
     <label>
@@ -18,7 +18,7 @@
     }
 
     <button type="submit" [disabled]="form.invalid || submitting">
-      {{ submitting ? 'Submitting…' : 'Submit task' }}
+      <app-icon name="check" [size]="16" /> {{ submitting ? 'Submitting…' : 'Submit task' }}
     </button>
   </form>
 </div>

@@ -192,6 +192,16 @@ button:disabled {
   background: var(--err-bg-soft);
 }
 
+/* Coloured action buttons (Print / Download / Open / Close) */
+.btn.t-info, .btn.t-ok, .btn.t-close { border-color: transparent; }
+.btn.t-info { background: var(--info-bg); color: var(--info-fg); }
+.btn.t-ok { background: var(--ok-bg); color: var(--ok-fg); }
+.btn.t-close { background: var(--err-bg); color: var(--err-fg); }
+.btn.t-info:hover:not(:disabled), .btn.t-ok:hover:not(:disabled), .btn.t-close:hover:not(:disabled) { filter: brightness(0.95); background-color: inherit; }
+.btn.secondary.t-info:hover:not(:disabled) { background: var(--info-bg); }
+.btn.secondary.t-ok:hover:not(:disabled) { background: var(--ok-bg); }
+.btn.secondary.t-close:hover:not(:disabled) { background: var(--err-bg); }
+
 .page-title {
   margin: 0 0 1rem;
   font-size: 1.5rem;

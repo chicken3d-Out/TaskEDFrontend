@@ -1,3 +1,4 @@
+import { IconComponent } from '../../shared/icon/icon.component';
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -7,7 +8,7 @@ import { TicketsService } from '../../core/services/tickets.service';
 @Component({
   selector: 'app-ticket-create',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, IconComponent],
   templateUrl: './ticket-create.component.html',
   styleUrl: './ticket-create.component.scss',
 })

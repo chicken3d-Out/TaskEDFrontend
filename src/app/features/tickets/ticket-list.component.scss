@@ -5,11 +5,17 @@
   margin-bottom: 1.25rem;
 }
 h1 {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   font-size: 1.25rem;
   color: var(--ok-fg);
   margin: 0;
 }
 .new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   background: #14532d;
   color: #fff;
   padding: 0.5rem 1rem;
@@ -40,7 +46,19 @@ h1 {
 .ticket-row:hover {
   border-color: #14532d;
 }
+.title-ico, .row-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  background: var(--ok-bg);
+  color: var(--ok-fg);
+}
+.title-ico { width: 38px; height: 38px; border-radius: 11px; }
+.row-ico { width: 40px; height: 40px; border-radius: 12px; margin-right: 0.9rem; }
 .title-col {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -61,6 +79,9 @@ h1 {
   font-weight: 600;
 }
 .status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   font-size: 0.75rem;
   font-weight: 700;
   padding: 0.3rem 0.7rem;

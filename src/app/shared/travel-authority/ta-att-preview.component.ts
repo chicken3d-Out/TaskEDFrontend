@@ -1,3 +1,4 @@
+import { IconComponent } from '../icon/icon.component';
 import { Component, Injectable, effect, inject, signal } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { firstValueFrom } from 'rxjs';
@@ -30,11 +31,12 @@ export class TaAttPreviewService {
 @Component({
   selector: 'app-ta-att-preview',
   standalone: true,
+  imports: [IconComponent],
   template: `
     @if (svc.shown(); as s) {
       <div class="bd" (click)="svc.close()"></div>
       <div class="box" role="dialog" aria-modal="true" [attr.aria-label]="s.name">
-        <header><strong>{{ s.name }}</strong><span><a class="btn secondary" [href]="s.url" target="_blank" rel="noopener" [attr.download]="s.name">Open / download</a> <button class="btn" type="button" (click)="svc.close()">Close</button></span></header>
+        <header><strong>{{ s.name }}</strong><span><a class="btn secondary" [href]="s.url" target="_blank" rel="noopener" [attr.download]="s.name"><app-icon name="download" [size]="16" /> Open / download</a> <button class="btn secondary t-close" type="button" (click)="svc.close()"><app-icon name="x" [size]="16" /> Close</button></span></header>
         <div class="view">
           @if (isImage(s)) { <img [src]="s.url" [alt]="s.name" /> }
           @else if (s.blob) { <iframe [src]="safe(s.url)" title="Attachment"></iframe> }

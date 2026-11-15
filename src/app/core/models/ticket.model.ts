@@ -9,6 +9,15 @@ export enum TicketStatus {
   CLOSED = 'closed',
 }
 
+export const TICKET_STATUS_ICONS: Record<TicketStatus, string> = {
+  [TicketStatus.SUBMITTED]: 'inbox',
+  [TicketStatus.ACKNOWLEDGED]: 'eye',
+  [TicketStatus.IN_PROGRESS]: 'refresh',
+  [TicketStatus.NEEDS_ATTACHMENT]: 'alert',
+  [TicketStatus.RESOLVED]: 'check',
+  [TicketStatus.CLOSED]: 'shield',
+};
+
 export const TICKET_STATUS_LABELS: Record<TicketStatus, string> = {
   [TicketStatus.SUBMITTED]: 'Submitted',
   [TicketStatus.ACKNOWLEDGED]: 'Acknowledged',

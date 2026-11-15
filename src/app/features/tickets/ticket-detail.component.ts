@@ -1,3 +1,4 @@
+import { IconComponent } from '../../shared/icon/icon.component';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
@@ -6,14 +7,14 @@ import { TicketsService } from '../../core/services/tickets.service';
 import { AuthService } from '../../core/services/auth.service';
 import { UploadService } from '../../core/services/upload.service';
 import { RealtimeService } from '../../core/services/realtime.service';
-import { Ticket, TicketStatus, TICKET_STATUS_LABELS, VALID_NEXT_STATUSES } from '../../core/models/ticket.model';
+import { Ticket, TicketStatus, TICKET_STATUS_LABELS, TICKET_STATUS_ICONS, VALID_NEXT_STATUSES } from '../../core/models/ticket.model';
 import { Role } from '../../core/models/user.model';
 import { LoadingComponent } from '../../shared/loading/loading.component';
 
 @Component({
   selector: 'app-ticket-detail',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LoadingComponent],
+  imports: [CommonModule, ReactiveFormsModule, LoadingComponent, IconComponent],
   templateUrl: './ticket-detail.component.html',
   styleUrl: './ticket-detail.component.scss',
 })
@@ -33,6 +34,7 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
   updateImageFile: File | null = null;
   error: string | null = null;
   statusLabels = TICKET_STATUS_LABELS;
+  statusIcons = TICKET_STATUS_ICONS;
 
   private unsubscribeRealtime?: () => void;
 

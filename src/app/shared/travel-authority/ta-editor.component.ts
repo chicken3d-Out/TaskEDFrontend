@@ -1,3 +1,4 @@
+import { IconComponent } from '../icon/icon.component';
 import { Component, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -26,7 +27,7 @@ const EMPTY: TaForm = { name: '', position: '', station: '', purpose: '', host: 
 @Component({
   selector: 'app-ta-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [IconComponent, CommonModule, FormsModule],
   template: `
     @if (svc.current(); as req) {
       <div class="backdrop" (click)="tryClose()"></div>
@@ -41,7 +42,7 @@ const EMPTY: TaForm = { name: '', position: '', station: '', purpose: '', host: 
             <button class="btn secondary" type="button" (click)="save('draft')" [disabled]="busy || !ready">{{ busy ? 'Saving…' : 'Save draft' }}</button>
             @if (isSelf()) { <button class="btn" type="button" (click)="save('sign')" [disabled]="busy || !ready">Save &amp; sign</button> }
             @else { <button class="btn" type="button" (click)="save('send')" [disabled]="busy || !ready">Save &amp; send to {{ firstName() }} to sign</button> }
-            <button class="btn secondary" type="button" (click)="tryClose()">Close</button>
+            <button class="btn secondary t-close" type="button" (click)="tryClose()"><app-icon name="x" [size]="16" /> Close</button>
           </div>
         </header>
         @if (error) { <p class="error pad">{{ error }}</p> }

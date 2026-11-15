@@ -84,7 +84,7 @@ import { IconComponent } from '../../shared/icon/icon.component';
       <div class="pnl" role="dialog" aria-modal="true" aria-label="Form 6">
         <header>
           <div><h3>Form 6 · {{ cur.applicant.name }}</h3><small class="muted">{{ statusOf(cur) }}</small></div>
-          <div class="hb"><select class="paper" [ngModel]="paperId" (ngModelChange)="setPaper($event)" aria-label="Paper size">@for (p of papers; track p.id) { <option [value]="p.id">{{ p.label }}</option> }</select><button class="btn secondary" type="button" (click)="print()" [disabled]="busy">Print</button><button class="btn secondary" type="button" (click)="close()">Close</button></div>
+          <div class="hb"><select class="paper" [ngModel]="paperId" (ngModelChange)="setPaper($event)" aria-label="Paper size">@for (p of papers; track p.id) { <option [value]="p.id">{{ p.label }}</option> }</select><button class="btn secondary t-info" type="button" (click)="print()" [disabled]="busy"><app-icon name="file-text" [size]="16" /> Print</button><button class="btn secondary t-close" type="button" (click)="close()"><app-icon name="x" [size]="16" /> Close</button></div>
         </header>
         @if (error) { <p class="error pad">{{ error }}</p> } @if (msg) { <p class="ok pad">{{ msg }}</p> }
         @if (cur.printed.signatoryNote && cur.status !== 'approved') { <p class="muted pad">{{ cur.printed.signatoryNote }}</p> }

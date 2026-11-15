@@ -2,16 +2,17 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TicketsService } from '../../core/services/tickets.service';
-import { Ticket, TICKET_STATUS_LABELS } from '../../core/models/ticket.model';
+import { Ticket, TICKET_STATUS_LABELS, TICKET_STATUS_ICONS } from '../../core/models/ticket.model';
 import { AuthService } from '../../core/services/auth.service';
 import { RealtimeService } from '../../core/services/realtime.service';
 import { Role } from '../../core/models/user.model';
+import { IconComponent } from '../../shared/icon/icon.component';
 import { LoadingComponent } from '../../shared/loading/loading.component';
 
 @Component({
   selector: 'app-ticket-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, LoadingComponent],
+  imports: [CommonModule, RouterLink, LoadingComponent, IconComponent],
   templateUrl: './ticket-list.component.html',
   styleUrl: './ticket-list.component.scss',
 })
@@ -19,6 +20,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
   tickets: Ticket[] = [];
   loading = true;
   statusLabels = TICKET_STATUS_LABELS;
+  statusIcons = TICKET_STATUS_ICONS;
   Role = Role;
 
   private unsubscribeRealtime?: () => void;
