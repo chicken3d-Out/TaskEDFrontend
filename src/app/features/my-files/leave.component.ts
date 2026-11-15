@@ -93,9 +93,8 @@ const blank = (): LeaveData => ({ office: '', lastName: '', firstName: '', middl
             <label class="rs">Signature size <input type="range" [min]="sizeMin" [max]="sizeMax" step="5" [ngModel]="sizePct" (ngModelChange)="resize($event)" aria-label="Signature size" /> <span>{{ sizePct }}%</span></label>
             <button class="btn" type="button" (click)="doSign()" [disabled]="busy || (decision === 'disapproval' && cur.myTurn === 'signatory' && !reason)">{{ busy ? 'Saving…' : cur.myTurn === 'signatory' ? 'Sign and ' + (decision === 'approval' ? 'approve' : 'disapprove') : 'Sign and send to ' + cur.printed.signatoryTitle }}</button>
           }
-          @if (cur.status === 'awaiting_applicant' && (cur.applicant.id === me?.id || cur.filedBy?.id === me?.id)) {
-            <button class="btn secondary" type="button" (click)="startEdit()">Edit</button><button class="btn secondary" type="button" (click)="remove()" [disabled]="busy">Delete</button>
-          }
+          @if (cur.status === 'awaiting_applicant' && (cur.applicant.id === me?.id || cur.filedBy?.id === me?.id)) { <button class="btn secondary" type="button" (click)="startEdit()">Edit</button> }
+          @if (cur.applicant.id === me?.id || cur.filedBy?.id === me?.id) { <button class="btn secondary" type="button" (click)="remove()" [disabled]="busy">Delete</button> }
         </div>
         <div class="scroll" #scroll>
           <div class="host" #host></div>
@@ -217,7 +216,7 @@ export class LeaveComponent implements OnInit {
   }
 
   async remove() {
-    if (!this.cur || !confirm('Delete this application?')) return;
+    if (!this.cur || !confirm(this.cur.deducted ? 'Delete this application? The days deducted will be given back.' : 'Delete this application? It will also disappear for the signatory.')) return;
     this.busy = true;
     try { await firstValueFrom(this.api.remove(this.cur.id)); this.close(); await this.reload(); } catch (e: any) { this.error = e?.error?.message ?? 'Could not delete.'; }
     this.busy = false;

@@ -94,6 +94,11 @@ export async function buildForm6(v: LeaveView): Promise<HTMLElement> {
   if (rec?.decision === 'disapproval') { tick(page, 'j46'); put(page, f['recReason'], esc(rec.reason), { size: 7, align: 'left', valign: 'top', wrap: true }); }
   // the corresponding signatory's name is filled in automatically (School Head for teachers, staff and the AO; the District Supervisor for a School Head)
   put(page, f['sigName'], esc(v.printed.signatory.toUpperCase()), { size: 9, bold: true });
+  // under the name: who signs (the template's "(Corresponding Signatory) School Head/ District Supervisor" is cleared from the picture)
+  const t = document.createElement('div');
+  t.textContent = v.printed.signatoryTitle;
+  t.style.cssText = `position:absolute;left:${491.6}px;top:${882}px;width:${251.8}px;text-align:center;font:italic 700 ${11 * FS * K}px/1.15 Arial,'Liberation Sans',Helvetica,sans-serif;color:#000;`;
+  page.appendChild(t);
   // 7.C / 7.D
   if (v.status === 'approved') put(page, f['daysPay'], esc(num(d.days)), { size: 9, bold: true });
   if (v.status === 'disapproved') put(page, f['disReason'], esc(v.note ?? ''), { size: 8, align: 'left', valign: 'top', wrap: true });
