@@ -14,7 +14,6 @@ import { WorkingFilesComponent } from './working-files.component';
 import { TravelAuthorityComponent } from './travel-authority.component';
 import { TaLogComponent } from './ta-log.component';
 import { TaNumberingComponent } from './ta-numbering.component';
-import { LeaveComponent } from './leave.component';
 import { ServiceCreditsComponent } from './service-credits.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 
@@ -28,7 +27,7 @@ interface YearGroup {
 @Component({
   selector: 'app-my-files',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, LoadingComponent, IconComponent, WorkingFilesComponent, TravelAuthorityComponent, TaLogComponent, TaNumberingComponent, ServiceCreditsComponent, LeaveComponent],
+  imports: [CommonModule, FormsModule, DatePipe, LoadingComponent, IconComponent, WorkingFilesComponent, TravelAuthorityComponent, TaLogComponent, TaNumberingComponent, ServiceCreditsComponent],
   templateUrl: './my-files.component.html',
   styleUrl: './my-files.component.scss',
 })
@@ -37,11 +36,11 @@ export class MyFilesComponent implements OnInit {
   preview = inject(FilePreviewService);
   auth = inject(AuthService);
   drive = inject(DriveUploadService);
-  tab: 'working' | 'storage' | 'travel' | 'pending' | 'number' | 'credits' | 'leave' = 'working';
+  tab: 'working' | 'storage' | 'travel' | 'pending' | 'number' | 'credits' = 'working';
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   get canTravel() { return this.auth.currentUser()?.role !== 'school'; }
-  go(t: 'working' | 'storage' | 'travel' | 'pending' | 'number' | 'credits' | 'leave') { this.tab = t; this.router.navigate([], { queryParams: { tab: t }, replaceUrl: true }); }
+  go(t: 'working' | 'storage' | 'travel' | 'pending' | 'number' | 'credits') { this.tab = t; this.router.navigate([], { queryParams: { tab: t }, replaceUrl: true }); }
   categories = [...CATEGORIES];
   schoolYear = '';
   // upload state
@@ -82,8 +81,7 @@ export class MyFilesComponent implements OnInit {
       if (t === 'working' || t === 'storage' || (t === 'travel' && this.canTravel)) this.tab = t;
       else if (t === 'pending' && (r === 'school_head' || r === 'district_supervisor' || r === 'ds_secretary')) this.tab = t;
       else if (t === 'number' && r === 'ds_secretary') this.tab = t;
-      else if (t === 'leave' && ['teacher', 'non_teaching', 'ds_secretary', 'school_head', 'admin_officer', 'publisher', 'district_supervisor'].includes(r ?? '')) this.tab = t;
-      else if (t === 'credits' && ['teacher', 'non_teaching', 'ds_secretary', 'school_head', 'admin_officer', 'publisher'].includes(r ?? '')) this.tab = t;
+      else if ((t === 'credits' || t === 'leave') && ['teacher', 'non_teaching', 'ds_secretary', 'school_head', 'admin_officer', 'publisher', 'district_supervisor'].includes(r ?? '')) this.tab = 'credits';
     });
     this.load();
   }

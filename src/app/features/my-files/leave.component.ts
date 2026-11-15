@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -20,7 +20,7 @@ const blank = (): LeaveData => ({ office: '', lastName: '', firstName: '', middl
   standalone: true,
   imports: [CommonModule, FormsModule, DatePipe],
   template: `
-    <div class="bar"><button class="btn" type="button" (click)="startNew()">{{ person ? 'Apply leave for ' + firstName() : 'Apply for leave (Form 6)' }}</button></div>
+    @if (!hideBar) { <div class="bar"><button class="btn" type="button" (click)="startNew()">{{ person ? 'Apply leave for ' + firstName() : 'Apply for leave (Form 6)' }}</button></div> }
     @if (error && !dlg) { <p class="error">{{ error }}</p> }
     @for (a of list; track a.id) {
       <div class="card item" [class.turn]="a.myTurn">
@@ -48,15 +48,11 @@ const blank = (): LeaveData => ({ office: '', lastName: '', firstName: '', middl
           <label>Salary (optional)<input [(ngModel)]="f.salary" /></label>
           <label>Date of filing<input type="date" [(ngModel)]="f.filingDate" /></label>
           <label>Type of leave<select [(ngModel)]="f.leaveType" (ngModelChange)="typeChanged()">@for (t of types; track t) { <option [value]="t">{{ t }}</option> }</select></label>
-          @if (f.leaveType === 'Others') { <label>Others (specify, e.g. Wellness Leave)<input [(ngModel)]="f.otherLeave" /></label> }
+          @if (f.leaveType === 'Others') { <label>Others: type the leave (e.g. Wellness Leave)<input [(ngModel)]="f.otherLeave" /></label> }
           <label>Working days applied for<input type="number" min="0.5" step="0.5" inputmode="decimal" [(ngModel)]="f.days" /></label>
           <label>Inclusive dates<input [(ngModel)]="f.dates" placeholder="e.g. December 3-5, 2026" /></label>
-          <label>Commutation<select [(ngModel)]="f.commutation"><option value="not">Not requested</option><option value="requested">Requested</option></select></label>
         </div>
-        <details class="more" [open]="f.leaveType !== 'Others'"><summary>More details of the leave (optional)</summary>
-        @if (f.leaveType === 'Vacation Leave' || f.leaveType === 'Special Privilege Leave') {
-          <div class="grid"><label>Where leave is spent<select [(ngModel)]="f.where"><option value="">—</option><option value="ph">Within the Philippines</option><option value="abroad">Abroad</option></select></label><label>Specify<input [(ngModel)]="f.whereText" /></label></div>
-        }
+        <details class="more" [open]="f.leaveType === 'Sick Leave' || f.leaveType === 'Study Leave' || f.leaveType === 'Special Leave Benefits for Women'"><summary>More details of the leave (optional)</summary>
         @if (f.leaveType === 'Sick Leave') {
           <div class="grid"><label>In<select [(ngModel)]="f.illness"><option value="">—</option><option value="hospital">Hospital</option><option value="outpatient">Out patient</option></select></label><label>Illness<input [(ngModel)]="f.illnessText" /></label></div>
         }
@@ -134,6 +130,8 @@ export class LeaveComponent implements OnInit {
   @ViewChild('host') host?: ElementRef<HTMLElement>;
   @ViewChild('scroll') scroll?: ElementRef<HTMLElement>;
 
+  @Input() hideBar = false;
+  @Output() changed = new EventEmitter<void>();
   @Input() person: { id: string; name: string; position?: string; station?: string } | null = null;
   me = this.auth.currentUser();
   list: LeaveView[] = []; types: string[] = []; loaded = false;
@@ -166,6 +164,7 @@ export class LeaveComponent implements OnInit {
   }
 
   async startNew() {
+    this.error = '';
     this.error = ''; this.editId = '';
     const u = this.me;
     if (this.person) {
@@ -196,7 +195,7 @@ export class LeaveComponent implements OnInit {
     try {
       const body = { data: this.f, kind: this.kind || null };
       const v = this.editId ? await firstValueFrom(this.api.update(this.editId, body)) : await firstValueFrom(this.api.create({ ...body, applicantId: this.personId && this.personId !== this.me?.id ? this.personId : undefined }));
-      await this.reload();
+      await this.reload(); this.changed.emit();
       this.dlg = null;
       await this.show(v);
     } catch (e: any) { this.error = e?.error?.message ?? 'Could not save.'; }
@@ -246,7 +245,7 @@ export class LeaveComponent implements OnInit {
 
   private async apply(p: Promise<LeaveView>, ok: string) {
     this.busy = true; this.error = '';
-    try { this.cur = await p; this.msg = ok; this.pos = null; this.placed = false; await this.reload(); await this.paint(); }
+    try { this.cur = await p; this.msg = ok; this.pos = null; this.placed = false; await this.reload(); this.changed.emit(); await this.paint(); }
     catch (e: any) { this.error = e?.error?.message ?? e?.message ?? 'Something went wrong.'; }
     this.busy = false;
   }

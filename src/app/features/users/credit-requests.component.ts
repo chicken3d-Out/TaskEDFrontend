@@ -27,8 +27,10 @@ import { CreditRequest, ServiceCreditsService } from '../../core/services/servic
       @if (error) { <p class="error">{{ error }}</p> }
       <h4>Leave (Form 6) names printed on the form</h4>
       <div class="names">
-        <label>Assistant Schools Division Superintendent (7.C)<input [(ngModel)]="asds" placeholder="Printed name" /></label>
-        <label>HRMO II, authorized officer (7.A)<input [(ngModel)]="hrmo" placeholder="Printed name" /></label>
+        <label>Approver name (7.C)<input [(ngModel)]="asds" placeholder="e.g. TEODORICO C. PELIÑO, JR., EdD" /></label>
+        <label>Approver position (7.C)<input [(ngModel)]="asdsTitle" placeholder="OIC - Assistant Schools Division Superintendent" /></label>
+        <label>HRMO name (7.A)<input [(ngModel)]="hrmo" placeholder="e.g. ERNESTO A. DIMAKILING" /></label>
+        <label>HRMO position (7.A)<input [(ngModel)]="hrmoTitle" placeholder="Administrative Officer IV / HRMO II" /></label>
         <button class="btn" type="button" (click)="saveNames()" [disabled]="busy">Save names</button>
       </div>
       @if (nameMsg) { <p class="ok">{{ nameMsg }}</p> }
@@ -41,17 +43,17 @@ import { CreditRequest, ServiceCreditsService } from '../../core/services/servic
   `,
   styles: [`.cq { padding: 1rem; margin-bottom: 1rem; } .cq h3 { margin: 0 0 .5rem; } .n { background: #dc2626; color: #fff; border-radius: 999px; padding: 0 .5rem; font-size: .75rem; }
     .req { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .6rem 0; border-top: 1px solid #f1f5f9; } .act { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
-    .act input { padding: .4rem .5rem; border: 1px solid #d1d5db; border-radius: 8px; } .muted { color: #6b7280; } .error { color: #b91c1c; } .rec { padding: .2rem 0; } .names { display: flex; gap: .6rem; flex-wrap: wrap; align-items: flex-end; } .names label { display: flex; flex-direction: column; gap: .2rem; font-size: .82rem; font-weight: 600; } .names input { padding: .45rem .55rem; border: 1px solid #d1d5db; border-radius: 8px; min-width: 16rem; font-weight: 400; } .ok { color: #166534; } h4 { margin: 1rem 0 .4rem; }`],
+    .act input { padding: .4rem .5rem; border: 1px solid #d1d5db; border-radius: 8px; } .muted { color: #6b7280; } .error { color: #b91c1c; } .rec { padding: .2rem 0; } .names { display: flex; gap: .6rem; flex-wrap: wrap; align-items: flex-end; } .names label { display: flex; flex-direction: column; gap: .2rem; font-size: .82rem; font-weight: 600; } .names input { padding: .45rem .55rem; border: 1px solid #d1d5db; border-radius: 8px; min-width: 18rem; font-weight: 400; } .ok { color: #166534; } h4 { margin: 1rem 0 .4rem; }`],
 })
 export class CreditRequestsComponent implements OnInit {
   private api = inject(ServiceCreditsService);
   private leave = inject(LeaveService);
-  asds = ''; hrmo = ''; nameMsg = '';
+  asds = ''; asdsTitle = ''; hrmo = ''; hrmoTitle = ''; nameMsg = '';
   pending: CreditRequest[] = []; recent: CreditRequest[] = []; notes: Record<string, string> = {}; busy = false; error = '';
-  ngOnInit() { firstValueFrom(this.leave.settings()).then((s) => { this.asds = s.asds; this.hrmo = s.hrmo; }).catch(() => {}); firstValueFrom(this.api.requests()).then((r) => { this.pending = r.pending; this.recent = r.recent; }).catch(() => {}); }
+  ngOnInit() { firstValueFrom(this.leave.settings()).then((s) => { this.asds = s.asds; this.asdsTitle = s.asdsTitle; this.hrmo = s.hrmo; this.hrmoTitle = s.hrmoTitle; }).catch(() => {}); firstValueFrom(this.api.requests()).then((r) => { this.pending = r.pending; this.recent = r.recent; }).catch(() => {}); }
   async saveNames() {
     this.busy = true; this.nameMsg = ''; this.error = '';
-    try { const s = await firstValueFrom(this.leave.saveSettings({ asds: this.asds, hrmo: this.hrmo })); this.asds = s.asds; this.hrmo = s.hrmo; this.nameMsg = 'Saved.'; }
+    try { const s = await firstValueFrom(this.leave.saveSettings({ asds: this.asds, asdsTitle: this.asdsTitle, hrmo: this.hrmo, hrmoTitle: this.hrmoTitle })); this.asds = s.asds; this.asdsTitle = s.asdsTitle; this.hrmo = s.hrmo; this.hrmoTitle = s.hrmoTitle; this.nameMsg = 'Saved.'; }
     catch (e: any) { this.error = e?.error?.message ?? 'Could not save.'; }
     this.busy = false;
   }

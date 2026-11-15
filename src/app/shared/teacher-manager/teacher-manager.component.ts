@@ -1,5 +1,4 @@
 import { ServiceCreditsComponent } from '../../features/my-files/service-credits.component';
-import { LeaveComponent } from '../../features/my-files/leave.component';
 import { TaLogComponent } from '../../features/my-files/ta-log.component';
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
@@ -21,19 +20,20 @@ import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.compo
 @Component({
   selector: 'app-teacher-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, HrProfileFormComponent, TaLogComponent, LeaveComponent, ServiceCreditsComponent],
+  imports: [CommonModule, FormsModule, DatePipe, HrProfileFormComponent, TaLogComponent, ServiceCreditsComponent],
   template: `
     <div class="backdrop" (click)="close.emit()"></div>
     <div class="panel" role="dialog" aria-modal="true">
       <header>
-        <div><h2>{{ teacherName }}</h2><small>{{ schoolName }}</small></div>
+        <div><h2>{{ teacherName || displayName }}</h2><small>{{ schoolName }}</small></div>
         <button class="btn secondary" type="button" (click)="close.emit()">Close</button>
       </header>
       <div class="tabs">
-        <button type="button" [class.on]="tab === 'profile'" (click)="tab = 'profile'">Employment details</button>
-        <button type="button" [class.on]="tab === 'files'" (click)="tab = 'files'">Documents</button>
-        <button type="button" [class.on]="tab === 'travel'" (click)="tab = 'travel'">Travel Authority</button>
-        <button type="button" [class.on]="tab === 'leave'" (click)="tab = 'leave'">Leave (Form 6)</button>
+        @if (!creditsOnly) {
+          <button type="button" [class.on]="tab === 'profile'" (click)="tab = 'profile'">Employment details</button>
+          <button type="button" [class.on]="tab === 'files'" (click)="tab = 'files'">Documents</button>
+          <button type="button" [class.on]="tab === 'travel'" (click)="tab = 'travel'">Travel Authority</button>
+        }
         <button type="button" [class.on]="tab === 'credits'" (click)="tab = 'credits'">Service Credits</button>
       </div>
 
@@ -43,10 +43,7 @@ import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.compo
         <p class="muted">Apply a Travel Authority for {{ teacherName }}. It is saved in <strong>your Google Drive</strong>; {{ teacherName }} is asked to sign first, then it goes to the recommending and approving authorities.</p>
         <app-ta-log [teacher]="teacherInfo" />
       } @else if (tab === 'credits') {
-        <app-service-credits [personId]="teacherId" />
-      } @else if (tab === 'leave') {
-        <p class="muted">Apply leave (Form 6) for {{ teacherName }}. {{ teacherName }} is asked to sign first, then it comes back to you for approval, and you send it to the School Head.</p>
-        <app-leave [person]="teacherInfo" />
+        <app-service-credits [personId]="teacherId" [person]="teacherInfo" [noLeave]="creditsOnly" />
       } @else {
         <p class="muted">
           Your own copy, saved in <strong>your Google Drive</strong> under <em>TaskEd Files › {{ folderTeachers }} › {{ teacherName }}</em>.
@@ -129,9 +126,12 @@ export class TeacherManagerComponent implements OnInit {
   sr = inject(SrEditorService);
 
   @Input({ required: true }) teacherId!: string;
+  // the School Head is kept under Non-Teaching: only the service credits are managed
+  @Input() creditsOnly = false;
+  @Input() displayName = '';
   @Output() close = new EventEmitter<void>();
 
-  tab: 'profile' | 'files' | 'travel' | 'leave' | 'credits' = 'profile';
+  tab: 'profile' | 'files' | 'travel' | 'credits' = 'profile';
   private ti: { id: string; name: string; position: string; station: string } | null = null;
   get teacherInfo() {
     const name = (this.teacherName ?? '').toUpperCase();
@@ -153,7 +153,7 @@ export class TeacherManagerComponent implements OnInit {
   get schoolName() { return this.view?.schoolName ?? ''; }
   get folderTeachers() { return `Teachers ${this.schoolName}`.trim(); }
 
-  ngOnInit() { this.load(); }
+  ngOnInit() { if (this.creditsOnly) { this.tab = 'credits'; return; } this.load(); }
 
   load() {
     this.api.teacherFiles(this.teacherId).subscribe({

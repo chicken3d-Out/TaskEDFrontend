@@ -198,8 +198,9 @@
               <span class="status" [class]="'s-' + row.user.status">{{ row.user.status }}</span>
               <div class="actions">
                 @if (isAO && row.user.role) {
-                  <button class="btn" (click)="managingId = row.user.id">Manage</button>
+                  <button class="btn" (click)="manage(row)">Manage</button>
                 }
+                @if (row.user.role !== Role.SCHOOL_HEAD) {
                 <button class="btn secondary" (click)="row.editing = !row.editing">
                   <app-icon name="pencil" [size]="15" /> {{ row.editing ? 'Close' : 'Edit' }}
                 </button>
@@ -207,6 +208,7 @@
                   <button class="btn secondary" [disabled]="row.busy" (click)="reactivate(row)">Reactivate</button>
                 } @else {
                   <button class="btn danger" [disabled]="row.busy" (click)="suspend(row)">Suspend</button>
+                }
                 }
               </div>
             </div>
@@ -233,5 +235,5 @@
   }
 }
 @if (managingId) {
-  <app-teacher-manager [teacherId]="managingId" (close)="managingId = null" />
+  <app-teacher-manager [teacherId]="managingId" [creditsOnly]="managingHead" [displayName]="managingName" (close)="managingId = null" />
 }

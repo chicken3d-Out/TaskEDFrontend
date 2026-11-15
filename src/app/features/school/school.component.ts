@@ -215,7 +215,7 @@ export class SchoolComponent implements OnInit {
   get nt() { return this.tab === 'nonteaching'; }
   get noun() { return this.nt ? 'Non-Teaching staff' : 'Teachers'; }
   get one() { return this.nt ? 'Non-Teaching staff' : 'teacher'; }
-  roleLabel(r: Role | null) { return r === Role.DS_SECRETARY ? 'DS Secretary' : r === Role.NON_TEACHING ? 'Non-Teaching' : ''; }
+  roleLabel(r: Role | null) { return r === Role.SCHOOL_HEAD ? 'School Head' : r === Role.DS_SECRETARY ? 'DS Secretary' : r === Role.NON_TEACHING ? 'Non-Teaching' : ''; }
 
   get pending() {
     return this.teachers.filter((t) => !t.user.role);
@@ -379,6 +379,9 @@ export class SchoolComponent implements OnInit {
   }
 
   managingId: string | null = null;
+  managingHead = false;
+  managingName = '';
+  manage(row: TeacherRow) { this.managingHead = row.user.role === Role.SCHOOL_HEAD; this.managingName = row.user.name; this.managingId = row.user.id; }
   get isAO() {
     return this.auth.currentUser()?.role === Role.ADMIN_OFFICER;
   }

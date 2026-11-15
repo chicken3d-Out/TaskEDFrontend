@@ -10,15 +10,16 @@ export interface LeaveData {
   where: '' | 'ph' | 'abroad'; whereText: string; illness: '' | 'hospital' | 'outpatient'; illnessText: string; womenText: string; study: '' | 'masters' | 'bar'; monetization: '' | 'monetization' | 'terminal';
   days: number; dates: string; commutation: 'not' | 'requested';
 }
+export interface LeaveSettings { hrmo: string; hrmoTitle: string; asds: string; asdsTitle: string }
 export interface LeaveSig { img: string; x: number; y: number; at: string }
 export interface LeaveView {
   id: string; status: LeaveStatus; data: LeaveData; kind: string | null; kindLabel: string | null; days: number;
-  credit: { asOf: string; label: string; earned: number; less: number; balance: number } | null; deducted: boolean;
+  credit: { asOf: string; label: string; col: 'vl' | 'sl' | null; vl: { earned: number; less: number; balance: number } | null; sl: { earned: number; less: number; balance: number } | null } | null; deducted: boolean;
   recommendation: { decision: 'approval' | 'disapproval'; reason: string } | null; note: string | null;
   applicant: { id: string; name: string; role: string; school: string }; filedBy: { id: string; name: string } | null;
   sigs: { applicant?: LeaveSig; ao?: LeaveSig; signatory?: LeaveSig };
   myTurn: 'applicant' | 'ao' | 'send' | 'signatory' | null; signAs: string | null; kinds: { kind: string; label: string }[];
-  printed: { hrmo: string; asds: string; signatory: string; signatoryTitle: string; signatoryNote: string | null };
+  printed: { hrmo: string; hrmoTitle: string; asds: string; asdsTitle: string; signatory: string; signatoryTitle: string; signatoryNote: string | null };
   createdAt: string; updatedAt: string;
 }
 export const LEAVE_STATUS: Record<LeaveStatus, string> = {
@@ -39,6 +40,6 @@ export class LeaveService {
   sign(id: string, body: { x: number; y: number; kind?: string | null; decision?: string; reason?: string }): Observable<LeaveView> { return this.http.post<LeaveView>(`${this.base}/${id}/sign`, body); }
   disapprove(id: string, reason: string): Observable<LeaveView> { return this.http.post<LeaveView>(`${this.base}/${id}/disapprove`, { reason }); }
   send(id: string): Observable<LeaveView> { return this.http.post<LeaveView>(`${this.base}/${id}/send`, {}); }
-  settings(): Observable<{ hrmo: string; asds: string }> { return this.http.get<{ hrmo: string; asds: string }>(`${this.base}/settings`); }
-  saveSettings(b: { hrmo?: string; asds?: string }): Observable<{ hrmo: string; asds: string }> { return this.http.put<{ hrmo: string; asds: string }>(`${this.base}/settings`, b); }
+  settings(): Observable<LeaveSettings> { return this.http.get<LeaveSettings>(`${this.base}/settings`); }
+  saveSettings(b: Partial<LeaveSettings>): Observable<LeaveSettings> { return this.http.put<LeaveSettings>(`${this.base}/settings`, b); }
 }
