@@ -195,10 +195,10 @@ function setSign(doc: Document, tc: Element, who: string, name: string, date: st
   }
 }
 
-export interface TaSig { img: string; x: number; y: number; at: string }
+export interface TaSig { img: string; x: number; y: number; scale?: number; at: string }
 export interface TaSigs { requester?: TaSig | null; countersign?: TaSig | null; recommending?: TaSig | null; approving?: TaSig | null }
 
-export const SIG_BOX_IN = { w: 1.5, h: 0.7 }; // a signature is fitted inside this box (inches)
+export const SIG_BOX_IN = { w: 1.1, h: 0.5 }; // a signature is fitted inside this box (inches), then the signer can resize it
 
 export function fmtDate(iso: string): string {
   const d = new Date(iso);
@@ -214,8 +214,8 @@ function dataUrlBytes(url: string): Uint8Array {
 function pngSize(a: Uint8Array) { const v = new DataView(a.buffer, a.byteOffset); return { w: v.getUint32(16), h: v.getUint32(20) }; }
 
 // Signature size in inches, fitted into SIG_BOX_IN and keeping its proportions.
-export function sigSizeIn(w: number, h: number) {
-  const k = Math.min(SIG_BOX_IN.w / w, SIG_BOX_IN.h / h);
+export function sigSizeIn(w: number, h: number, scale = 1) {
+  const k = Math.min(SIG_BOX_IN.w / w, SIG_BOX_IN.h / h) * (scale || 1);
   return { w: w * k, h: h * k };
 }
 export function pngSizeOf(url: string) { return pngSize(dataUrlBytes(url)); }
@@ -260,7 +260,7 @@ async function addSignatures(z: JSZip, doc: Document, list: TaSig[], page: { w: 
     const n = i + 1;
     z.file(`word/media/ta_sig${n}.png`, bytes);
     rels = rels.replace('</Relationships>', `<Relationship Id="rIdTaSig${n}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/ta_sig${n}.png"/></Relationships>`);
-    const sz = sigSizeIn(pngSize(bytes).w, pngSize(bytes).h);
+    const sz = sigSizeIn(pngSize(bytes).w, pngSize(bytes).h, s.scale);
     const cx = Math.round(sz.w * EMU), cy = Math.round(sz.h * EMU);
     const px = Math.max(0, Math.round(s.x * page.w * EMU - cx / 2));
     const py = Math.max(0, Math.round(s.y * page.h * EMU - cy / 2));

@@ -43,7 +43,7 @@ import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.compo
         <p class="muted">Apply a Travel Authority for {{ teacherName }}. It is saved in <strong>your Google Drive</strong>; {{ teacherName }} is asked to sign first, then it goes to the recommending and approving authorities.</p>
         <app-ta-log [teacher]="teacherInfo" />
       } @else if (tab === 'credits') {
-        <app-service-credits [personId]="teacherId" [person]="teacherInfo" [noLeave]="creditsOnly" />
+        <app-service-credits [personId]="teacherId" [person]="teacherInfo" [noLeave]="false" />
       } @else {
         <p class="muted">
           Your own copy, saved in <strong>your Google Drive</strong> under <em>TaskEd Files › {{ folderTeachers }} › {{ teacherName }}</em>.

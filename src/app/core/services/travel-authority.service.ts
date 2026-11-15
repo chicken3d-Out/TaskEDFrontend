@@ -6,7 +6,7 @@ import { environment } from '../../../environments/environment';
 export type TaStatus = 'draft' | 'awaiting_requester' | 'awaiting_countersign' | 'awaiting_recommending' | 'awaiting_approving' | 'awaiting_email' | 'approved' | 'emailed';
 export interface TaAttachment { id: string; name: string; mime: string; size: number; url?: string | null }
 export interface TaNumbering { id: string; name: string; destination: string; dates: string; requesterName: string; taNumber: string | null; taNumberedAt: string | null; approvedAt: string }
-export interface TaSigRec { img: string; x: number; y: number; at: string }
+export interface TaSigRec { img: string; x: number; y: number; scale?: number; at: string }
 export interface TaForm {
   name: string; position: string; station: string; purpose: string; host: string;
   dates: string; destination: string; fund: string; dateFrom: string; dateTo: string;
@@ -62,7 +62,7 @@ export class TravelAuthorityService {
   create(body: { data: Partial<TaForm>; outside: boolean; forTeacherId?: string }): Observable<TaRecord> { return this.http.post<TaRecord>(this.base, body); }
   update(id: string, body: { data: Partial<TaForm>; outside: boolean }): Observable<TaRecord> { return this.http.patch<TaRecord>(`${this.base}/${id}`, body); }
   send(id: string): Observable<TaRecord> { return this.http.post<TaRecord>(`${this.base}/${id}/send`, {}); }
-  sign(id: string, x: number, y: number): Observable<TaRecord> { return this.http.post<TaRecord>(`${this.base}/${id}/sign`, { x, y }); }
+  sign(id: string, x: number, y: number, scale = 1): Observable<TaRecord> { return this.http.post<TaRecord>(`${this.base}/${id}/sign`, { x, y, scale }); }
   markEmailed(id: string): Observable<TaRecord> { return this.http.post<TaRecord>(`${this.base}/${id}/emailed`, {}); }
   uploadSignature(): Observable<{ uploadUrl: string; fields: Record<string, string> }> { return this.http.post<{ uploadUrl: string; fields: Record<string, string> }>(`${this.base}/upload-signature`, {}); }
   addAttachment(id: string, body: { name: string; mime: string; size: number; url: string; publicId: string }): Observable<TaAttachment[]> { return this.http.post<TaAttachment[]>(`${this.base}/${id}/attachments`, body); }

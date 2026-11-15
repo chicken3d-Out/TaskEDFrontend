@@ -124,7 +124,7 @@ export class ServiceCreditsComponent implements OnInit {
   editKind: string | null = null; editBalance: number | null = null; editReason = '';
   soOpen = false; soKind: CreditKind | '' = ''; soAmount: number | null = null; soNumber = ''; soDate = today(); soFile: File | null = null;
 
-  get manage() { return !!this.personId; }
+  get manage() { return !!this.personId || !!this.o?.canManage; } // the AO also sets their own credits (first count once, later changes need the Administrator)
   roleName(r: string) { return (ROLE_LABELS as Record<string, string>)[r] ?? r; }
   typeName(l: CreditLog) { return ({ initial: 'Initial count', special_order: 'Special Order', edit: 'Changed', reset: 'Yearly renewal', deduction: 'Leave used', restore: 'Restored', accrual: 'Monthly earning', expiry: 'Expired' } as const)[l.type] ?? l.type; }
   soKinds() { return (this.o?.credits ?? []).filter((c) => c.kind === 'cto' || c.kind === 'service_credit'); }

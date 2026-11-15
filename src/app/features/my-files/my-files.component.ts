@@ -15,6 +15,7 @@ import { TravelAuthorityComponent } from './travel-authority.component';
 import { TaLogComponent } from './ta-log.component';
 import { TaNumberingComponent } from './ta-numbering.component';
 import { ServiceCreditsComponent } from './service-credits.component';
+import { LeaveComponent } from './leave.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 
 interface YearGroup {
@@ -27,7 +28,7 @@ interface YearGroup {
 @Component({
   selector: 'app-my-files',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, LoadingComponent, IconComponent, WorkingFilesComponent, TravelAuthorityComponent, TaLogComponent, TaNumberingComponent, ServiceCreditsComponent],
+  imports: [CommonModule, FormsModule, DatePipe, LoadingComponent, IconComponent, WorkingFilesComponent, TravelAuthorityComponent, TaLogComponent, TaNumberingComponent, ServiceCreditsComponent, LeaveComponent],
   templateUrl: './my-files.component.html',
   styleUrl: './my-files.component.scss',
 })
@@ -39,6 +40,7 @@ export class MyFilesComponent implements OnInit {
   tab: 'working' | 'storage' | 'travel' | 'pending' | 'number' | 'credits' = 'working';
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  get canTravelSign() { return this.auth.currentUser()?.role !== 'school'; }
   get canTravel() { return this.auth.currentUser()?.role !== 'school'; }
   go(t: 'working' | 'storage' | 'travel' | 'pending' | 'number' | 'credits') { this.tab = t; this.router.navigate([], { queryParams: { tab: t }, replaceUrl: true }); }
   categories = [...CATEGORIES];
@@ -79,7 +81,7 @@ export class MyFilesComponent implements OnInit {
       const t = m.get('tab');
       const r = this.auth.currentUser()?.role;
       if (t === 'working' || t === 'storage' || (t === 'travel' && this.canTravel)) this.tab = t;
-      else if (t === 'pending' && (r === 'school_head' || r === 'district_supervisor' || r === 'ds_secretary')) this.tab = t;
+      else if (t === 'pending' && ['school_head', 'district_supervisor', 'ds_secretary', 'teacher', 'non_teaching', 'admin_officer', 'publisher'].includes(r ?? '')) this.tab = t;
       else if (t === 'number' && r === 'ds_secretary') this.tab = t;
       else if ((t === 'credits' || t === 'leave') && ['teacher', 'non_teaching', 'ds_secretary', 'school_head', 'admin_officer', 'publisher', 'district_supervisor'].includes(r ?? '')) this.tab = 'credits';
     });

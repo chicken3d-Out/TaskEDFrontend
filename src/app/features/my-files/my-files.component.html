@@ -10,7 +10,9 @@
   } @else if (tab === 'travel') {
     <app-travel-authority />
   } @else if (tab === 'pending') {
-    <app-ta-log mode="pending" />
+    <h2 class="ph">Leave (Form 6) waiting for your signature</h2>
+    <app-leave [hideBar]="true" [pendingOnly]="true" />
+    @if (canTravelSign) { <h2 class="ph">Travel Authority waiting for your signature</h2><app-ta-log mode="pending" /> }
   } @else if (tab === 'credits') {
     <app-service-credits />
   } @else if (tab === 'number') {

@@ -7,14 +7,15 @@ import { DriveUploadService } from '../../core/services/drive-upload.service';
 import { LEAVE_STATUS, LeaveData, LeaveService, LeaveView } from '../../core/services/leave.service';
 import { ServiceCreditsService } from '../../core/services/service-credits.service';
 import { ROLE_LABELS } from '../../core/models/user.model';
-import { PAGE_W, SIG_W, buildForm6, form6Pdf, suggestKind } from '../../shared/leave/leave-form';
+import { PAGE_W, SIG_FRAC, SIG_MAX, buildForm6, buildForm6Back, form6Pdf, suggestKind } from '../../shared/leave/leave-form';
+import { PAPERS, loadPaper, paperOf, printPdf, savePaper } from '../../shared/print/paper';
 import { blackenPng } from '../../shared/signature/blacken';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const blank = (): LeaveData => ({ office: '', lastName: '', firstName: '', middleName: '', filingDate: today(), position: '', salary: '', leaveType: 'Vacation Leave', otherLeave: '', where: '', whereText: '', illness: '', illnessText: '', womenText: '', study: '', monetization: '', days: 1, dates: '', commutation: 'not' });
 
-// My files › Leave (Form 6): apply, sign, approve and send. Credits are deducted when the AO approves
-// (or when the School Head approves an AO's own leave) and given back if it is disapproved.
+// Leave (Form 6): apply, sign, and the corresponding signatory approves. Credits are deducted only
+// when the corresponding signatory approves it.
 @Component({
   selector: 'app-leave',
   standalone: true,
@@ -33,7 +34,7 @@ const blank = (): LeaveData => ({ office: '', lastName: '', firstName: '', middl
         </div>
         <button class="btn secondary" type="button" (click)="open(a.id)">Open</button>
       </div>
-    } @empty { <p class="muted">{{ loaded ? 'No leave applications yet.' : 'Loading…' }}</p> }
+    } @empty { <p class="muted">{{ loaded ? (pendingOnly ? 'No leave applications are waiting for your signature.' : 'No leave applications yet.') : 'Loading…' }}</p> }
 
     @if (dlg === 'form') {
       <div class="bd" (click)="dlg = null"></div>
@@ -46,7 +47,6 @@ const blank = (): LeaveData => ({ office: '', lastName: '', firstName: '', middl
           <label>First name<input [(ngModel)]="f.firstName" /></label>
           <label>Middle name<input [(ngModel)]="f.middleName" /></label>
           <label>Salary (optional)<input [(ngModel)]="f.salary" /></label>
-          <label>Date of filing<input type="date" [(ngModel)]="f.filingDate" /></label>
           <label>Type of leave<select [(ngModel)]="f.leaveType" (ngModelChange)="typeChanged()">@for (t of types; track t) { <option [value]="t">{{ t }}</option> }</select></label>
           @if (f.leaveType === 'Others') { <label>Others: type the leave (e.g. Wellness Leave)<input [(ngModel)]="f.otherLeave" /></label> }
           <label>Working days applied for<input type="number" min="0.5" step="0.5" inputmode="decimal" [(ngModel)]="f.days" /></label>
@@ -75,33 +75,37 @@ const blank = (): LeaveData => ({ office: '', lastName: '', firstName: '', middl
       <div class="pnl" role="dialog" aria-modal="true" aria-label="Form 6">
         <header>
           <div><h3>Form 6 · {{ cur.applicant.name }}</h3><small class="muted">{{ statusOf(cur) }}</small></div>
-          <div class="hb"><button class="btn secondary" type="button" (click)="download()" [disabled]="busy">Download PDF</button><button class="btn secondary" type="button" (click)="close()">Close</button></div>
+          <div class="hb"><select class="paper" [ngModel]="paperId" (ngModelChange)="setPaper($event)" aria-label="Paper size">@for (p of papers; track p.id) { <option [value]="p.id">{{ p.label }}</option> }</select><button class="btn secondary" type="button" (click)="print()" [disabled]="busy">Print</button><button class="btn secondary" type="button" (click)="download()" [disabled]="busy">Download PDF</button><button class="btn secondary" type="button" (click)="close()">Close</button></div>
         </header>
         @if (error) { <p class="error pad">{{ error }}</p> } @if (msg) { <p class="ok pad">{{ msg }}</p> }
         @if (cur.printed.signatoryNote && cur.status !== 'approved') { <p class="muted pad">{{ cur.printed.signatoryNote }}</p> }
         <div class="pad acts2">
-          @if (cur.myTurn === 'applicant' || cur.myTurn === 'ao' || cur.myTurn === 'signatory') {
+          @if (cur.myTurn) {
             @if (!cur.signAs) { <span class="error">You have no signature yet. Add one in My profile, then come back.</span> }
             @else { <span class="tip">Tap the form where your signature goes{{ placed ? ' (tap again to move it)' : '' }}.</span> }
-          }
-          @if (cur.myTurn === 'ao') {
-            <label>Deduct from <select [(ngModel)]="aoKind"><option value="">Nothing</option>@for (k of cur.kinds; track k.kind) { <option [value]="k.kind">{{ k.label }}</option> }</select></label>
           }
           @if (cur.myTurn === 'signatory') {
             <label class="rad"><input type="radio" name="dec" value="approval" [(ngModel)]="decision" /> For approval</label>
             <label class="rad"><input type="radio" name="dec" value="disapproval" [(ngModel)]="decision" /> For disapproval</label>
+            @if (decision === 'disapproval') { <input class="why" [(ngModel)]="reason" placeholder="Reason (needed to disapprove)" aria-label="Reason" /> }
           }
-          @if (cur.myTurn === 'ao' || (cur.myTurn === 'signatory' && decision === 'disapproval')) { <input class="why" [(ngModel)]="reason" placeholder="Reason (needed to disapprove)" aria-label="Reason" /> }
-          @if (placed && cur.myTurn && cur.myTurn !== 'send') {
-            <button class="btn" type="button" (click)="doSign()" [disabled]="busy">{{ busy ? 'Saving…' : signLabel() }}</button>
+          @if (placed && cur.myTurn) {
+            <label class="rs">Signature size <input type="range" [min]="sizeMin" [max]="sizeMax" step="5" [ngModel]="sizePct" (ngModelChange)="resize($event)" aria-label="Signature size" /> <span>{{ sizePct }}%</span></label>
+            <button class="btn" type="button" (click)="doSign()" [disabled]="busy || (decision === 'disapproval' && cur.myTurn === 'signatory' && !reason)">{{ busy ? 'Saving…' : cur.myTurn === 'signatory' ? 'Sign and ' + (decision === 'approval' ? 'approve' : 'disapprove') : 'Sign and send to ' + cur.printed.signatoryTitle }}</button>
           }
-          @if (cur.myTurn === 'ao') { <button class="btn secondary" type="button" (click)="disapprove()" [disabled]="busy || !reason">Disapprove</button> }
-          @if (cur.myTurn === 'send') { <button class="btn" type="button" (click)="send()" [disabled]="busy">Send to {{ cur.printed.signatoryTitle }} for signature</button> }
           @if (cur.status === 'awaiting_applicant' && (cur.applicant.id === me?.id || cur.filedBy?.id === me?.id)) {
             <button class="btn secondary" type="button" (click)="startEdit()">Edit</button><button class="btn secondary" type="button" (click)="remove()" [disabled]="busy">Delete</button>
           }
         </div>
-        <div class="scroll" #scroll><div class="host" #host></div></div>
+        <div class="scroll" #scroll>
+          <div class="host" #host></div>
+          @if (cur.events.length) {
+            <div class="hist"><h4>History</h4>
+              @for (e of cur.events; track $index) { <div class="ev"><span class="when">{{ e.at | date: 'MMM d, y, h:mm a' }}</span> {{ e.text }}</div> }
+              @if (cur.deducted && cur.credit) { <div class="ev muted">Credit deducted from {{ cur.credit.label }} only after the signatory approved.</div> }
+            </div>
+          }
+        </div>
       </div>
     }
   `,
@@ -119,7 +123,9 @@ const blank = (): LeaveData => ({ office: '', lastName: '', firstName: '', middl
     .pnl { position: fixed; z-index: 1201; inset: 0; margin: auto; width: min(960px, 100%); height: min(100%, 100dvh); background: #f3f4f6; display: flex; flex-direction: column; }
     .pnl header { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .8rem 1.1rem; background: #fff; border-bottom: 1px solid #e5e7eb; } .pnl h3 { margin: 0; font-size: 1.05rem; } .hb { display: flex; gap: .5rem; }
     .pad { padding: .5rem 1.1rem; margin: 0; background: #fff; } .acts2 { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; } .tip { color: #166534; } .why { min-width: 14rem; }
-    .scroll { flex: 1; overflow: auto; padding: .8rem; } .host { width: max-content; margin: 0 auto; }
+    .scroll { flex: 1; overflow: auto; padding: .8rem; } .host { width: max-content; margin: 0 auto; } .host > .pg { margin-bottom: 14px; }
+    .paper { padding: .4rem; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; } .rs { flex-direction: row; align-items: center; gap: .4rem; } .rs input { width: 9rem; padding: 0; }
+    .hist { background: #fff; border-radius: 10px; padding: .7rem 1rem; margin: .4rem auto 1rem; max-width: 794px; } .hist h4 { margin: 0 0 .4rem; } .ev { font-size: .85rem; padding: .15rem 0; } .when { color: #6b7280; margin-right: .4rem; }
     :host ::ng-deep .host .pg { cursor: crosshair; box-shadow: 0 2px 10px rgba(0,0,0,.2); }
   `],
 })
@@ -131,6 +137,7 @@ export class LeaveComponent implements OnInit {
   @ViewChild('scroll') scroll?: ElementRef<HTMLElement>;
 
   @Input() hideBar = false;
+  @Input() pendingOnly = false; // only the applications waiting for my signature
   @Output() changed = new EventEmitter<void>();
   @Input() person: { id: string; name: string; position?: string; station?: string } | null = null;
   me = this.auth.currentUser();
@@ -140,13 +147,15 @@ export class LeaveComponent implements OnInit {
   f: LeaveData = blank(); kind = ''; kinds: { kind: string; label: string }[] = [];
   busy = false; error = ''; msg = '';
   placed = false; private pos: { x: number; y: number } | null = null;
-  aoKind = ''; decision: 'approval' | 'disapproval' = 'approval'; reason = '';
+  decision: 'approval' | 'disapproval' = 'approval'; reason = '';
+  sizePct = 100; sizeMin = 40; sizeMax = Math.round(SIG_MAX / SIG_FRAC * 100); papers = PAPERS; paperId = loadPaper().id;
+  private ghostEl: HTMLImageElement | null = null;
 
   firstName() { return (this.person?.name ?? '').split(' ')[0]; }
   roleName(r: string) { return (ROLE_LABELS as Record<string, string>)[r] ?? r; }
   statusOf(a: LeaveView) { return LEAVE_STATUS[a.status]; }
-  turnText(a: LeaveView) { return ({ applicant: 'Your signature', ao: 'Your approval', send: 'Send it on', signatory: 'Your signature' } as const)[a.myTurn!]; }
-  signLabel() { return this.cur?.myTurn === 'ao' ? 'Sign and approve' : this.cur?.myTurn === 'signatory' ? 'Sign' : 'Sign'; }
+  turnText(a: LeaveView) { return a.myTurn === 'signatory' ? 'Needs your signature' : 'Please sign'; }
+  setPaper(id: string) { this.paperId = id; savePaper(id); }
 
   async ngOnInit() {
     try { this.types = await firstValueFrom(this.api.types()); } catch { this.types = []; }
@@ -154,7 +163,7 @@ export class LeaveComponent implements OnInit {
   }
 
   async reload() {
-    try { const all = await firstValueFrom(this.api.list()); this.list = this.person ? all.filter((x) => x.applicant.id === this.person!.id) : all; this.error = ''; } catch (e: any) { this.error = e?.error?.message ?? 'Could not load your leave applications.'; }
+    try { const all = await firstValueFrom(this.api.list()); this.list = this.pendingOnly ? all.filter((x) => x.myTurn) : this.person ? all.filter((x) => x.applicant.id === this.person!.id) : all; this.error = ''; } catch (e: any) { this.error = e?.error?.message ?? 'Could not load your leave applications.'; }
     this.loaded = true;
   }
 
@@ -218,7 +227,7 @@ export class LeaveComponent implements OnInit {
   async open(id: string) { this.error = ''; try { await this.show(await firstValueFrom(this.api.get(id))); } catch (e: any) { this.error = e?.error?.message ?? 'Could not open it.'; } }
 
   private async show(v: LeaveView) {
-    this.cur = v; this.dlg = 'view'; this.msg = ''; this.error = ''; this.pos = null; this.placed = false; this.reason = ''; this.decision = 'approval'; this.aoKind = v.kind ?? '';
+    this.cur = v; this.dlg = 'view'; this.msg = ''; this.error = ''; this.pos = null; this.placed = false; this.reason = ''; this.decision = 'approval'; this.sizePct = 100; this.ghostEl = null;
     await this.paint();
   }
 
@@ -227,16 +236,17 @@ export class LeaveComponent implements OnInit {
     await new Promise((r) => setTimeout(r));
     const host = this.host?.nativeElement; if (!host) return;
     const page = await buildForm6(v);
-    host.innerHTML = ''; host.appendChild(page);
-    if (v.signAs && v.myTurn && v.myTurn !== 'send') {
+    const back = await buildForm6Back();
+    host.innerHTML = ''; host.appendChild(page); host.appendChild(back);
+    if (v.signAs && v.myTurn) {
       let ghost: HTMLImageElement | null = null;
       page.addEventListener('click', async (e) => {
         const r = page.getBoundingClientRect();
         this.pos = { x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)) };
         ghost?.remove();
         ghost = document.createElement('img'); ghost.className = 'tasig ghost'; ghost.src = await blackenPng(v.signAs!);
-        ghost.style.left = `${this.pos.x * 100}%`; ghost.style.top = `${this.pos.y * 100}%`; ghost.style.width = `${SIG_W}px`;
-        page.appendChild(ghost); this.placed = true;
+        ghost.style.cssText = `position:absolute;transform:translate(-50%,-50%);pointer-events:none;opacity:.75;outline:1px dashed #16a34a;left:${this.pos.x * 100}%;top:${this.pos.y * 100}%;width:${SIG_FRAC * PAGE_W * this.sizePct / 100}px;`;
+        page.appendChild(ghost); this.ghostEl = ghost; this.placed = true;
       });
     }
     const avail = (this.scroll?.nativeElement.clientWidth ?? 800) - 16;
@@ -252,19 +262,32 @@ export class LeaveComponent implements OnInit {
 
   doSign() {
     const v = this.cur; if (!v || !this.pos) return;
-    const body: any = { x: this.pos.x, y: this.pos.y };
-    if (v.myTurn === 'ao') body.kind = this.aoKind || null;
+    const body: any = { x: this.pos.x, y: this.pos.y, w: Math.round(SIG_FRAC * this.sizePct) / 100 };
     if (v.myTurn === 'signatory') { body.decision = this.decision; body.reason = this.reason; }
-    void this.apply(firstValueFrom(this.api.sign(v.id, body)), v.myTurn === 'applicant' ? 'Signed.' : v.myTurn === 'ao' ? 'Approved and signed. Press “Send” to pass it on.' : 'Signed.');
+    void this.apply(firstValueFrom(this.api.sign(v.id, body)), v.myTurn === 'applicant' ? `Signed and sent to the ${v.printed.signatoryTitle}.` : this.decision === 'approval' ? 'Approved. The credit has been deducted.' : 'Disapproved.');
   }
-  disapprove() { if (this.cur) void this.apply(firstValueFrom(this.api.disapprove(this.cur.id, this.reason)), 'Disapproved.'); }
-  send() { if (this.cur) void this.apply(firstValueFrom(this.api.send(this.cur.id)), `Sent to the ${this.cur.printed.signatoryTitle}.`); }
+
+  // the signer makes the tapped signature bigger or smaller to fit the signing space
+  resize(pct: number) {
+    this.sizePct = Math.min(this.sizeMax, Math.max(this.sizeMin, Number(pct)));
+    if (this.ghostEl) this.ghostEl.style.width = `${SIG_FRAC * PAGE_W * this.sizePct / 100}px`;
+  }
+
+  private pages() { return Array.from(this.host?.nativeElement.querySelectorAll('.pg') ?? []) as HTMLElement[]; }
 
   async download() {
-    const page = this.host?.nativeElement.querySelector('.pg') as HTMLElement | null;
-    if (!page || !this.cur) return;
+    const pages = this.pages();
+    if (!pages.length || !this.cur) return;
     this.busy = true; this.error = '';
-    try { DriveUploadService.saveBlob(await form6Pdf(page), `Form 6 - ${this.cur.applicant.name}.pdf`); } catch (e: any) { this.error = e?.message ?? 'Could not build the file.'; }
+    try { DriveUploadService.saveBlob(await form6Pdf(pages, paperOf(this.paperId)), `Form 6 - ${this.cur.applicant.name}.pdf`); } catch (e: any) { this.error = e?.message ?? 'Could not build the file.'; }
+    this.busy = false;
+  }
+
+  async print() {
+    const pages = this.pages();
+    if (!pages.length) return;
+    this.busy = true; this.error = '';
+    try { printPdf(await form6Pdf(pages, paperOf(this.paperId))); } catch (e: any) { this.error = e?.message ?? 'Could not prepare the print.'; }
     this.busy = false;
   }
 

@@ -2,6 +2,7 @@ import { Component, HostListener, OnInit, effect, inject, signal, untracked } fr
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
 import { filter, firstValueFrom } from 'rxjs';
+import { LeaveService } from '../../core/services/leave.service';
 import { TravelAuthorityService } from '../../core/services/travel-authority.service';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationsService } from '../../core/services/notifications.service';
@@ -38,6 +39,7 @@ export class ShellComponent implements OnInit {
   sidebarOpen = signal(true);
   filesOpen = signal(true);
   private ta = inject(TravelAuthorityService);
+  private leaveApi = inject(LeaveService);
   pendingCount = signal(0); // Travel Authorities waiting for this person's signature
   // which My files section is showing (?tab=working|travel|storage)
   get filesTab(): string { const u = this.router.parseUrl(this.router.url); return u.root.children['primary']?.segments[0]?.path === 'my-files' ? (u.queryParams['tab'] ?? 'working') : ''; }
@@ -47,7 +49,7 @@ export class ShellComponent implements OnInit {
       { label: 'Working Directory', tab: 'working' },
       { label: 'Travel Authority', tab: 'travel', show: r !== Role.SCHOOL },
       { label: 'Service Credits', tab: 'credits', show: r === Role.DISTRICT_SUPERVISOR || r === Role.TEACHER || r === Role.DS_SECRETARY || r === Role.NON_TEACHING || r === Role.SCHOOL_HEAD || r === Role.ADMIN_OFFICER || r === Role.PUBLISHER },
-      { label: 'Pending for Signature', tab: 'pending', show: r === Role.SCHOOL_HEAD || r === Role.DISTRICT_SUPERVISOR || r === Role.DS_SECRETARY },
+      { label: 'Pending for Signature', tab: 'pending', show: r === Role.SCHOOL_HEAD || r === Role.DISTRICT_SUPERVISOR || r === Role.DS_SECRETARY || r === Role.TEACHER || r === Role.NON_TEACHING || r === Role.ADMIN_OFFICER || r === Role.PUBLISHER },
       { label: 'TA Number', tab: 'number', show: r === Role.DS_SECRETARY },
       { label: 'File Storage', tab: 'storage' },
     ].filter((c) => c.show !== false);
@@ -75,8 +77,11 @@ export class ShellComponent implements OnInit {
 
   private loadPending() {
     const r = this.role;
-    if (r !== Role.SCHOOL_HEAD && r !== Role.DISTRICT_SUPERVISOR && r !== Role.DS_SECRETARY) { this.pendingCount.set(0); return; }
-    firstValueFrom(this.ta.inbox()).then((rows) => this.pendingCount.set(rows.filter((x) => x.myTurn === 'countersign' || x.myTurn === 'recommending' || x.myTurn === 'approving').length)).catch(() => {});
+    if (r === Role.SCHOOL || r === Role.ADMINISTRATOR || !r) { this.pendingCount.set(0); return; }
+    // Travel Authorities and leave (Form 6) waiting for this person's signature
+    const ta = firstValueFrom(this.ta.inbox()).then((rows) => rows.filter((x) => !!x.myTurn).length).catch(() => 0);
+    const lv = firstValueFrom(this.leaveApi.list()).then((rows) => rows.filter((x) => !!x.myTurn).length).catch(() => 0);
+    Promise.all([ta, lv]).then(([a, b]) => this.pendingCount.set(a + b));
   }
 
   ngOnInit() {
