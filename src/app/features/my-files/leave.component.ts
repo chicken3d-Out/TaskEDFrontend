@@ -172,6 +172,14 @@ export class LeaveComponent implements OnInit {
   }
 
   // ---------- form ----------
+  // Office/Department: the school followed by its district (e.g. "Gapas ES STA. FE District")
+  private office() {
+    const u: any = this.me, sch = u?.school ?? u?.assignedSchools?.[0];
+    const name = sch?.name ?? '';
+    const d = (sch?.district ?? '').trim();
+    return name ? name + (d ? ' ' + (/district\s*$/i.test(d) ? d : d + ' District') : '') : '';
+  }
+
   private fillFor(name: { last: string; first: string; middle: string }, school: string, position: string) {
     this.f = { ...blank(), lastName: name.last, firstName: name.first, middleName: name.middle, office: school, position };
   }
@@ -183,10 +191,10 @@ export class LeaveComponent implements OnInit {
     if (this.person) {
       this.personId = this.person.id;
       const parts = this.person.name.split(' ');
-      this.fillFor({ last: parts.length > 1 ? parts[parts.length - 1] : this.person.name, first: parts.slice(0, -1).join(' '), middle: '' }, (u as any)?.school?.name ?? '', this.person.position ?? '');
+      this.fillFor({ last: parts.length > 1 ? parts[parts.length - 1] : this.person.name, first: parts.slice(0, -1).join(' '), middle: '' }, this.office(), this.person.position ?? '');
     } else {
       this.personId = u?.id ?? '';
-      this.fillFor({ last: u?.lastName ?? '', first: u?.firstName ?? '', middle: u?.middleName ?? '' }, (u as any)?.school?.name ?? '', (u as any)?.designation ?? '');
+      this.fillFor({ last: u?.lastName ?? '', first: u?.firstName ?? '', middle: u?.middleName ?? '' }, this.office(), (u as any)?.designation ?? '');
     }
     this.kind = '';
     await this.loadKinds(this.personId);
