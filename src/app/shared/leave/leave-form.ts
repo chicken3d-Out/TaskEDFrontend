@@ -92,7 +92,8 @@ export async function buildForm6(v: LeaveView): Promise<HTMLElement> {
   const rec = v.recommendation;
   if (rec?.decision === 'approval') tick(page, 'j45');
   if (rec?.decision === 'disapproval') { tick(page, 'j46'); put(page, f['recReason'], esc(rec.reason), { size: 7, align: 'left', valign: 'top', wrap: true }); }
-  if (v.printed.signatoryTitle === 'CID Chief') put(page, f['sigName'], esc(v.printed.signatory), { size: 9, bold: true });
+  // the corresponding signatory's name is filled in automatically (School Head for teachers, staff and the AO; the District Supervisor for a School Head)
+  put(page, f['sigName'], esc(v.printed.signatory.toUpperCase()), { size: 9, bold: true });
   // 7.C / 7.D
   if (v.status === 'approved') put(page, f['daysPay'], esc(num(d.days)), { size: 9, bold: true });
   if (v.status === 'disapproved') put(page, f['disReason'], esc(v.note ?? ''), { size: 8, align: 'left', valign: 'top', wrap: true });

@@ -81,7 +81,7 @@ export class MyFilesComponent implements OnInit {
       const t = m.get('tab');
       const r = this.auth.currentUser()?.role;
       if (t === 'working' || t === 'storage' || (t === 'travel' && this.canTravel)) this.tab = t;
-      else if (t === 'pending' && ['school_head', 'district_supervisor', 'ds_secretary', 'teacher', 'non_teaching', 'admin_officer', 'publisher'].includes(r ?? '')) this.tab = t;
+      else if (t === 'pending' && ['school_head', 'district_supervisor', 'ds_secretary', 'teacher'].includes(r ?? '')) this.tab = t;
       else if (t === 'number' && r === 'ds_secretary') this.tab = t;
       else if ((t === 'credits' || t === 'leave') && ['teacher', 'non_teaching', 'ds_secretary', 'school_head', 'admin_officer', 'publisher', 'district_supervisor'].includes(r ?? '')) this.tab = 'credits';
     });

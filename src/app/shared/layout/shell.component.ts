@@ -49,7 +49,7 @@ export class ShellComponent implements OnInit {
       { label: 'Working Directory', tab: 'working' },
       { label: 'Travel Authority', tab: 'travel', show: r !== Role.SCHOOL },
       { label: 'Service Credits', tab: 'credits', show: r === Role.DISTRICT_SUPERVISOR || r === Role.TEACHER || r === Role.DS_SECRETARY || r === Role.NON_TEACHING || r === Role.SCHOOL_HEAD || r === Role.ADMIN_OFFICER || r === Role.PUBLISHER },
-      { label: 'Pending for Signature', tab: 'pending', show: r === Role.SCHOOL_HEAD || r === Role.DISTRICT_SUPERVISOR || r === Role.DS_SECRETARY || r === Role.TEACHER || r === Role.NON_TEACHING || r === Role.ADMIN_OFFICER || r === Role.PUBLISHER },
+      { label: 'Pending for Signature', tab: 'pending', show: r === Role.SCHOOL_HEAD || r === Role.DISTRICT_SUPERVISOR || r === Role.DS_SECRETARY || r === Role.TEACHER },
       { label: 'TA Number', tab: 'number', show: r === Role.DS_SECRETARY },
       { label: 'File Storage', tab: 'storage' },
     ].filter((c) => c.show !== false);
@@ -77,7 +77,7 @@ export class ShellComponent implements OnInit {
 
   private loadPending() {
     const r = this.role;
-    if (r === Role.SCHOOL || r === Role.ADMINISTRATOR || !r) { this.pendingCount.set(0); return; }
+    if (r !== Role.SCHOOL_HEAD && r !== Role.DISTRICT_SUPERVISOR && r !== Role.DS_SECRETARY && r !== Role.TEACHER) { this.pendingCount.set(0); return; }
     // Travel Authorities and leave (Form 6) waiting for this person's signature
     const ta = firstValueFrom(this.ta.inbox()).then((rows) => rows.filter((x) => !!x.myTurn).length).catch(() => 0);
     const lv = firstValueFrom(this.leaveApi.list()).then((rows) => rows.filter((x) => !!x.myTurn).length).catch(() => 0);
