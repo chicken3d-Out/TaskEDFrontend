@@ -38,6 +38,10 @@
       }
     </div>
 
+    <button class="icon-btn theme-btn" type="button" (click)="theme.toggle()" [attr.aria-label]="theme.mode() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'">
+      <app-icon [name]="theme.mode() === 'dark' ? 'sun' : 'moon'" [size]="20" />
+    </button>
+
     <div class="menu-wrap">
       <button class="icon-btn" (click)="showNotifications = !showNotifications; showUserMenu = false; showActive = false" aria-label="Notifications">
         <app-icon name="bell" [size]="21" />
@@ -70,7 +74,9 @@
       </button>
       @if (showUserMenu) {
         <div class="popover user-menu">
-          <a routerLink="/profile" class="menu-row"><app-icon name="user" [size]="18" /> My profile</a>
+          <a routerLink="/profile" class="menu-row" (click)="showUserMenu = false"><app-icon name="user" [size]="18" /> My profile</a>
+          <button class="menu-row" type="button" (click)="theme.toggle(); showUserMenu = false"><app-icon [name]="theme.mode() === 'dark' ? 'sun' : 'moon'" [size]="18" /> {{ theme.mode() === 'dark' ? 'Light mode' : 'Dark mode' }}</button>
+          <button class="menu-row" type="button" (click)="bugs.openDialog(); showUserMenu = false"><app-icon name="bug" [size]="18" /> Report a bug</button>
           <button class="menu-row" (click)="auth.logout()"><app-icon name="logout" [size]="18" /> Sign out</button>
         </div>
       }
@@ -82,7 +88,7 @@
       @for (item of navItems; track item.link) {
         @if (item.link === '/my-files') {
           <div class="navgroup">
-            <a routerLink="/my-files" [queryParams]="{ tab: 'working' }" [class.active]="filesTab !== ''" (click)="filesOpen.set(true); closeSidebarOnMobile()">
+            <a routerLink="/my-files" [queryParams]="{ tab: filesHome }" [class.active]="filesTab !== ''" (click)="filesOpen.set(true); closeSidebarOnMobile()">
               <app-icon [name]="item.icon" [size]="20" />
               <span>{{ item.label }}</span>
               <button type="button" class="chev" (click)="$event.preventDefault(); $event.stopPropagation(); filesOpen.set(!filesOpen())" [attr.aria-label]="filesOpen() ? 'Collapse My files' : 'Expand My files'">{{ filesOpen() ? '▾' : '▸' }}</button>
@@ -102,6 +108,7 @@
           >
             <app-icon [name]="item.icon" [size]="20" />
             <span>{{ item.label }}</span>
+            @if (item.link === '/bug-reports' && openBugs() > 0) { <b class="cnt">{{ openBugs() }}</b> }
           </a>
         }
       }

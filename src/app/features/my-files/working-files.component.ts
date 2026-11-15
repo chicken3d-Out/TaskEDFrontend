@@ -18,10 +18,12 @@ export const WORKING_TYPES = ['PDS', 'Service Record', 'Service Credit', 'SALN',
 // Working Directory Files: the person's own working documents (PDS, Service
 // Record...) kept in their Drive under TaskEd Files / Working Directory / <type>.
 // One current copy per document, so there is no school year here.
+import { LoadingComponent } from '../../shared/loading/loading.component';
+
 @Component({
   selector: 'app-working-files',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe],
+  imports: [LoadingComponent, CommonModule, FormsModule, DatePipe],
   template: `
     <div class="card tip">
       <strong>Where these go</strong>
@@ -29,7 +31,8 @@ export const WORKING_TYPES = ['PDS', 'Service Record', 'Service Credit', 'SALN',
     </div>
     @if (error) { <p class="error">{{ error }}</p> }
     @if (saving) { <div class="bar"><div class="fill" [style.width.%]="progress"></div></div> }
-    @if (msg) { <p class="muted">{{ msg }}</p> }
+    @if (msg) { <p class="muted">@if (saving) { <span class="spin"></span> } {{ msg }}</p> }
+    @if (!loaded) { <app-loading [compact]="true" label="Loading your files…" /> }
     @for (t of types; track t) {
       <section class="card">
         <div class="sechead">
@@ -85,6 +88,7 @@ export class WorkingFilesComponent implements OnInit {
   sr = inject(SrEditorService);
 
   types = WORKING_TYPES;
+  loaded = false;
   files: MyFile[] = [];
   currentYear = '';
   saving = false;
@@ -96,7 +100,7 @@ export class WorkingFilesComponent implements OnInit {
 
   load() {
     this.api.list().subscribe({
-      next: (v) => { this.currentYear = v.currentYear; this.files = v.files.filter((f) => f.section === 'working'); },
+      next: (v) => { this.currentYear = v.currentYear; this.files = v.files.filter((f) => f.section === 'working'); this.loaded = true; },
       error: (e) => (this.error = e?.error?.message ?? 'Could not load your files.'),
     });
   }

@@ -12,10 +12,59 @@
   --muted: #6b7280;
   --danger: #dc2626;
   --warn: #d97706;
-  --radius: 14px;
-  --shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 4px 14px rgba(16, 24, 40, 0.06);
+  --radius: 16px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 20px rgba(16, 24, 40, 0.06);
+  --text-2: #374151;
+  --border-strong: #d1d5db;
+  --input-bg: #ffffff;
+  --overlay: rgba(17, 24, 39, 0.5);
+  --ok-bg: #dcfce7;
+  --ok-bg-soft: #f0fdf4;
+  --ok-fg: #166534;
+  --err-bg: #fee2e2;
+  --err-bg-soft: #fef2f2;
+  --err-fg: #b91c1c;
+  --warn-bg: #fef3c7;
+  --warn-fg: #92400e;
+  --info-bg: #dbeafe;
+  --info-fg: #1d4ed8;
+  --topbar-bg: rgba(255, 255, 255, 0.9);
+  color-scheme: light;
   --sidebar-w: 260px;
   --topbar-h: 62px;
+}
+
+/* Dark theme: switched by the toggle in the top bar (or the phone's own setting until the person chooses) */
+:root[data-theme='dark'] {
+  --primary: #22c55e;
+  --primary-strong: #86efac;
+  --primary-soft: #14301f;
+  --accent: #60a5fa;
+  --bg: #0b1210;
+  --surface: #121b17;
+  --surface-2: #1a2621;
+  --border: #25332c;
+  --text: #e8f0ec;
+  --muted: #9aaba2;
+  --danger: #f87171;
+  --warn: #fbbf24;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --text-2: #cbd8d1;
+  --border-strong: #35473e;
+  --input-bg: #0f1814;
+  --overlay: rgba(0, 0, 0, 0.65);
+  --ok-bg: #14301f;
+  --ok-bg-soft: #10241a;
+  --ok-fg: #86efac;
+  --err-bg: #3b1616;
+  --err-bg-soft: #2a1212;
+  --err-fg: #fca5a5;
+  --warn-bg: #3b2a0c;
+  --warn-fg: #fcd34d;
+  --info-bg: #14263f;
+  --info-fg: #93c5fd;
+  --topbar-bg: rgba(18, 27, 23, 0.9);
+  color-scheme: dark;
 }
 
 * {
@@ -47,6 +96,20 @@ a {
   color: var(--accent);
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+::placeholder {
+  color: var(--muted);
+  opacity: 0.8;
+}
+
 input,
 select,
 textarea,
@@ -61,7 +124,7 @@ textarea {
   padding: 0.6rem 0.8rem;
   border: 1px solid var(--border);
   border-radius: 10px;
-  background: #fff;
+  background: var(--input-bg);
   color: var(--text);
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -113,7 +176,7 @@ button:disabled {
   transform: translateY(1px);
 }
 .btn.secondary {
-  background: #fff;
+  background: var(--surface);
   color: var(--text);
   border-color: var(--border);
 }
@@ -121,12 +184,12 @@ button:disabled {
   background: var(--surface-2);
 }
 .btn.danger {
-  background: #fff;
+  background: var(--surface);
   color: var(--danger);
-  border-color: #fecaca;
+  border-color: var(--err-bg);
 }
 .btn.danger:hover:not(:disabled) {
-  background: #fef2f2;
+  background: var(--err-bg-soft);
 }
 
 .page-title {
@@ -158,4 +221,113 @@ button:disabled {
     transition: none !important;
     animation: none !important;
   }
+}
+
+
+/* Pages made of paper (Form 6, Travel Authority, previews) stay white with black text in dark mode too */
+.pg,
+.pg *,
+section.docx,
+.docx-wrapper {
+  color-scheme: light;
+}
+.pg,
+section.docx {
+  background: #fff;
+  color: #000;
+}
+
+/* Modern touches shared by every page */
+.card {
+  transition: box-shadow 0.18s, border-color 0.18s;
+}
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 700;
+}
+.page-title app-icon {
+  color: var(--primary);
+  background: var(--primary-soft);
+  border-radius: 12px;
+  padding: 0.4rem;
+  box-sizing: content-box;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
+.spin {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2.5px solid var(--border-strong);
+  border-top-color: var(--primary);
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Small phones (down to 320px): nothing may push the page sideways */
+main,
+.card {
+  min-width: 0;
+}
+.card {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  body {
+    font-size: 14.5px;
+  }
+  .card {
+    padding: 1rem;
+    border-radius: 14px;
+  }
+  .page-title {
+    font-size: 1.25rem;
+  }
+  .btn {
+    padding: 0.55rem 0.85rem;
+  }
+  table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
+@media (max-width: 380px) {
+  .card {
+    padding: 0.85rem;
+  }
+  .btn {
+    font-size: 0.88rem;
+  }
+}
+
+/* The TaskEd wordmark is dark green: give it a light chip on dark backgrounds so it stays readable */
+:root[data-theme='dark'] img[src*='taskEd-logo'] {
+  background: #e8f0ec;
+  border-radius: 10px;
+  padding: 2px 8px;
+}
+
+/* Form pages position their pictures exactly; a responsive max-width must never shrink them */
+.pg img,
+section.docx img,
+.docx-wrapper img {
+  max-width: none;
 }

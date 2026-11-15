@@ -1,4 +1,4 @@
-import { Component, HostListener, computed, inject } from '@angular/core';
+import { Component, HostListener, computed, effect, inject, signal } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { FilePreviewService } from './file-preview.service';
 import { IconComponent } from '../icon/icon.component';
@@ -18,7 +18,8 @@ import { IconComponent } from '../icon/icon.component';
           </div>
           <div class="body">
             @if (safe(); as src) {
-              <iframe [src]="src" title="Document preview" loading="lazy" referrerpolicy="no-referrer"></iframe>
+              @if (!ready()) { <div class="wait"><span class="spin"></span><span>Opening the file…</span></div> }
+              <iframe [src]="src" title="Document preview" referrerpolicy="no-referrer" (load)="ready.set(true)" [style.visibility]="ready() ? 'visible' : 'hidden'"></iframe>
             } @else {
               <div class="nopreview">
                 <p>This kind of link (a folder, OneDrive or SharePoint) cannot be previewed inside TaskEd.</p>
@@ -36,7 +37,7 @@ import { IconComponent } from '../icon/icon.component';
     .bar { display: flex; align-items: center; gap: .6rem; padding: .6rem .9rem; border-bottom: 1px solid var(--border); }
     .title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .x { border: none; background: transparent; cursor: pointer; padding: .3rem; border-radius: 8px; color: var(--muted); }
-    .body { flex: 1; min-height: 0; }
+    .body { flex: 1; min-height: 0; position: relative; } .wait { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: .7rem; color: var(--muted); }
     iframe { width: 100%; height: 100%; border: 0; }
     .nopreview { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; text-align: center; padding: 1.5rem; color: var(--muted); }
   `],
@@ -44,6 +45,8 @@ import { IconComponent } from '../icon/icon.component';
 export class FilePreviewComponent {
   preview = inject(FilePreviewService);
   private sanitizer = inject(DomSanitizer);
+  ready = signal(false);
+  constructor() { effect(() => { this.preview.state(); this.ready.set(false); }, { allowSignalWrites: true }); }
   safe = computed(() => {
     const e = this.preview.state()?.embed;
     return e ? this.sanitizer.bypassSecurityTrustResourceUrl(e) : null;

@@ -36,12 +36,12 @@ const COLORS: Record<string, string> = {
     <p class="muted">Tracks from GDACS (JTWC/NOAA data). Strength labels use PAGASA's wind scale, but PAGASA's own names and signal numbers can differ — always follow the official PAGASA bulletin.</p>
   `,
   styles: [`
-    .hz-map { position: relative; z-index: 0; isolation: isolate; height: min(62vh, 520px); border-radius: 12px; border: 1px solid #e5e7eb; }
+    .hz-map { position: relative; z-index: 0; isolation: isolate; height: min(62vh, 520px); border-radius: 12px; border: 1px solid var(--border); }
     .legend { display: flex; flex-wrap: wrap; gap: .3rem .9rem; font-size: .8rem; margin: .6rem 0; }
     .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
-    .storm { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; padding: .6rem .8rem; border: 1px solid #e5e7eb; border-radius: 10px; margin-bottom: .5rem; cursor: pointer; }
+    .storm { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; padding: .6rem .8rem; border: 1px solid var(--border); border-radius: 10px; margin-bottom: .5rem; cursor: pointer; }
     .chip { color: #fff; border-radius: 999px; padding: .1rem .6rem; font-size: .8rem; }
-    .muted { color: #6b7280; font-size: .85rem; } .ok { color: #166534; }
+    .muted { color: var(--muted); font-size: .85rem; } .ok { color: var(--ok-fg); }
   `],
 })
 export class TyphoonTrackerComponent implements AfterViewInit, OnDestroy {

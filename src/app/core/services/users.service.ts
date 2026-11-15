@@ -39,6 +39,10 @@ export class UsersService {
     return this.http.post<User>(`${this.base}/${id}/assign-role`, { role });
   }
 
+  remove(id: string): Observable<{ ok: true }> {
+    return this.http.delete<{ ok: true }>(`${this.base}/${id}`);
+  }
+
   reject(id: string): Observable<User> {
     return this.http.post<User>(`${this.base}/${id}/reject`, {});
   }

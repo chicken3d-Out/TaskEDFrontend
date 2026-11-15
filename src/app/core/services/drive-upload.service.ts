@@ -229,17 +229,33 @@ export class DriveUploadService {
     return parent;
   }
 
-  upload(token: string, parent: string, file: File, onProgress: (pct: number) => void): Promise<UploadedFile> {
+  // A file TaskEd saved earlier with the same name in the same folder, if there is one.
+  private async existing(token: string, parent: string, name: string): Promise<string | null> {
+    try {
+      const esc = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const q = encodeURIComponent(`name='${esc}' and '${parent}' in parents and mimeType!='${FOLDER}' and trashed=false`);
+      const found = await this.api(token, `files?q=${q}&fields=files(id)&orderBy=modifiedTime%20desc&pageSize=1`);
+      return found.files?.[0]?.id ?? null;
+    } catch { return null; }
+  }
+
+  // Saving a file with a name that is already in the folder replaces that file, so Drive never fills with copies.
+  async upload(token: string, parent: string, file: File, onProgress: (pct: number) => void): Promise<UploadedFile> {
+    const old = await this.existing(token, parent, file.name);
+    return old ? this.send(token, parent, file, onProgress, old) : this.send(token, parent, file, onProgress, null);
+  }
+
+  private send(token: string, parent: string, file: File, onProgress: (pct: number) => void, replaceId: string | null): Promise<UploadedFile> {
     return new Promise((resolve, reject) => {
       const boundary = 'tasked' + Math.random().toString(36).slice(2);
-      const meta = JSON.stringify({ name: file.name, parents: [parent] });
+      const meta = JSON.stringify(replaceId ? { name: file.name } : { name: file.name, parents: [parent] });
       const body = new Blob([
         `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${boundary}\r\nContent-Type: ${file.type || 'application/octet-stream'}\r\n\r\n`,
         file,
         `\r\n--${boundary}--`,
       ]);
       const xhr = new XMLHttpRequest();
-      xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink');
+      xhr.open(replaceId ? 'PATCH' : 'POST', `https://www.googleapis.com/upload/drive/v3/files${replaceId ? '/' + replaceId : ''}?uploadType=multipart&fields=id,name,webViewLink`);
       xhr.setRequestHeader('Authorization', `Bearer ${token}`);
       xhr.setRequestHeader('Content-Type', `multipart/related; boundary=${boundary}`);
       xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(Math.round((e.loaded / e.total) * 100));

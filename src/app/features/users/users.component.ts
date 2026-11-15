@@ -50,7 +50,7 @@ export class UsersComponent implements OnInit {
   AccountStatus = AccountStatus;
   // Administrator is not offered here: administrators are created with
   // "Add user" and sign in with a username and password.
-  roles = [Role.TEACHER, Role.ADMIN_OFFICER, Role.SCHOOL_HEAD, Role.SCHOOL, Role.PUBLISHER, Role.DISTRICT_SUPERVISOR, Role.DS_SECRETARY, Role.NON_TEACHING].map((r) => ({
+  roles = [Role.TEACHER, Role.ADMIN_OFFICER, Role.SCHOOL_HEAD, Role.SCHOOL, Role.DISTRICT_SUPERVISOR, Role.DS_SECRETARY, Role.NON_TEACHING].map((r) => ({
     value: r,
     label: ROLE_LABELS[r],
   }));
@@ -188,6 +188,12 @@ export class UsersComponent implements OnInit {
   suspend(row: Row) {
     if (!confirm(`Suspend ${row.user.name}? They will not be able to sign in.`)) return;
     this.act(row, this.usersService.setStatus(row.user.id, AccountStatus.SUSPENDED));
+  }
+
+  // the Administrator deletes any other account, with what belongs to it
+  remove(row: Row) {
+    if (!confirm(`Delete ${row.user.name} for good? Their tasks, files and records in TaskEd are deleted with the account. This cannot be undone.`)) return;
+    this.act(row, this.usersService.remove(row.user.id));
   }
 
   reactivate(row: Row) {

@@ -79,12 +79,12 @@ import { COLS, FIELDS, SECTIONS, SR_CAP, Row, SrData, SrFormatError, SrPackage, 
   styles: [`
     :host { display: contents; }
     .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1100; }
-    .panel { position: fixed; z-index: 1101; inset: 0 0 0 auto; width: min(980px, 100%); background: #fff; display: flex; flex-direction: column; overflow: hidden; }
-    header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: 1rem 1.2rem; border-bottom: 1px solid #e5e7eb; flex-wrap: wrap; }
-    header h2 { margin: 0; } header small { color: #6b7280; }
+    .panel { position: fixed; z-index: 1101; inset: 0 0 0 auto; width: min(980px, 100%); background: var(--surface); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: 1rem 1.2rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    header h2 { margin: 0; } header small { color: var(--muted); }
     .hbtns { display: flex; gap: .5rem; flex-wrap: wrap; }
     .chips { display: flex; gap: .4rem; padding: .7rem 1.2rem; overflow-x: auto; border-bottom: 1px solid #f1f5f9; }
-    .chips button { white-space: nowrap; border: 1px solid #e5e7eb; background: #fff; border-radius: 999px; padding: .4rem .9rem; font: inherit; cursor: pointer; }
+    .chips button { white-space: nowrap; border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: .4rem .9rem; font: inherit; cursor: pointer; }
     .chips button.on { background: #15803d; color: #fff; border-color: #15803d; }
     .body { padding: 1rem 1.2rem 3rem; overflow-y: auto; flex: 1; }
     fieldset.ro { border: 0; padding: 0; margin: 0; min-width: 0; }
@@ -93,14 +93,14 @@ import { COLS, FIELDS, SECTIONS, SR_CAP, Row, SrData, SrFormatError, SrPackage, 
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .6rem .8rem; }
     label { display: flex; flex-direction: column; gap: .2rem; font-size: .82rem; font-weight: 600; }
     label.wide { grid-column: span 2; }
-    input:not([type=radio]), select { padding: .5rem .6rem; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; font-weight: 400; }
+    input:not([type=radio]), select { padding: .5rem .6rem; border: 1px solid var(--border-strong); border-radius: 8px; font: inherit; font-weight: 400; }
     .opts { display: flex; flex-wrap: wrap; gap: .4rem 1rem; }
-    .opt { flex-direction: row; align-items: center; gap: .4rem; font-weight: 400; font-size: .9rem; } .opt.clear { color: #6b7280; }
-    .entry { border: 1px solid #e5e7eb; border-radius: 10px; padding: .7rem .8rem; margin-bottom: .6rem; }
+    .opt { flex-direction: row; align-items: center; gap: .4rem; font-weight: 400; font-size: .9rem; } .opt.clear { color: var(--muted); }
+    .entry { border: 1px solid var(--border); border-radius: 10px; padding: .7rem .8rem; margin-bottom: .6rem; }
     .ehead { display: flex; justify-content: space-between; margin-bottom: .4rem; }
-    .link { background: none; border: 0; cursor: pointer; font: inherit; } .danger { color: #b91c1c; }
+    .link { background: none; border: 0; cursor: pointer; font: inherit; } .danger { color: var(--err-fg); }
     .q { border-bottom: 1px solid #f1f5f9; padding: .6rem 0; } .q p { margin: 0 0 .4rem; }
-    .muted { color: #6b7280; font-size: .85rem; } .ok { color: #166534; } .error { color: #b91c1c; }
+    .muted { color: var(--muted); font-size: .85rem; } .ok { color: var(--ok-fg); } .error { color: var(--err-fg); }
     @media (max-width: 600px) { label.wide { grid-column: span 1; } }
       .dp { display: flex; gap: .6rem; align-items: center; } .dp > input { flex: 1; }
   `],

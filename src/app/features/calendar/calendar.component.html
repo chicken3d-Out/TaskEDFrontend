@@ -31,7 +31,7 @@
 
 <div class="calendar-page">
   <div class="header-row">
-    <h1 class="page-title">Calendar &amp; Announcements</h1>
+    <h1 class="page-title"><app-icon name="calendar" [size]="22" /> Calendar &amp; Announcements</h1>
     @if (canManage) {
       <button class="btn" (click)="showForm = !showForm">
         <app-icon [name]="showForm ? 'x' : 'plus'" [size]="18" />

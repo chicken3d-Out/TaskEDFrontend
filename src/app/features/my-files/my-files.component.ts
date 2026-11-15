@@ -80,6 +80,7 @@ export class MyFilesComponent implements OnInit {
     this.route.queryParamMap.subscribe((m) => {
       const t = m.get('tab');
       const r = this.auth.currentUser()?.role;
+      if (r === 'school') { this.tab = 'storage'; return; } // a School account only has File Storage
       if (t === 'working' || t === 'storage' || (t === 'travel' && this.canTravel)) this.tab = t;
       else if (t === 'pending' && ['school_head', 'district_supervisor', 'ds_secretary', 'teacher'].includes(r ?? '')) this.tab = t;
       else if (t === 'number' && r === 'ds_secretary') this.tab = t;

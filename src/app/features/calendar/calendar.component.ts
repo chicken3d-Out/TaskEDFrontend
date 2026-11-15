@@ -158,7 +158,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
 
   get canManage(): boolean {
     const role = this.auth.currentUser()?.role;
-    return role === Role.ADMINISTRATOR || role === Role.PUBLISHER;
+    return role === Role.ADMINISTRATOR || role === Role.ADMIN_OFFICER;
   }
 
   private sameDay(a: Date, b: Date) {

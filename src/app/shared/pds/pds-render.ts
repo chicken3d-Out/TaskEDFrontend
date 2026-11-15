@@ -427,10 +427,10 @@ export async function renderPdsPages(buf: ArrayBuffer): Promise<PdsPage[]> {
 
 export const PDS_PAGE_CSS = `
 .pg{position:relative;background:#fff;overflow:hidden}
-.pt{border-collapse:collapse;table-layout:fixed;background:#fff}
+.pt{border-collapse:collapse;table-layout:fixed;background:var(--surface)}
 .pt td{padding:0 2px;overflow:visible;line-height:1.15;box-sizing:border-box;max-width:0}
 .ov{position:absolute;font:11px Arial,sans-serif;color:#000;white-space:nowrap;display:flex;align-items:center;gap:3px;pointer-events:none}
 .ov .cb{font-size:15px;line-height:1}
-.ov .dd{border:1px solid #777;background:#fff;padding:0 4px;width:100%;overflow:hidden}
+.ov .dd{border:1px solid #777;background:var(--surface);padding:0 4px;width:100%;overflow:hidden}
 .ov .tb{white-space:pre-wrap;font-family:Arial,sans-serif}
 `;

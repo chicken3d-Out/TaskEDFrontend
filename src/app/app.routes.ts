@@ -20,6 +20,7 @@ import { MyFilesComponent } from './features/my-files/my-files.component';
 import { SchoolComponent } from './features/school/school.component';
 import { SchoolsAdminComponent } from './features/schools-admin/schools-admin.component';
 import { DocumentTypesComponent } from './features/document-types/document-types.component';
+import { BugReportsComponent } from './features/bug-reports/bug-reports.component';
 import {
   approvedGuard,
   adminOnlyGuard,
@@ -51,6 +52,7 @@ export const routes: Routes = [
       { path: 'tickets/new', redirectTo: 'tasks/new', pathMatch: 'full' },
       { path: 'tickets/:id', redirectTo: 'tasks/:id' },
       { path: 'users', component: UsersComponent, canActivate: [adminOnlyGuard] },
+      { path: 'bug-reports', component: BugReportsComponent, canActivate: [adminOnlyGuard] },
       { path: 'approvals', redirectTo: 'users', pathMatch: 'full' },
       { path: 'calendar', component: CalendarComponent },
       { path: 'announcements', redirectTo: 'calendar', pathMatch: 'full' },

@@ -22,7 +22,7 @@ interface Row {
   standalone: true,
   imports: [CommonModule, FormsModule, LoadingComponent, IconComponent],
   template: `
-    <h1 class="page-title">School documents</h1>
+    <h1 class="page-title"><app-icon name="folder" [size]="22" /> School documents</h1>
     <p class="muted">These are the documents schools see in their <b>School files</b> tab. Each one has a soft copy and a scanned copy slot.</p>
 
     <form class="card add" (ngSubmit)="add()">
@@ -82,8 +82,8 @@ interface Row {
     small { color: var(--muted); }
     .actions { display: flex; gap: 0.5rem; }
     .hidden { opacity: 0.65; }
-    .req { align-self: flex-start; background: #fee2e2; color: #991b1b; border-radius: 999px; font-size: 0.68rem; font-weight: 700; padding: 0.05rem 0.5rem; margin: 0.15rem 0; }
-    .off { align-self: flex-start; background: #e5e7eb; color: #374151; border-radius: 999px; font-size: 0.68rem; font-weight: 700; padding: 0.05rem 0.5rem; margin: 0.15rem 0; }
+    .req { align-self: flex-start; background: var(--err-bg); color: var(--err-fg); border-radius: 999px; font-size: 0.68rem; font-weight: 700; padding: 0.05rem 0.5rem; margin: 0.15rem 0; }
+    .off { align-self: flex-start; background: var(--border); color: var(--text-2); border-radius: 999px; font-size: 0.68rem; font-weight: 700; padding: 0.05rem 0.5rem; margin: 0.15rem 0; }
     .empty { text-align: center; color: var(--muted); }
   `],
 })

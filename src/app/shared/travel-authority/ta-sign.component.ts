@@ -54,7 +54,7 @@ const ROLE_WORD = { requester: 'the employee', countersign: 'the School Head (co
         }
         @if (rec?.myTurn === 'recommending' && rec?.approvingByEmail) { <p class="pad muted">After you sign, {{ rec!.ownerName }} (who applied) emails the signed form and its attachments to the Travel Authority mailbox for the remaining authority.</p> }
         <div class="scroll" #scroll>
-          @if (loading) { <p class="muted pad">Laying out the form…</p> }
+          @if (loading || busy) { <div class="overlay"><span class="spin"></span><span>{{ busy ? 'Preparing your file…' : rec ? 'Laying out the form…' : 'Opening the Travel Authority…' }}</span></div> }
           <div class="host" #host></div>
         </div>
       </div>
@@ -63,16 +63,16 @@ const ROLE_WORD = { requester: 'the employee', countersign: 'the School Head (co
   styles: [`
     :host { display: contents; }
     .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 1200; }
-    .panel { position: fixed; z-index: 1201; inset: 0; margin: auto; width: min(960px, 100%); height: min(100%, 100dvh); background: #f3f4f6; display: flex; flex-direction: column; }
-    header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: .8rem 1.1rem; background: #fff; border-bottom: 1px solid #e5e7eb; flex-wrap: wrap; }
-    header h2 { margin: 0; font-size: 1.1rem; } header small { color: #6b7280; }
-    .hbtns { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; } .paper { padding: .4rem; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; } .rs { display: inline-flex; align-items: center; gap: .4rem; margin-left: .8rem; } .rs input { width: 10rem; }
-    .pad { padding: .5rem 1.1rem; margin: 0; background: #fff; }
-    .tip { background: #f0fdf4; color: #166534; }
-    .scroll { flex: 1; overflow: auto; padding: .8rem; }
+    .panel { position: fixed; z-index: 1201; inset: 0; margin: auto; width: min(960px, 100%); height: min(100%, 100dvh); background: var(--surface-2); display: flex; flex-direction: column; }
+    header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: .8rem 1.1rem; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    header h2 { margin: 0; font-size: 1.1rem; } header small { color: var(--muted); }
+    .hbtns { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; } .paper { padding: .4rem; border: 1px solid var(--border-strong); border-radius: 8px; font: inherit; } .rs { display: inline-flex; align-items: center; gap: .4rem; margin-left: .8rem; } .rs input { width: 10rem; }
+    .pad { padding: .5rem 1.1rem; margin: 0; background: var(--surface); }
+    .tip { background: var(--ok-bg-soft); color: var(--ok-fg); }
+    .scroll { flex: 1; overflow: auto; padding: .8rem; position: relative; } .overlay { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: center; gap: .7rem; padding: .8rem; margin-bottom: .6rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); color: var(--text); }
     .host { width: max-content; margin: 0 auto; }
     .att { display: flex; gap: .8rem; flex-wrap: wrap; font-size: .88rem; } .att a { color: #15803d; }
-    .muted { color: #6b7280; } .ok { color: #166534; } .error { color: #b91c1c; }
+    .muted { color: var(--muted); } .ok { color: var(--ok-fg); } .error { color: var(--err-fg); }
     :host ::ng-deep .host .pg { position: relative; cursor: crosshair; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.2); margin-bottom: 12px; }
     :host ::ng-deep .host img.tasig { position: absolute; pointer-events: none; transform: translate(-50%, -50%); }
     :host ::ng-deep .host img.tasig.ghost { opacity: .75; outline: 1px dashed #16a34a; }

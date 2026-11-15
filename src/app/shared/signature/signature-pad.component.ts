@@ -71,14 +71,14 @@ function toSignaturePng(src: HTMLCanvasElement, removeWhite: boolean): string | 
     </div>
   `,
   styles: [`
-    .muted { color: #6b7280; font-size: .85rem; } .ok { color: #166534; } .error { color: #b91c1c; }
+    .muted { color: var(--muted); font-size: .85rem; } .ok { color: var(--ok-fg); } .error { color: var(--err-fg); }
     .tabs2 { display: flex; gap: .4rem; margin: .8rem 0 .5rem; }
-    .tabs2 button { border: 1px solid #e5e7eb; background: #fff; border-radius: 999px; padding: .35rem .9rem; font: inherit; cursor: pointer; }
+    .tabs2 button { border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: .35rem .9rem; font: inherit; cursor: pointer; }
     .tabs2 button.on { background: #15803d; color: #fff; border-color: #15803d; }
     .pad { width: 100%; max-width: 600px; aspect-ratio: 600 / 220; border: 1px dashed #9ca3af; border-radius: 10px; background: #fff; touch-action: none; cursor: crosshair; display: block; }
     .row { display: flex; gap: .5rem; margin: .6rem 0; flex-wrap: wrap; }
     .cur { display: flex; flex-direction: column; gap: .3rem; margin: .6rem 0; font-size: .82rem; font-weight: 600; }
-    .cur img { max-width: 260px; max-height: 110px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px; background: repeating-conic-gradient(#f3f4f6 0 25%, #fff 0 50%) 0 0 / 16px 16px; align-self: flex-start; }
+    .cur img { max-width: 260px; max-height: 110px; border: 1px solid var(--border); border-radius: 8px; padding: 6px; background: repeating-conic-gradient(#f3f4f6 0 25%, #fff 0 50%) 0 0 / 16px 16px; align-self: flex-start; }
   `],
 })
 export class SignaturePadComponent implements OnInit {

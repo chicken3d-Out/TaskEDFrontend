@@ -42,10 +42,10 @@ interface Part { text: string; userId: string | null; name: string }
   `,
   styles: [`
     .box { padding: 1rem 1.25rem; margin: 1rem 0; } summary { cursor: pointer; display: flex; gap: .6rem; flex-wrap: wrap; align-items: baseline; }
-    .muted { color: #6b7280; font-size: .85rem; } .ok { color: #166534; } .error { color: #b91c1c; }
+    .muted { color: var(--muted); font-size: .85rem; } .ok { color: var(--ok-fg); } .error { color: var(--err-fg); }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem .8rem; margin: .8rem 0; } .lbl { grid-column: 1 / -1; }
     label { display: flex; flex-direction: column; gap: .2rem; font-size: .82rem; font-weight: 600; }
-    input { padding: .5rem .6rem; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; font-weight: 400; }
+    input { padding: .5rem .6rem; border: 1px solid var(--border-strong); border-radius: 8px; font: inherit; font-weight: 400; }
     h4 { margin: 1.2rem 0 .2rem; } .row { margin-top: .5rem; } @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
   `],
 })

@@ -8,6 +8,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { NotificationsService } from '../../core/services/notifications.service';
 import { LegalService } from '../legal/legal.service';
 import { PresenceService } from '../../core/services/presence.service';
+import { ThemeService } from '../../core/services/theme.service';
+import { BugReportsService } from '../../core/services/bug-reports.service';
 import { PushNotificationsService } from '../../core/services/push-notifications.service';
 import { Role, roleLabel } from '../../core/models/user.model';
 import { IconComponent } from '../icon/icon.component';
@@ -40,13 +42,18 @@ export class ShellComponent implements OnInit {
   filesOpen = signal(true);
   private ta = inject(TravelAuthorityService);
   private leaveApi = inject(LeaveService);
+  theme = inject(ThemeService);
+  bugs = inject(BugReportsService);
+  openBugs = signal(0); // bug reports nobody has resolved yet (Administrator)
   pendingCount = signal(0); // Travel Authorities waiting for this person's signature
   // which My files section is showing (?tab=working|travel|storage)
   get filesTab(): string { const u = this.router.parseUrl(this.router.url); return u.root.children['primary']?.segments[0]?.path === 'my-files' ? (u.queryParams['tab'] ?? 'working') : ''; }
+  // a School account only has File Storage under My files
+  get filesHome() { return this.role === Role.SCHOOL ? 'storage' : 'working'; }
   get filesChildren() {
     const r = this.role;
     return [
-      { label: 'Working Directory', tab: 'working' },
+      { label: 'Working Directory', tab: 'working', show: r !== Role.SCHOOL },
       { label: 'Travel Authority', tab: 'travel', show: r !== Role.SCHOOL },
       { label: 'Service Credits', tab: 'credits', show: r === Role.DISTRICT_SUPERVISOR || r === Role.TEACHER || r === Role.DS_SECRETARY || r === Role.NON_TEACHING || r === Role.SCHOOL_HEAD || r === Role.ADMIN_OFFICER || r === Role.PUBLISHER },
       { label: 'Pending for Signature', tab: 'pending', show: r === Role.SCHOOL_HEAD || r === Role.DISTRICT_SUPERVISOR || r === Role.DS_SECRETARY || r === Role.TEACHER },
@@ -92,6 +99,7 @@ export class ShellComponent implements OnInit {
       this.pushNotifications.register();
     }
     this.sidebarOpen.set(this.initialSidebarState());
+    if (this.role === Role.ADMINISTRATOR) firstValueFrom(this.bugs.openCount()).then((c) => this.openBugs.set(c.count)).catch(() => {});
   }
 
   private isDesktop(): boolean {
@@ -147,6 +155,7 @@ export class ShellComponent implements OnInit {
       { label: 'Users', icon: 'users', link: '/users', show: r === Role.ADMINISTRATOR },
       { label: 'Schools', icon: 'school', link: '/schools', show: r === Role.ADMINISTRATOR },
       { label: 'School documents', icon: 'folder', link: '/document-types', show: r === Role.ADMINISTRATOR },
+      { label: 'Bug reports', icon: 'bug', link: '/bug-reports', show: r === Role.ADMINISTRATOR },
       { label: 'Calendar & Announcements', icon: 'calendar', link: '/calendar', show: true },
       { label: 'Forum', icon: 'forum', link: '/forum', show: r === Role.ADMIN_OFFICER || r === Role.ADMINISTRATOR },
       { label: 'Weather', icon: 'weather', link: '/weather', show: true },

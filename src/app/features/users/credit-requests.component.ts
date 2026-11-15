@@ -43,7 +43,7 @@ import { CreditRequest, ServiceCreditsService } from '../../core/services/servic
   `,
   styles: [`.cq { padding: 1rem; margin-bottom: 1rem; } .cq h3 { margin: 0 0 .5rem; } .n { background: #dc2626; color: #fff; border-radius: 999px; padding: 0 .5rem; font-size: .75rem; }
     .req { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .6rem 0; border-top: 1px solid #f1f5f9; } .act { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
-    .act input { padding: .4rem .5rem; border: 1px solid #d1d5db; border-radius: 8px; } .muted { color: #6b7280; } .error { color: #b91c1c; } .rec { padding: .2rem 0; } .names { display: flex; gap: .6rem; flex-wrap: wrap; align-items: flex-end; } .names label { display: flex; flex-direction: column; gap: .2rem; font-size: .82rem; font-weight: 600; } .names input { padding: .45rem .55rem; border: 1px solid #d1d5db; border-radius: 8px; min-width: 18rem; font-weight: 400; } .ok { color: #166534; } h4 { margin: 1rem 0 .4rem; }`],
+    .act input { padding: .4rem .5rem; border: 1px solid var(--border-strong); border-radius: 8px; } .muted { color: var(--muted); } .error { color: var(--err-fg); } .rec { padding: .2rem 0; } .names { display: flex; gap: .6rem; flex-wrap: wrap; align-items: flex-end; } .names label { display: flex; flex-direction: column; gap: .2rem; font-size: .82rem; font-weight: 600; } .names input { padding: .45rem .55rem; border: 1px solid var(--border-strong); border-radius: 8px; min-width: 18rem; font-weight: 400; } .ok { color: var(--ok-fg); } h4 { margin: 1rem 0 .4rem; }`],
 })
 export class CreditRequestsComponent implements OnInit {
   private api = inject(ServiceCreditsService);

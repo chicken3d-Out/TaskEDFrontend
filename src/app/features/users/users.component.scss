@@ -12,7 +12,7 @@
 }
 .tabs {
   display: inline-flex;
-  background: #e8ecf0;
+  background: var(--surface-2);
   padding: 3px;
   border-radius: 12px;
   button {
@@ -22,12 +22,12 @@
     border-radius: 9px;
     font-weight: 600;
     font-size: 0.88rem;
-    color: #374151;
+    color: var(--text-2);
     display: inline-flex;
     gap: 0.4rem;
     align-items: center;
     &.on {
-      background: #fff;
+      background: var(--surface);
       box-shadow: var(--shadow);
       color: var(--primary-strong);
     }
@@ -80,19 +80,19 @@
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: capitalize;
-  background: #e5e7eb;
+  background: var(--border);
   &.s-approved {
-    background: #dcfce7;
+    background: var(--ok-bg);
     color: #15803d;
   }
   &.s-pending {
-    background: #fef3c7;
-    color: #b45309;
+    background: var(--warn-bg);
+    color: var(--warn-fg);
   }
   &.s-rejected,
   &.s-suspended {
-    background: #fee2e2;
-    color: #b91c1c;
+    background: var(--err-bg);
+    color: var(--err-fg);
   }
 }
 .details {
@@ -101,7 +101,7 @@
   gap: 0.4rem 1.2rem;
   margin: 0.8rem 0;
   font-size: 0.85rem;
-  color: #374151;
+  color: var(--text-2);
   span {
     display: inline-flex;
     align-items: center;
@@ -204,7 +204,7 @@ fieldset {
 }
 .kind {
   display: inline-flex;
-  background: #e8ecf0;
+  background: var(--surface-2);
   padding: 3px;
   border-radius: 12px;
   align-self: flex-start;
@@ -216,9 +216,9 @@ fieldset {
     border-radius: 9px;
     font-weight: 600;
     font-size: 0.85rem;
-    color: #374151;
+    color: var(--text-2);
     &.on {
-      background: #fff;
+      background: var(--surface);
       box-shadow: var(--shadow);
       color: var(--primary-strong);
     }

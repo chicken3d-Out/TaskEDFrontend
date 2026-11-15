@@ -17,10 +17,12 @@ import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.compo
 
 // The Administrative Officer's workspace for one teacher: employment details,
 // and the AO's own copy of the teacher's documents (saved in the AO's Drive).
+import { LoadingComponent } from '../loading/loading.component';
+
 @Component({
   selector: 'app-teacher-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, HrProfileFormComponent, TaLogComponent, ServiceCreditsComponent],
+  imports: [LoadingComponent, CommonModule, FormsModule, DatePipe, HrProfileFormComponent, TaLogComponent, ServiceCreditsComponent],
   template: `
     <div class="backdrop" (click)="close.emit()"></div>
     <div class="panel" role="dialog" aria-modal="true">
@@ -50,7 +52,8 @@ import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.compo
           This is separate from the teacher's own My files.
         </p>
         @if (busy) { <div class="bar"><div class="fill" [style.width.%]="progress"></div></div> }
-        @if (msg) { <p class="muted">{{ msg }}</p> }
+        @if (msg) { <p class="muted">@if (busy) { <span class="spin"></span> } {{ msg }}</p> }
+        @if (!view) { <app-loading [compact]="true" label="Loading the files…" /> }
         @if (error) { <p class="error">{{ error }}</p> }
         @if (view) {
           @for (s of sections; track s) {
@@ -96,23 +99,23 @@ import { HrProfileFormComponent } from '../hr-profile-form/hr-profile-form.compo
   styles: [`
     :host { position: fixed; inset: 0; z-index: 1000; display: block; }
     .backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.45); }
-    .panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(760px, 100%); background: #fff; overflow-y: auto; padding: 1.2rem; box-shadow: -8px 0 30px rgba(0,0,0,.2); }
+    .panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(760px, 100%); background: var(--surface); overflow-y: auto; padding: 1.2rem; box-shadow: -8px 0 30px rgba(0,0,0,.2); }
     header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
-    header h2 { margin: 0; } header small { color: #6b7280; }
+    header h2 { margin: 0; } header small { color: var(--muted); }
     .tabs { display: flex; gap: .4rem; margin: 1rem 0; }
-    .tabs button { border: 1px solid #e5e7eb; background: #fff; border-radius: 999px; padding: .4rem .9rem; font: inherit; cursor: pointer; }
+    .tabs button { border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: .4rem .9rem; font: inherit; cursor: pointer; }
     .tabs button.on { background: #15803d; color: #fff; border-color: #15803d; }
     .sechead { display: flex; justify-content: space-between; align-items: center; gap: .6rem; margin-top: 1rem; }
     .sechead h3 { margin: 0; }
     .pick { cursor: pointer; } .pick.disabled { opacity: .5; pointer-events: none; }
     .up { display: flex; flex-wrap: wrap; gap: .5rem; margin: .6rem 0; }
     .up input[type=text], .up input:not([type]) { flex: 1; min-width: 160px; }
-    .up select, .up input { padding: .5rem .6rem; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; }
-    .bar { height: 6px; background: #e5e7eb; border-radius: 6px; overflow: hidden; } .fill { height: 100%; background: #15803d; }
+    .up select, .up input { padding: .5rem .6rem; border: 1px solid var(--border-strong); border-radius: 8px; font: inherit; }
+    .bar { height: 6px; background: var(--border); border-radius: 6px; overflow: hidden; } .fill { height: 100%; background: #15803d; }
     h3 { margin: 1rem 0 .3rem; font-size: .95rem; }
     .frow { display: flex; justify-content: space-between; align-items: center; gap: .6rem; flex-wrap: wrap; padding: .5rem 0; border-bottom: 1px solid #f1f5f9; }
-    .frow small { display: block; color: #6b7280; } .acts { display: flex; gap: .4rem; }
-    .muted { color: #6b7280; font-size: .85rem; } .error { color: #b91c1c; }
+    .frow small { display: block; color: var(--muted); } .acts { display: flex; gap: .4rem; }
+    .muted { color: var(--muted); font-size: .85rem; } .error { color: var(--err-fg); }
   `],
 })
 export class TeacherManagerComponent implements OnInit {

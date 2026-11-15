@@ -6,12 +6,14 @@ import { HrProfileFormComponent } from '../../shared/hr-profile-form/hr-profile-
 import { SignaturePadComponent } from '../../shared/signature/signature-pad.component';
 import { ProfileFormComponent } from '../../shared/profile-form/profile-form.component';
 
+import { IconComponent } from '../../shared/icon/icon.component';
+
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [ProfileFormComponent, HrProfileFormComponent, ReactiveFormsModule, SignaturePadComponent],
+  imports: [IconComponent, ProfileFormComponent, HrProfileFormComponent, ReactiveFormsModule, SignaturePadComponent],
   template: `
-    <h1 class="page-title">My profile</h1>
+    <h1 class="page-title"><app-icon name="user" [size]="22" /> My profile</h1>
     <div class="card box">
       <div class="meta">
         <span class="badge-pill">{{ roleLabel(auth.currentUser()?.role) }}</span>
@@ -28,7 +30,7 @@ import { ProfileFormComponent } from '../../shared/profile-form/profile-form.com
       <app-profile-form mode="edit" />
     </div>
 
-    @if (auth.currentUser()?.role && auth.currentUser()?.role !== 'administrator') {
+    @if (auth.currentUser()?.role && auth.currentUser()?.role !== 'administrator' && auth.currentUser()?.role !== 'school') {
       <div class="card box">
         <h2>Employment details</h2>
         <app-hr-profile-form userId="me" />
@@ -113,7 +115,7 @@ import { ProfileFormComponent } from '../../shared/profile-form/profile-form.com
         color: var(--muted);
       }
       .assigned {
-        color: #374151;
+        color: var(--text-2);
       }
     `,
   ],

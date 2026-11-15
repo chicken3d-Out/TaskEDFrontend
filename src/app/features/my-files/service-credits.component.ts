@@ -12,17 +12,21 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 // Service Credits and Leave (Form 6) on one page: the cards with what is left, a button to apply for leave,
 // and two tabs: Form 6 and Logs. Your own credits are view-only; the school's AO keeps the counts.
+import { LoadingComponent } from '../../shared/loading/loading.component';
+
+import { IconComponent } from '../../shared/icon/icon.component';
+
 @Component({
   selector: 'app-service-credits',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, LeaveComponent],
+  imports: [IconComponent, LoadingComponent, CommonModule, FormsModule, DatePipe, LeaveComponent],
   template: `
-    @if (!o) { <p class="muted">{{ error || 'Loading…' }}</p> } @else {
+    @if (!o) { @if (error) { <p class="muted">{{ error }}</p> } @else { <app-loading [compact]="true" label="Loading service credits…" /> } } @else {
       <h3 class="who">{{ personId ? o.user.name : 'My service credits' }} <small class="muted">{{ roleName(o.user.role) }}@if (o.user.school) { · {{ o.user.school }} }</small></h3>
       <div class="cards">
         @for (c of o.credits; track c.kind) {
           <div class="card cr" [class.wl]="c.kind === 'wellness'">
-            <small>{{ c.label }}</small>
+            <small><span class="ci"><app-icon [name]="iconOf(c.kind)" [size]="15" /></span> {{ c.label }}</small>
             @if (c.usable || c.initialSet) { <b>{{ c.balance }}</b><span class="d">{{ c.balance === 1 ? 'day' : 'days' }}</span> } @else { <b class="dash">—</b><span class="d">not set yet</span> }
             @if (c.note) { <em>{{ c.note }}</em> }
             @for (e of c.expires ?? []; track e.on) { <em class="warn">{{ e.amount }} expires {{ e.on | date: 'mediumDate' }}</em> }
@@ -89,20 +93,21 @@ const today = () => new Date().toISOString().slice(0, 10);
     }
   `,
   styles: [`
-    .seg { display: inline-flex; border: 1px solid #d1d5db; border-radius: 999px; overflow: hidden; margin: 1rem 0; }
-    .seg button { border: 0; background: #fff; padding: .45rem 1.2rem; font: inherit; cursor: pointer; } .seg .on { background: #166534; color: #fff; }
-    .muted { color: #6b7280; } .ok { color: #166534; } .error { color: #b91c1c; }
+    .seg { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 999px; overflow: hidden; margin: 1rem 0; }
+    .seg button { border: 0; background: var(--surface); padding: .45rem 1.2rem; font: inherit; cursor: pointer; } .seg .on { background: #166534; color: #fff; }
+    .muted { color: var(--muted); } .ok { color: var(--ok-fg); } .error { color: var(--err-fg); }
+    .ci { display: inline-flex; width: 24px; height: 24px; align-items: center; justify-content: center; border-radius: 8px; background: var(--primary-soft); color: var(--primary); margin-right: .3rem; vertical-align: middle; } .cr small { display: flex; align-items: center; }
     .who { margin: .5rem 0; } .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .7rem; margin-bottom: 1rem; }
-    .cr { padding: .8rem 1rem; display: flex; flex-direction: column; gap: .2rem; } .cr small { color: #6b7280; }
-    .cr b { font-size: 2rem; line-height: 1.1; color: #166534; } .cr b.dash { color: #9ca3af; } .cr .d { font-size: .8rem; color: #6b7280; } .cr.wl b { color: #0369a1; }
-    .cr em { font-size: .75rem; color: #6b7280; font-style: normal; } .cr em.warn { color: #92400e; }
+    .cr { padding: .8rem 1rem; display: flex; flex-direction: column; gap: .2rem; } .cr small { color: var(--muted); }
+    .cr b { font-size: 2rem; line-height: 1.1; color: var(--ok-fg); } .cr b.dash { color: var(--muted); } .cr .d { font-size: .8rem; color: var(--muted); } .cr.wl b { color: #0369a1; }
+    .cr em { font-size: .75rem; color: var(--muted); font-style: normal; } .cr em.warn { color: var(--warn-fg); }
     .actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: .6rem; }
     .row { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .3rem; } .row input { width: 6.5rem; } .sm { padding: .25rem .6rem; font-size: .8rem; align-self: flex-start; margin-top: .3rem; }
     .edit { display: flex; flex-direction: column; gap: .35rem; margin-top: .4rem; }
-    input, select { padding: .4rem .5rem; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; min-width: 0; }
+    input, select { padding: .4rem .5rem; border: 1px solid var(--border-strong); border-radius: 8px; font: inherit; min-width: 0; }
     .so { padding: .8rem 1rem; margin-bottom: 1rem; } .so h4 { margin: 0 0 .5rem; } .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: .6rem; margin-bottom: .6rem; } .grid label { display: flex; flex-direction: column; gap: .2rem; font-size: .85rem; }
     .log { display: flex; justify-content: space-between; gap: 1rem; padding: .55rem 0; border-bottom: 1px solid #f1f5f9; } .log .main { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
-    .log .t { background: #e0f2fe; color: #075985; border-radius: 999px; padding: 0 .5rem; font-size: .72rem; margin-left: .3rem; } .log .n { text-align: right; font-weight: 700; color: #166534; white-space: nowrap; } .log .n.neg { color: #b91c1c; } .log .n small { display: block; font-weight: 400; color: #6b7280; }
+    .log .t { background: #e0f2fe; color: #075985; border-radius: 999px; padding: 0 .5rem; font-size: .72rem; margin-left: .3rem; } .log .n { text-align: right; font-weight: 700; color: var(--ok-fg); white-space: nowrap; } .log .n.neg { color: var(--err-fg); } .log .n small { display: block; font-weight: 400; color: var(--muted); }
     .log a { color: #15803d; }
   `],
 })
@@ -127,6 +132,7 @@ export class ServiceCreditsComponent implements OnInit {
   get manage() { return !!this.personId || !!this.o?.canManage; } // the AO also sets their own credits (first count once, later changes need the Administrator)
   roleName(r: string) { return (ROLE_LABELS as Record<string, string>)[r] ?? r; }
   typeName(l: CreditLog) { return ({ initial: 'Initial count', special_order: 'Special Order', edit: 'Changed', reset: 'Yearly renewal', deduction: 'Leave used', restore: 'Restored', accrual: 'Monthly earning', expiry: 'Expired' } as const)[l.type] ?? l.type; }
+  iconOf(k: string) { return ({ wellness: 'sun', vl: 'sun', sl: 'shield', spl: 'pen', fl: 'calendar', cto: 'clock' } as Record<string, string>)[k] ?? 'wallet'; }
   soKinds() { return (this.o?.credits ?? []).filter((c) => c.kind === 'cto' || c.kind === 'service_credit'); }
 
   ngOnInit() { if (this.noLeave) this.tab = 'logs'; void this.reload(); }

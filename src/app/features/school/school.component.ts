@@ -64,8 +64,6 @@ export class SchoolComponent implements OnInit {
     address: [''],
     contactNumber: [''],
     email: [''],
-    schoolHeadName: [''],
-    schoolHeadContact: [''],
   });
 
   // add teacher
@@ -157,8 +155,6 @@ export class SchoolComponent implements OnInit {
       address: s.address ?? '',
       contactNumber: s.contactNumber ?? '',
       email: s.email ?? '',
-      schoolHeadName: s.schoolHeadName ?? '',
-      schoolHeadContact: s.schoolHeadContact ?? '',
     });
     this.editingProfile = true;
     this.profileMsg = null;
@@ -173,8 +169,6 @@ export class SchoolComponent implements OnInit {
       address: v.address ?? '',
       contactNumber: v.contactNumber ?? '',
       email: v.email ?? '',
-      schoolHeadName: v.schoolHeadName ?? '',
-      schoolHeadContact: v.schoolHeadContact ?? '',
       ...(this.isAdmin && v.name ? { name: v.name } : {}),
     };
     this.portal.updateSchool(this.schoolId, dto).subscribe({

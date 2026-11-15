@@ -119,12 +119,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   &.hol {
-    background: #dbeafe;
-    color: #1d4ed8;
+    background: var(--info-bg);
+    color: var(--info-fg);
   }
   &.note {
     background: #ffedd5;
-    color: #c2410c;
+    color: var(--warn-fg);
   }
 }
 .more {

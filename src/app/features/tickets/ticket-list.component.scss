@@ -6,7 +6,7 @@
 }
 h1 {
   font-size: 1.25rem;
-  color: #14532d;
+  color: var(--ok-fg);
   margin: 0;
 }
 .new-btn {
@@ -19,7 +19,7 @@ h1 {
   font-weight: 600;
 }
 .empty {
-  color: #888;
+  color: var(--muted);
 }
 .ticket-table {
   display: flex;
@@ -30,8 +30,8 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.9rem 1.1rem;
   text-decoration: none;
@@ -50,7 +50,7 @@ h1 {
 }
 .meta {
   font-size: 0.78rem;
-  color: #888;
+  color: var(--muted);
 }
 .mine-tag {
   background: #ecfdf5;
@@ -70,8 +70,8 @@ h1 {
   letter-spacing: 0.02em;
 }
 .status-submitted {
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: var(--info-bg);
+  color: var(--info-fg);
 }
 .status-acknowledged {
   background: #fefce8;
@@ -79,17 +79,17 @@ h1 {
 }
 .status-in_progress {
   background: #fff7ed;
-  color: #c2410c;
+  color: var(--warn-fg);
 }
 .status-needs_attachment {
-  background: #fef2f2;
-  color: #b91c1c;
+  background: var(--err-bg-soft);
+  color: var(--err-fg);
 }
 .status-resolved {
-  background: #f0fdf4;
+  background: var(--ok-bg-soft);
   color: #15803d;
 }
 .status-closed {
-  background: #f3f4f6;
-  color: #6b7280;
+  background: var(--surface-2);
+  color: var(--muted);
 }

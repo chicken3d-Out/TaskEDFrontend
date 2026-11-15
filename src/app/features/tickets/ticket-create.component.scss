@@ -3,16 +3,16 @@
   justify-content: center;
 }
 .create-card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 12px;
   padding: 2rem 2.5rem;
   max-width: 560px;
   width: 100%;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
 }
 h1 {
   margin: 0 0 0.25rem;
-  color: #14532d;
+  color: var(--ok-fg);
   font-size: 1.25rem;
 }
 .subtitle {
@@ -25,7 +25,7 @@ label {
   margin-bottom: 1.1rem;
   font-weight: 600;
   font-size: 0.9rem;
-  color: #333;
+  color: var(--text);
 }
 input,
 textarea {
@@ -33,7 +33,7 @@ textarea {
   width: 100%;
   margin-top: 0.35rem;
   padding: 0.6rem 0.75rem;
-  border: 1px solid #d0d5dd;
+  border: 1px solid var(--border-strong);
   border-radius: 6px;
   font-size: 0.95rem;
   font-weight: normal;
@@ -41,7 +41,7 @@ textarea {
   box-sizing: border-box;
 }
 .error {
-  color: #b91c1c;
+  color: var(--err-fg);
   font-size: 0.85rem;
   margin-bottom: 1rem;
 }

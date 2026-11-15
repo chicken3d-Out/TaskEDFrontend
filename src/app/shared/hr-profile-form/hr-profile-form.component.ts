@@ -7,12 +7,14 @@ interface Field { key: string; label: string; hint?: string; type?: 'text' | 'da
 
 // Employment details (the DepEd personnel masterlist columns). A Teacher's is
 // kept by the AO of the school; everyone else keeps their own.
+import { LoadingComponent } from '../loading/loading.component';
+
 @Component({
   selector: 'app-hr-profile-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [LoadingComponent, CommonModule, FormsModule],
   template: `
-    @if (loading) { <p class="muted">Loading…</p> }
+    @if (loading) { <app-loading [compact]="true" label="Loading the profile…" /> }
     @else if (error && !data) { <p class="error">{{ error }}</p> }
     @else if (data) {
       <p class="muted note">
@@ -50,11 +52,11 @@ interface Field { key: string; label: string; hint?: string; type?: 'text' | 'da
   styles: [`
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .7rem .9rem; margin: .6rem 0 1rem; }
     label { display: flex; flex-direction: column; gap: .2rem; font-size: .85rem; font-weight: 600; }
-    label small { font-weight: 400; color: #6b7280; }
+    label small { font-weight: 400; color: var(--muted); }
     label.wide { grid-column: 1 / -1; }
-    input, select { padding: .5rem .6rem; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; font-weight: 400; }
-    input:disabled, select:disabled { background: #f3f4f6; color: #374151; }
-    .muted { color: #6b7280; font-size: .85rem; } .ok { color: #166534; } .error { color: #b91c1c; }
+    input, select { padding: .5rem .6rem; border: 1px solid var(--border-strong); border-radius: 8px; font: inherit; font-weight: 400; }
+    input:disabled, select:disabled { background: var(--surface-2); color: var(--text-2); }
+    .muted { color: var(--muted); font-size: .85rem; } .ok { color: var(--ok-fg); } .error { color: var(--err-fg); }
   `],
 })
 export class HrProfileFormComponent implements OnChanges {

@@ -39,14 +39,14 @@ import { PDS_PAGE_CSS, PdsPage, renderPdsPages } from './pds-render';
     .md{background:var(--surface,#fff);border-radius:14px;width:min(1000px,100%);height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.4)}
     .hd{display:flex;align-items:center;gap:.5rem;padding:.7rem 1rem;border-bottom:1px solid #e2e8f0}
     .sp{flex:1}
-    .bodyx{flex:1;overflow:auto;background:#e5e7eb;padding:1rem;display:flex;flex-direction:column;align-items:center;gap:.4rem}
-    .label{font-size:.75rem;color:#64748b;align-self:flex-start}
-    .sheet{background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.2);margin-bottom:1rem;overflow:hidden;flex:none}
+    .bodyx{flex:1;overflow:auto;background:var(--border);padding:1rem;display:flex;flex-direction:column;align-items:center;gap:.4rem}
+    .label{font-size:.75rem;color:var(--muted);align-self:flex-start}
+    .sheet{background:var(--surface);box-shadow:0 2px 10px rgba(0,0,0,.2);margin-bottom:1rem;overflow:hidden;flex:none}
     .docxhost{width:100%;overflow:auto}
     :host ::ng-deep .docx-wrapper{background:transparent!important;padding:0!important}
     :host ::ng-deep .docx-wrapper>section.docx{margin:0 auto 1rem!important;box-shadow:0 2px 10px rgba(0,0,0,.2)}
     .inner{transform-origin:top left}
-    .msg{color:#475569}.err{color:#b91c1c}
+    .msg{color:#475569}.err{color:var(--err-fg)}
   `],
 })
 export class PdsPreviewComponent {

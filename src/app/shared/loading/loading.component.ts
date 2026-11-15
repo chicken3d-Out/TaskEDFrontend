@@ -44,7 +44,7 @@ import { CommonModule } from '@angular/common';
         width: 140px;
         height: 3px;
         border-radius: 3px;
-        background: #e5e7eb;
+        background: var(--border);
         overflow: hidden;
       }
       .compact .track {
@@ -67,7 +67,7 @@ import { CommonModule } from '@angular/common';
       }
       .label {
         font-size: 0.8rem;
-        color: #888;
+        color: var(--muted);
       }
       @keyframes spin {
         to {

@@ -15,10 +15,12 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 
 // Apply for a Travel Authority, sign the ones waiting for you, and see the log (by month).
 // With `teacher` set (AO / AO Publisher in Manage teacher) it applies for and lists that teacher's.
+import { LoadingComponent } from '../../shared/loading/loading.component';
+
 @Component({
   selector: 'app-ta-log',
   standalone: true,
-  imports: [CommonModule, DatePipe],
+  imports: [LoadingComponent, CommonModule, DatePipe],
   template: `
     @if (mode === 'log' && canApply()) {
       <div class="top">
@@ -82,7 +84,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
           }
         }
       </section>
-    } @empty { <p class="muted">{{ loaded ? 'No travel authorities yet.' : 'Loading…' }}</p> }
+    } @empty { @if (loaded) { <p class="muted">No travel authorities yet.</p> } @else { <app-loading [compact]="true" label="Loading travel authorities…" /> } }
     }
   `,
   styleUrl: './my-files.component.scss',
@@ -91,10 +93,11 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
     .todo { border-left: 4px solid #16a34a; }
     .head { display: flex; gap: .6rem; align-items: center; width: 100%; background: none; border: 0; padding: .3rem 0; font: inherit; cursor: pointer; text-align: left; }
     .chev { width: 1rem; }
-    .chip { background: #fef3c7; color: #92400e; border-radius: 999px; padding: .05rem .55rem; font-size: .75rem; } .chip.ok { background: #dcfce7; color: #166534; }
-    .st { color: #92400e; }
+    .chip { background: var(--warn-bg); color: var(--warn-fg); border-radius: 999px; padding: .05rem .55rem; font-size: .75rem; } .chip.ok { background: var(--ok-bg); color: var(--ok-fg); }
+    .st { color: var(--warn-fg); }
     .atts a { color: #15803d; margin-left: .5rem; text-decoration: underline; }
-    .info { display: flex; flex-direction: column; gap: .1rem; min-width: 0; } .info small { color: #6b7280; }
+    @media (max-width: 520px) { .frow { flex-wrap: wrap; } .frow .acts { width: 100%; } .frow .acts .btn { width: 100%; } }
+    .info { display: flex; flex-direction: column; gap: .1rem; min-width: 0; } .info small { color: var(--muted); }
   `],
 })
 export class TaLogComponent implements OnInit {

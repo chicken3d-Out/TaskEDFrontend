@@ -12,7 +12,7 @@ import { IconComponent } from '../../shared/icon/icon.component';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, LoadingComponent, IconComponent],
   template: `
-    <h1 class="page-title">Schools</h1>
+    <h1 class="page-title"><app-icon name="school" [size]="22" /> Schools</h1>
     <input class="search" [(ngModel)]="search" placeholder="Search schools…" />
     @if (loading) {
       <app-loading [compact]="true" />
@@ -44,7 +44,7 @@ import { IconComponent } from '../../shared/icon/icon.component';
     .main { flex: 1; min-width: 200px; display: flex; flex-direction: column; }
     small { color: var(--muted); }
     .meta { display: flex; gap: 1.1rem; flex-wrap: wrap; font-size: 0.82rem; color: var(--muted); }
-    .pill { background: #fef3c7; color: #92400e; font-style: normal; border-radius: 999px; padding: 0 0.45rem; font-size: 0.7rem; margin-left: 0.3rem; }
+    .pill { background: var(--warn-bg); color: var(--warn-fg); font-style: normal; border-radius: 999px; padding: 0 0.45rem; font-size: 0.7rem; margin-left: 0.3rem; }
   `],
 })
 export class SchoolsAdminComponent implements OnInit {

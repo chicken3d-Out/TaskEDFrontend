@@ -53,12 +53,12 @@ export class TaAttPreviewService {
   styles: [`
     :host { display: contents; }
     .bd { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 1300; }
-    .box { position: fixed; z-index: 1301; inset: 3vh 3vw; background: #fff; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; max-width: 1000px; margin: 0 auto; }
-    header { display: flex; justify-content: space-between; align-items: center; gap: .6rem; padding: .6rem 1rem; border-bottom: 1px solid #e5e7eb; flex-wrap: wrap; }
+    .box { position: fixed; z-index: 1301; inset: 3vh 3vw; background: var(--surface); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; max-width: 1000px; margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: .6rem; padding: .6rem 1rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
     header strong { overflow-wrap: anywhere; } header span { display: flex; gap: .4rem; }
-    .view { flex: 1; overflow: auto; background: #f3f4f6; display: flex; justify-content: center; }
-    .pages { width: 100%; display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: .5rem; } .err { background: #fff; padding: 1rem; border-radius: 8px; max-width: 34rem; }
-    img { max-width: 100%; height: auto; align-self: flex-start; } iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+    .view { flex: 1; overflow: auto; background: var(--surface-2); display: flex; justify-content: center; }
+    .pages { width: 100%; display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: .5rem; } .err { background: var(--surface); padding: 1rem; border-radius: 8px; max-width: 34rem; }
+    img { max-width: 100%; height: auto; align-self: flex-start; } iframe { width: 100%; height: 100%; border: 0; background: var(--surface); }
     .toast { position: fixed; z-index: 1302; bottom: 1rem; left: 50%; transform: translateX(-50%); background: #b91c1c; color: #fff; padding: .5rem 1rem; border-radius: 8px; }
   `],
 })

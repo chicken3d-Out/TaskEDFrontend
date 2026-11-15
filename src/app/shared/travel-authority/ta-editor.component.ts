@@ -91,9 +91,9 @@ const EMPTY: TaForm = { name: '', position: '', station: '', purpose: '', host: 
   styles: [`
     :host { display: contents; }
     .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1100; }
-    .panel { position: fixed; z-index: 1101; inset: 0 0 0 auto; width: min(820px, 100%); background: #fff; display: flex; flex-direction: column; overflow: hidden; }
-    header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: 1rem 1.2rem; border-bottom: 1px solid #e5e7eb; flex-wrap: wrap; }
-    header h2 { margin: 0; } header small { color: #6b7280; }
+    .panel { position: fixed; z-index: 1101; inset: 0 0 0 auto; width: min(820px, 100%); background: var(--surface); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: 1rem 1.2rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    header h2 { margin: 0; } header small { color: var(--muted); }
     .hbtns { display: flex; gap: .5rem; flex-wrap: wrap; }
     .body { padding: 1rem 1.2rem 3rem; overflow-y: auto; flex: 1; }
     .pad { padding: .6rem 1.2rem 0; margin: 0; }
@@ -102,12 +102,12 @@ const EMPTY: TaForm = { name: '', position: '', station: '', purpose: '', host: 
     label { display: flex; flex-direction: column; gap: .2rem; font-size: .82rem; font-weight: 600; }
     label.wide { grid-column: 1 / -1; }
     label.chk { flex-direction: row; align-items: center; gap: .5rem; font-weight: 400; font-size: .92rem; margin-top: .9rem; }
-    input:not([type=checkbox]), textarea { padding: .5rem .6rem; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; font-weight: 400; }
-    .route { display: grid; gap: .5rem; } .route div { display: flex; flex-direction: column; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: .5rem .8rem; }
-    .route small { color: #6b7280; } .route em { color: #b45309; font-size: .82rem; }
+    input:not([type=checkbox]), textarea { padding: .5rem .6rem; border: 1px solid var(--border-strong); border-radius: 8px; font: inherit; font-weight: 400; }
+    .route { display: grid; gap: .5rem; } .route div { display: flex; flex-direction: column; background: var(--ok-bg-soft); border: 1px solid #bbf7d0; border-radius: 10px; padding: .5rem .8rem; }
+    .route small { color: var(--muted); } .route em { color: var(--warn-fg); font-size: .82rem; }
     .att a { color: #15803d; }
     .att { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .35rem 0; border-bottom: 1px solid #f3f4f6; } .pick { cursor: pointer; display: inline-block; margin-top: .5rem; }
-    .muted { color: #6b7280; font-size: .85rem; } .ok { color: #166534; } .error { color: #b91c1c; }
+    .muted { color: var(--muted); font-size: .85rem; } .ok { color: var(--ok-fg); } .error { color: var(--err-fg); }
   `],
 })
 export class TaEditorComponent {

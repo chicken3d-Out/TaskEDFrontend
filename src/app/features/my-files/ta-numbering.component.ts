@@ -18,7 +18,7 @@ interface Row extends TaNumbering { level: string; month: number; seq: string; b
     @if (error) { <p class="error">{{ error }}</p> }
     <h3>Waiting for a number ({{ waiting.length }})</h3>
     @for (r of waiting; track r.id) { <ng-container *ngTemplateOutlet="row; context: { $implicit: r }"></ng-container> }
-    @if (!waiting.length) { <p class="muted">{{ loaded ? 'Nothing is waiting for a number.' : 'Loading…' }}</p> }
+    @if (!waiting.length) { <p class="muted">{{ loaded ? 'Nothing is waiting for a number.' : '⏳ Loading…' }}</p> }
     <h3>Numbered ({{ done.length }})</h3>
     @for (r of done; track r.id) { <ng-container *ngTemplateOutlet="row; context: { $implicit: r }"></ng-container> }
 
@@ -44,13 +44,13 @@ interface Row extends TaNumbering { level: string; month: number; seq: string; b
     </ng-template>
   `,
   styles: [`
-    .muted { color: #6b7280; font-size: .88rem; } .error { color: #b91c1c; } h3 { margin: 1.1rem 0 .4rem; }
+    .muted { color: var(--muted); font-size: .88rem; } .error { color: var(--err-fg); } h3 { margin: 1.1rem 0 .4rem; }
     .item { padding: .7rem 1rem; margin-bottom: .5rem; display: flex; flex-wrap: wrap; gap: .6rem 1rem; justify-content: space-between; align-items: center; }
-    .info { display: flex; flex-direction: column; gap: .1rem; min-width: 0; } .info small { color: #6b7280; }
+    .info { display: flex; flex-direction: column; gap: .1rem; min-width: 0; } .info small { color: var(--muted); }
     .acts { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
-    .acts input { width: 5rem; } select, input { padding: .4rem .5rem; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; }
-    .chip { background: #dcfce7; color: #166534; border-radius: 999px; padding: .05rem .55rem; font-size: .75rem; }
-    .pv { font-weight: 700; color: #166534; } .item .error { flex-basis: 100%; margin: 0; }
+    .acts input { width: 5rem; } select, input { padding: .4rem .5rem; border: 1px solid var(--border-strong); border-radius: 8px; font: inherit; }
+    .chip { background: var(--ok-bg); color: var(--ok-fg); border-radius: 999px; padding: .05rem .55rem; font-size: .75rem; }
+    .pv { font-weight: 700; color: var(--ok-fg); } .item .error { flex-basis: 100%; margin: 0; }
   `],
 })
 export class TaNumberingComponent {

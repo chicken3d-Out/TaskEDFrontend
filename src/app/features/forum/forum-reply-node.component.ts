@@ -45,15 +45,15 @@ import { ForumAuthorComponent } from './forum-author.component';
   styles: [
     `
       .reply-node { margin-bottom: 0.6rem; }
-      .reply-body { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 0.7rem 0.9rem; }
+      .reply-body { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.7rem 0.9rem; }
       .reply-head { display: flex; gap: 0.6rem; align-items: center; justify-content: space-between; margin-bottom: 0.3rem; flex-wrap: wrap; }
-      .time { font-size: 0.72rem; color: #999; }
-      p { margin: 0 0 0.5rem; font-size: 0.9rem; color: #333; white-space: pre-wrap; }
+      .time { font-size: 0.72rem; color: var(--muted); }
+      p { margin: 0 0 0.5rem; font-size: 0.9rem; color: var(--text); white-space: pre-wrap; }
       .reply-actions { display: flex; gap: 0.5rem; }
-      .reply-actions button { border: 1px solid var(--border); background: #fff; border-radius: 8px; padding: 0.2rem 0.6rem; font-size: 0.78rem; cursor: pointer; display: inline-flex; gap: 0.3rem; align-items: center; }
+      .reply-actions button { border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: 0.2rem 0.6rem; font-size: 0.78rem; cursor: pointer; display: inline-flex; gap: 0.3rem; align-items: center; }
       .reply-actions button:disabled { cursor: default; opacity: 0.8; }
       .on-up { background: var(--primary-soft) !important; border-color: var(--primary) !important; color: var(--primary-strong); }
-      .on-down { background: #fee2e2 !important; border-color: var(--danger) !important; color: #991b1b; }
+      .on-down { background: var(--err-bg) !important; border-color: var(--danger) !important; color: var(--err-fg); }
       .reply-btn { margin-left: auto; }
       .children { margin-left: 1.5rem; margin-top: 0.5rem; padding-left: 0.75rem; border-left: 2px solid var(--border); }
     `,

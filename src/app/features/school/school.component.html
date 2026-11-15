@@ -68,8 +68,7 @@
             <label>Contact number<input formControlName="contactNumber" /></label>
             <label class="wide">Address<input formControlName="address" /></label>
             <label class="wide">School email<input formControlName="email" /></label>
-            <label>School Head<input formControlName="schoolHeadName" placeholder="Full name" /></label>
-            <label>School Head contact<input formControlName="schoolHeadContact" /></label>
+            <p class="muted wide">The School Head shown for this school is the School Head account registered here; it is not typed in.</p>
             @if (profileMsg) {
               <p class="error wide">{{ profileMsg }}</p>
             }

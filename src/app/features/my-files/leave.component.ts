@@ -16,15 +16,20 @@ const blank = (): LeaveData => ({ office: '', lastName: '', firstName: '', middl
 
 // Leave (Form 6): apply, sign, and the corresponding signatory approves. Credits are deducted only
 // when the corresponding signatory approves it.
+import { LoadingComponent } from '../../shared/loading/loading.component';
+
+import { IconComponent } from '../../shared/icon/icon.component';
+
 @Component({
   selector: 'app-leave',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe],
+  imports: [IconComponent, LoadingComponent, CommonModule, FormsModule, DatePipe],
   template: `
     @if (!hideBar) { <div class="bar"><button class="btn" type="button" (click)="startNew()">{{ person ? 'Apply leave for ' + firstName() : 'Apply for leave (Form 6)' }}</button></div> }
     @if (error && !dlg) { <p class="error">{{ error }}</p> }
     @for (a of list; track a.id) {
       <div class="card item" [class.turn]="a.myTurn">
+        <span class="ico"><app-icon name="file-text" [size]="20" /></span>
         <div class="main">
           <strong>{{ a.applicant.name }}</strong> <span class="muted">· {{ a.data.leaveType === 'Others' ? a.data.otherLeave : a.data.leaveType }} · {{ a.days }} day{{ a.days === 1 ? '' : 's' }} · {{ a.data.dates }}</span>
           <div><span class="st" [class.ok]="a.status === 'approved'" [class.no]="a.status === 'disapproved'">{{ statusOf(a) }}</span>
@@ -33,12 +38,12 @@ const blank = (): LeaveData => ({ office: '', lastName: '', firstName: '', middl
           @if (a.kindLabel) { <small class="muted">Deducts from {{ a.kindLabel }}{{ a.deducted ? ' · deducted' : '' }}</small> }
         </div>
         <div class="cb">
-          <button class="btn secondary" type="button" (click)="open(a.id)">Open</button>
-          <button class="btn secondary" type="button" (click)="downloadCard(a)" [disabled]="busy">Download</button>
+          <button class="btn secondary" type="button" (click)="open(a.id)" [disabled]="!!openingId">@if (openingId === a.id) { <span class="spin"></span> } Open</button>
+          <button class="btn secondary" type="button" (click)="downloadCard(a)" [disabled]="busy">@if (busy && busyId === a.id) { <span class="spin"></span> } Download</button>
           @if (a.applicant.id === me?.id || a.filedBy?.id === me?.id) { <button class="btn secondary danger" type="button" (click)="removeCard(a)" [disabled]="busy">Delete</button> }
         </div>
       </div>
-    } @empty { <p class="muted">{{ loaded ? (pendingOnly ? 'No leave applications are waiting for your signature.' : 'No leave applications yet.') : 'Loading…' }}</p> }
+    } @empty { @if (loaded) { <p class="muted">{{ pendingOnly ? 'No leave applications are waiting for your signature.' : 'No leave applications yet.' }}</p> } @else { <app-loading [compact]="true" label="Loading leave applications…" /> } }
 
     @if (dlg === 'form') {
       <div class="bd" (click)="dlg = null"></div>
@@ -101,6 +106,7 @@ const blank = (): LeaveData => ({ office: '', lastName: '', firstName: '', middl
 
         </div>
         <div class="scroll" #scroll>
+          @if (painting || busy) { <div class="wait"><span class="spin"></span><span>{{ busy ? 'Working on it…' : 'Laying out the form…' }}</span></div> }
           <div class="host" #host></div>
           @if (cur.events.length) {
             <div class="hist"><h4>History</h4>
@@ -113,23 +119,26 @@ const blank = (): LeaveData => ({ office: '', lastName: '', firstName: '', middl
     }
   `,
   styles: [`
-    .cb { display: flex; gap: .4rem; flex-wrap: wrap; justify-content: flex-end; } .danger { color: #b91c1c; border-color: #fca5a5; }
-    .bar { margin-bottom: 1rem; } .muted { color: #6b7280; } .ok { color: #166534; } .error { color: #b91c1c; }
+    .ico { flex: none; width: 40px; height: 40px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: var(--primary-soft); color: var(--primary); } .main { flex: 1; min-width: 0; }
+    @media (max-width: 560px) { .item { flex-wrap: wrap; padding: .7rem; } .cb { width: 100%; justify-content: flex-start; } .pnl header { padding: .6rem .7rem; } .hb { flex-wrap: wrap; width: 100%; } .hb .paper { flex: 1 1 100%; } .box { padding: .9rem; } }
+    .cb { display: flex; gap: .4rem; flex-wrap: wrap; justify-content: flex-end; } .danger { color: var(--err-fg); border-color: #fca5a5; }
+    .bar { margin-bottom: 1rem; } .muted { color: var(--muted); } .ok { color: var(--ok-fg); } .error { color: var(--err-fg); }
     .item { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .8rem 1rem; margin-bottom: .6rem; } .item.turn { border-left: 4px solid #16a34a; }
-    .st { display: inline-block; font-size: .75rem; background: #fef3c7; color: #92400e; border-radius: 999px; padding: 0 .55rem; } .st.ok { background: #dcfce7; color: #166534; } .st.no { background: #fee2e2; color: #991b1b; }
+    .st { display: inline-block; font-size: .75rem; background: var(--warn-bg); color: var(--warn-fg); border-radius: 999px; padding: 0 .55rem; } .st.ok { background: var(--ok-bg); color: var(--ok-fg); } .st.no { background: var(--err-bg); color: var(--err-fg); }
     .turnb { font-size: .75rem; background: #166534; color: #fff; border-radius: 999px; padding: 0 .55rem; margin-left: .3rem; }
     .bd { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1200; }
-    .box { position: fixed; z-index: 1201; inset: 0; margin: auto; width: min(720px, 100%); max-height: 100dvh; height: fit-content; overflow: auto; background: #fff; border-radius: 12px; padding: 1.2rem; }
+    .box { position: fixed; z-index: 1201; inset: 0; margin: auto; width: min(720px, 100%); max-height: 100dvh; height: fit-content; overflow: auto; background: var(--surface); border-radius: 12px; padding: 1.2rem; }
     .box h3 { margin: 0 0 .8rem; } .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: .6rem; margin: .6rem 0; }
-    label { display: flex; flex-direction: column; gap: .2rem; font-size: .82rem; font-weight: 600; } input, select { padding: .45rem .55rem; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; font-weight: 400; min-width: 0; }
-    .kinds { border: 1px solid #e5e7eb; border-radius: 8px; padding: .5rem .8rem; margin: .6rem 0; } .rad { flex-direction: row; align-items: center; gap: .4rem; font-weight: 400; } .rad input { width: auto; }
-    .acts { display: flex; gap: .5rem; margin-top: .8rem; } .more { margin: .4rem 0; } .more summary { cursor: pointer; color: #166534; font-size: .85rem; }
-    .pnl { position: fixed; z-index: 1201; inset: 0; margin: auto; width: min(960px, 100%); height: min(100%, 100dvh); background: #f3f4f6; display: flex; flex-direction: column; }
-    .pnl header { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .8rem 1.1rem; background: #fff; border-bottom: 1px solid #e5e7eb; } .pnl h3 { margin: 0; font-size: 1.05rem; } .hb { display: flex; gap: .5rem; }
-    .pad { padding: .5rem 1.1rem; margin: 0; background: #fff; } .acts2 { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; } .tip { color: #166534; } .why { min-width: 14rem; }
+    label { display: flex; flex-direction: column; gap: .2rem; font-size: .82rem; font-weight: 600; } input, select { padding: .45rem .55rem; border: 1px solid var(--border-strong); border-radius: 8px; font: inherit; font-weight: 400; min-width: 0; }
+    .kinds { border: 1px solid var(--border); border-radius: 8px; padding: .5rem .8rem; margin: .6rem 0; } .rad { flex-direction: row; align-items: center; gap: .4rem; font-weight: 400; } .rad input { width: auto; }
+    .acts { display: flex; gap: .5rem; margin-top: .8rem; } .more { margin: .4rem 0; } .more summary { cursor: pointer; color: var(--ok-fg); font-size: .85rem; }
+    .pnl { position: fixed; z-index: 1201; inset: 0; margin: auto; width: min(960px, 100%); height: min(100%, 100dvh); background: var(--surface-2); display: flex; flex-direction: column; }
+    .pnl header { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .8rem 1.1rem; background: var(--surface); border-bottom: 1px solid var(--border); } .pnl h3 { margin: 0; font-size: 1.05rem; } .hb { display: flex; gap: .5rem; }
+    .pad { padding: .5rem 1.1rem; margin: 0; background: var(--surface); } .acts2 { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; } .tip { color: var(--ok-fg); } .why { min-width: 14rem; }
     .scroll { flex: 1; overflow: auto; padding: .8rem; } .host { width: max-content; margin: 0 auto; } .host > .pg { margin-bottom: 14px; }
-    .paper { padding: .4rem; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; } .rs { flex-direction: row; align-items: center; gap: .4rem; } .rs input { width: 9rem; padding: 0; }
-    .hist { background: #fff; border-radius: 10px; padding: .7rem 1rem; margin: .4rem auto 1rem; max-width: 794px; } .hist h4 { margin: 0 0 .4rem; } .ev { font-size: .85rem; padding: .15rem 0; } .when { color: #6b7280; margin-right: .4rem; }
+    .wait { display: flex; align-items: center; justify-content: center; gap: .7rem; padding: .8rem; margin: 0 auto .6rem; max-width: 794px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--text); }
+    .paper { padding: .4rem; border: 1px solid var(--border-strong); border-radius: 8px; font: inherit; } .rs { flex-direction: row; align-items: center; gap: .4rem; } .rs input { width: 9rem; padding: 0; }
+    .hist { background: var(--surface); border-radius: 10px; padding: .7rem 1rem; margin: .4rem auto 1rem; max-width: 794px; } .hist h4 { margin: 0 0 .4rem; } .ev { font-size: .85rem; padding: .15rem 0; } .when { color: var(--muted); margin-right: .4rem; }
     :host ::ng-deep .host .pg { cursor: crosshair; box-shadow: 0 2px 10px rgba(0,0,0,.2); }
   `],
 })
@@ -236,14 +245,21 @@ export class LeaveComponent implements OnInit {
   }
 
   // ---------- viewer ----------
-  async open(id: string) { this.error = ''; try { await this.show(await firstValueFrom(this.api.get(id))); } catch (e: any) { this.error = e?.error?.message ?? 'Could not open it.'; } }
+  openingId = '';
+  async open(id: string) { this.error = ''; this.openingId = id; try { await this.show(await firstValueFrom(this.api.get(id))); } catch (e: any) { this.error = e?.error?.message ?? 'Could not open it.'; } this.openingId = ''; }
 
   private async show(v: LeaveView) {
     this.cur = v; this.dlg = 'view'; this.msg = ''; this.error = ''; this.pos = null; this.placed = false; this.reason = ''; this.decision = 'approval'; this.sizePct = 100; this.ghostEl = null;
     await this.paint();
   }
 
+  painting = false;
   private async paint() {
+    this.painting = true;
+    try { await this.paintInner(); } finally { this.painting = false; }
+  }
+
+  private async paintInner() {
     const v = this.cur!;
     await new Promise((r) => setTimeout(r));
     const host = this.host?.nativeElement; if (!host) return;
@@ -288,8 +304,9 @@ export class LeaveComponent implements OnInit {
   private pages() { return Array.from(this.host?.nativeElement.querySelectorAll('.pg') ?? []) as HTMLElement[]; }
 
   // Download straight from the list: the form is laid out off-screen, so the form need not be opened.
+  busyId = '';
   async downloadCard(a: LeaveView) {
-    this.busy = true; this.error = '';
+    this.busy = true; this.busyId = a.id; this.error = '';
     const holder = document.createElement('div');
     holder.style.cssText = 'position:fixed;left:-10000px;top:0;';
     document.body.appendChild(holder);

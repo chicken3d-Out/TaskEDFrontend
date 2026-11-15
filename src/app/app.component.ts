@@ -8,6 +8,7 @@ import { SalnEditorComponent } from './shared/saln/saln-editor.component';
 import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { LegalModalComponent } from './shared/legal/legal-modal.component';
+import { BugReportDialogComponent } from './shared/bug-report/bug-report-dialog.component';
 import { FilePreviewComponent } from './shared/file-preview/file-preview.component';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
@@ -16,7 +17,7 @@ import { AuthService } from './core/services/auth.service';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, LegalModalComponent, FilePreviewComponent, PdsEditorComponent, PdsPreviewComponent, SalnEditorComponent, SrEditorComponent, TaEditorComponent, TaSignComponent, TaAttPreviewComponent],
+  imports: [RouterOutlet, BugReportDialogComponent, LegalModalComponent, FilePreviewComponent, PdsEditorComponent, PdsPreviewComponent, SalnEditorComponent, SrEditorComponent, TaEditorComponent, TaSignComponent, TaAttPreviewComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })

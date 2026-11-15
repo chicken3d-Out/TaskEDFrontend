@@ -105,7 +105,7 @@ import { IconComponent } from '../../shared/icon/icon.component';
       .tabs {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        background: #e8ecf0;
+        background: var(--surface-2);
         padding: 3px;
         border-radius: 12px;
         margin-bottom: 1.3rem;
@@ -116,18 +116,23 @@ import { IconComponent } from '../../shared/icon/icon.component';
           border-radius: 9px;
           font-weight: 600;
           font-size: 0.88rem;
-          color: #374151;
+          white-space: nowrap;
+          color: var(--text-2);
+          @media (max-width: 380px) {
+            font-size: 0.8rem;
+            padding: 0.5rem 0.2rem;
+          }
           &.on {
-            background: #fff;
+            background: var(--surface);
             box-shadow: var(--shadow);
             color: var(--primary-strong);
           }
         }
       }
       .notice {
-        background: #fffbeb;
+        background: var(--warn-bg);
         border: 1px solid #fde68a;
-        color: #92400e;
+        color: var(--warn-fg);
         border-radius: 10px;
         padding: 0.6rem 0.8rem;
         font-size: 0.85rem;
@@ -143,7 +148,7 @@ import { IconComponent } from '../../shared/icon/icon.component';
         padding: 0.8rem 1rem;
         border-radius: 12px;
         border: 1px solid var(--border);
-        background: #fff;
+        background: var(--surface);
         font-weight: 600;
         box-shadow: var(--shadow);
         &:hover {

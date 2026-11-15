@@ -6,26 +6,26 @@
 }
 h1 {
   margin: 0 0 0.25rem;
-  color: #14532d;
+  color: var(--ok-fg);
   font-size: 1.3rem;
 }
 .meta {
-  color: #888;
+  color: var(--muted);
   font-size: 0.82rem;
   margin: 0;
 }
 .description {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1rem;
-  color: #333;
+  color: var(--text);
   white-space: pre-wrap;
   margin-bottom: 1.5rem;
 }
 h2 {
   font-size: 0.95rem;
-  color: #333;
+  color: var(--text);
   margin-bottom: 0.6rem;
 }
 .thread,
@@ -34,8 +34,8 @@ h2 {
   margin-bottom: 1.75rem;
 }
 .update-item {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.8rem 1rem;
   margin-bottom: 0.6rem;
@@ -52,11 +52,11 @@ h2 {
 .time {
   margin-left: auto;
   font-size: 0.75rem;
-  color: #999;
+  color: var(--muted);
 }
 .tag {
-  background: #fef2f2;
-  color: #b91c1c;
+  background: var(--err-bg-soft);
+  color: var(--err-fg);
   font-size: 0.7rem;
   font-weight: 700;
   padding: 0.15rem 0.5rem;
@@ -65,7 +65,7 @@ h2 {
 .update-item p {
   margin: 0;
   font-size: 0.9rem;
-  color: #333;
+  color: var(--text);
 }
 .update-image {
   max-width: 100%;
@@ -75,12 +75,12 @@ h2 {
 .attachment-link {
   display: block;
   font-size: 0.85rem;
-  color: #1d4ed8;
+  color: var(--info-fg);
   margin-bottom: 0.3rem;
 }
 form {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1rem;
   display: flex;
@@ -91,7 +91,7 @@ textarea,
 input {
   width: 100%;
   padding: 0.55rem 0.7rem;
-  border: 1px solid #d0d5dd;
+  border: 1px solid var(--border-strong);
   border-radius: 6px;
   font-family: inherit;
   font-size: 0.9rem;
@@ -119,7 +119,7 @@ input {
 .status-select select {
   padding: 0.35rem 0.5rem;
   border-radius: 6px;
-  border: 1px solid #d0d5dd;
+  border: 1px solid var(--border-strong);
 }
 button {
   align-self: flex-start;
@@ -137,7 +137,7 @@ button:disabled {
 }
 .hint {
   font-size: 0.78rem;
-  color: #888;
+  color: var(--muted);
   margin-bottom: 0.5rem;
 }
 .file-row {
@@ -146,7 +146,7 @@ button:disabled {
   gap: 0.3rem;
   font-size: 0.82rem;
   font-weight: 600;
-  color: #333;
+  color: var(--text);
 }
 .file-row input[type='file'] {
   border: none;
@@ -157,18 +157,18 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1rem;
 }
 .readonly-note {
-  color: #888;
+  color: var(--muted);
   font-size: 0.85rem;
   font-style: italic;
 }
 .empty {
-  color: #888;
+  color: var(--muted);
 }
 .status {
   font-size: 0.75rem;
@@ -181,8 +181,8 @@ button:disabled {
   height: fit-content;
 }
 .status-submitted {
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: var(--info-bg);
+  color: var(--info-fg);
 }
 .status-acknowledged {
   background: #fefce8;
@@ -190,17 +190,17 @@ button:disabled {
 }
 .status-in_progress {
   background: #fff7ed;
-  color: #c2410c;
+  color: var(--warn-fg);
 }
 .status-needs_attachment {
-  background: #fef2f2;
-  color: #b91c1c;
+  background: var(--err-bg-soft);
+  color: var(--err-fg);
 }
 .status-resolved {
-  background: #f0fdf4;
+  background: var(--ok-bg-soft);
   color: #15803d;
 }
 .status-closed {
-  background: #f3f4f6;
-  color: #6b7280;
+  background: var(--surface-2);
+  color: var(--muted);
 }

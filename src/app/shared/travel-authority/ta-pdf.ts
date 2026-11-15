@@ -13,7 +13,7 @@ export function taData(rec: TaRecord) {
 export async function renderBasePage(rec: TaRecord, pkg: TaPackage): Promise<HTMLCanvasElement> {
   const docx = await buildTa(pkg, taData(rec), rec.sigs, false); // dates are printed, signature pictures are not
   const host = document.createElement('div');
-  host.style.cssText = 'position:fixed;left:-10000px;top:0;width:900px;background:#fff';
+  host.style.cssText = 'position:fixed;left:-10000px;top:0;width:900px;background:#fff;color:#000';
   // justified lines get letter gaps ("aut horized") when drawn to a picture: keep those lines left-aligned
   const fix = document.createElement('style');
   fix.textContent = 'section.docx p[style*="justify"]{text-align:left !important;text-justify:none !important;letter-spacing:normal !important;word-spacing:normal !important}';

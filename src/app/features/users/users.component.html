@@ -2,7 +2,7 @@
 <app-ta-signatories />
 <div class="head">
   <div class="title-row">
-    <h1 class="page-title">Users</h1>
+    <h1 class="page-title"><app-icon name="users" [size]="22" /> Users</h1>
     <button class="btn" (click)="showAdd = !showAdd">
       <app-icon [name]="showAdd ? 'x' : 'plus'" [size]="18" />
       {{ showAdd ? 'Cancel' : 'Add user' }}
@@ -197,6 +197,7 @@
             } @else if (row.user.status === AccountStatus.PENDING) {
               <button class="btn danger" [disabled]="row.busy" (click)="reject(row)">Reject</button>
             }
+            <button class="btn danger" [disabled]="row.busy" (click)="remove(row)"><app-icon name="trash" [size]="16" /> Delete</button>
           }
         </div>
       </div>

@@ -78,7 +78,7 @@ label {
   p {
     margin: 0.3rem 0 0;
     font-size: 0.88rem;
-    color: #374151;
+    color: var(--text-2);
   }
 }
 .meta {
@@ -106,7 +106,7 @@ label {
   align-items: center;
   justify-content: center;
   &:hover {
-    background: #fef2f2;
+    background: var(--err-bg-soft);
     color: var(--danger);
   }
 }
@@ -211,14 +211,14 @@ label {
 }
 
 
-.holiday { color: #1d4ed8; font-weight: 600; }
-.mine { color: #c2410c; font-weight: 600; }
+.holiday { color: var(--info-fg); font-weight: 600; }
+.mine { color: var(--warn-fg); font-weight: 600; }
 .event-item { border-left: 3px solid #16a34a; padding-left: 0.6rem; margin: 0.35rem 0; border-bottom: none;
   &.k-holiday { border-left-color: #2563eb; }
   &.k-note { border-left-color: #ea580c; }
 }
-.up-row .d.d-hol { background: #dbeafe; color: #1d4ed8; }
-.up-row .d.d-note { background: #ffedd5; color: #c2410c; }
+.up-row .d.d-hol { background: var(--info-bg); color: var(--info-fg); }
+.up-row .d.d-note { background: #ffedd5; color: var(--warn-fg); }
 .legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-top: 0.8rem; font-size: 0.8rem; color: var(--muted);
   span { display: inline-flex; align-items: center; gap: 0.35rem; }
   .hint { margin-left: auto; }
