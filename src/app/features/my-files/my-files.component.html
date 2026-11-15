@@ -113,9 +113,9 @@
                           <small>Added {{ f.createdAt | date: 'MMM d, y' }}</small>
                         </div>
                         <div class="acts">
-                          <button class="btn secondary" type="button" (click)="preview.open(f.link, f.label)">Preview</button>
+                          <button class="btn secondary" type="button" (click)="preview.open(f.link, f.label)"><app-icon name="eye" [size]="16" /> Preview</button>
                           <a class="btn secondary" [href]="f.link" target="_blank" rel="noopener noreferrer" aria-label="Open">
-                            <app-icon name="download" [size]="15" /> Open
+                            <app-icon name="external" [size]="15" /> Open
                           </a>
                           <button class="btn secondary" type="button" (click)="startEdit(f)" aria-label="Edit">
                             <app-icon name="pencil" [size]="15" />

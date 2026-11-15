@@ -17,14 +17,16 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 // With `teacher` set (AO / AO Publisher in Manage teacher) it applies for and lists that teacher's.
 import { LoadingComponent } from '../../shared/loading/loading.component';
 
+import { IconComponent } from '../../shared/icon/icon.component';
+
 @Component({
   selector: 'app-ta-log',
   standalone: true,
-  imports: [LoadingComponent, CommonModule, DatePipe],
+  imports: [IconComponent, LoadingComponent, CommonModule, DatePipe],
   template: `
     @if (mode === 'log' && canApply()) {
       <div class="top">
-        <button class="btn" type="button" (click)="apply()">{{ teacher ? 'Apply Travel Authority for ' + firstName() : 'Apply Travel Authority' }}</button>
+        <button class="btn" type="button" (click)="apply()"><app-icon name="plus" [size]="16" /> {{ teacher ? 'Apply Travel Authority for ' + firstName() : 'Apply Travel Authority' }}</button>
       </div>
     }
     @if (error) { <p class="error">{{ error }}</p> }
@@ -44,7 +46,7 @@ import { LoadingComponent } from '../../shared/loading/loading.component';
             </div>
             <div class="acts">
               @if (r.status === 'awaiting_email') { <button class="btn" type="button" (click)="sendMail(r)" [disabled]="busy">Send to Travel Authority</button> }
-              @else { <button class="btn" type="button" (click)="open(r)">Review &amp; sign</button> }
+              @else { <button class="btn" type="button" (click)="open(r)"><app-icon name="pen" [size]="16" /> Review &amp; sign</button> }
             </div>
           </div>
         }
@@ -56,13 +58,14 @@ import { LoadingComponent } from '../../shared/loading/loading.component';
     @for (g of groups; track g.key) {
       <section class="card year">
         <button type="button" class="head" (click)="toggle(g.key)" [attr.aria-expanded]="isOpen(g.key)">
-          <span class="chev">{{ isOpen(g.key) ? '▾' : '▸' }}</span>
+          <span class="chev"><app-icon [name]="isOpen(g.key) ? 'chevron-down' : 'chevron-right'" [size]="18" /></span>
           <strong>{{ g.label }}</strong>
-          <span class="muted">{{ g.rows.length }} Travel Authorit{{ g.rows.length === 1 ? 'y' : 'ies' }}</span>
+          <span class="count">{{ g.rows.length }}</span>
         </button>
         @if (isOpen(g.key)) {
           @for (r of g.rows; track r.id) {
-            <div class="frow">
+            <div class="frow trow">
+              <span class="ico"><app-icon name="plane" [size]="20" /></span>
               <div class="info">
                 <strong>Travel Authority – {{ r.data.name }}</strong>
                 <small>{{ summary(r) }}</small>
@@ -74,11 +77,11 @@ import { LoadingComponent } from '../../shared/loading/loading.component';
               </div>
               <div class="acts">
                 @if (r.isOwner && r.status === 'awaiting_email') { <button class="btn" type="button" (click)="sendMail(r)" [disabled]="busy">Send to Travel Authority</button> }
-                <button class="btn secondary" type="button" (click)="open(r)">{{ r.myTurn ? 'Review & sign' : 'Preview' }}</button>
+                <button class="btn secondary" type="button" (click)="open(r)"><app-icon [name]="r.myTurn ? 'pen' : 'eye'" [size]="16" /> {{ r.myTurn ? 'Review & sign' : 'Preview' }}</button>
                 @if (r.isOwner && (r.status === 'draft' || r.status === 'awaiting_requester')) { <button class="btn" type="button" (click)="edit(r)">Edit</button> }
                 @if (r.isOwner && r.status === 'draft' && r.requesterId !== meId) { <button class="btn" type="button" (click)="send(r)">Send to sign</button> }
-                <button class="btn secondary" type="button" (click)="download(r)" [disabled]="busy">Download</button>
-                @if (r.isOwner) { <button class="btn danger" type="button" (click)="remove(r)">Delete</button> }
+                <button class="btn secondary" type="button" (click)="download(r)" [disabled]="busy"><app-icon name="download" [size]="16" /> Download</button>
+                @if (r.isOwner) { <button class="btn danger" type="button" (click)="remove(r)"><app-icon name="trash" [size]="16" /> Delete</button> }
               </div>
             </div>
           }
@@ -89,6 +92,24 @@ import { LoadingComponent } from '../../shared/loading/loading.component';
   `,
   styleUrl: './my-files.component.scss',
   styles: [`
+    .year { padding: 0; overflow: hidden; margin-bottom: .9rem; }
+    .year .head { padding: .8rem 1.1rem; margin: 0; background: var(--surface-2); border-bottom: 1px solid var(--border); gap: .5rem; }
+    .year .head strong { flex: 1; text-align: left; }
+    .count { background: var(--primary-soft); color: var(--primary-strong); border-radius: 999px; font-size: .75rem; font-weight: 700; min-width: 1.6rem; text-align: center; padding: .1rem .5rem; }
+    .year .chev { display: inline-flex; color: var(--muted); width: auto; }
+    .trow { display: flex; align-items: center; gap: .9rem; padding: .95rem 1.1rem; border-bottom: 1px solid var(--border); }
+    .trow:last-child { border-bottom: 0; }
+    .trow .ico { flex: none; width: 42px; height: 42px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: var(--primary-soft); color: var(--primary); }
+    .trow .info { flex: 1; min-width: 0; gap: .25rem; }
+    .trow .info > strong { font-size: .98rem; }
+    .trow .acts { flex: none; justify-content: flex-end; }
+    .trow .acts .btn { padding: .4rem .85rem; font-size: .85rem; }
+    @media (max-width: 760px) {
+      .trow { flex-wrap: wrap; align-items: flex-start; padding: .85rem; }
+      .trow .info { flex: 1 1 calc(100% - 60px); }
+      .trow .acts { flex: 1 1 100%; justify-content: flex-start; }
+      .trow .acts .btn { flex: 1 1 auto; }
+    }
     .top { margin-bottom: .8rem; } .logh { margin: 1.2rem 0 .5rem; }
     .todo { border-left: 4px solid #16a34a; }
     .head { display: flex; gap: .6rem; align-items: center; width: 100%; background: none; border: 0; padding: .3rem 0; font: inherit; cursor: pointer; text-align: left; }

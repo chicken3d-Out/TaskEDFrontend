@@ -51,8 +51,8 @@ import { IconComponent } from '../../shared/icon/icon.component';
       </div>
 
       <div class="actions">
-        @if (!noLeave) { <button class="btn" type="button" (click)="apply()">Apply for leave (Form 6)</button> }
-        @if (manage && o.canManage) { <button class="btn secondary" type="button" (click)="soOpen = !soOpen">{{ soOpen ? 'Close' : 'Add credits (Special Order)' }}</button> }
+        @if (!noLeave) { <button class="btn" type="button" (click)="apply()"><app-icon name="plus" [size]="16" /> Apply for leave (Form 6)</button> }
+        @if (manage && o.canManage) { <button class="btn secondary" type="button" (click)="soOpen = !soOpen"><app-icon [name]="soOpen ? 'x' : 'plus'" [size]="16" /> {{ soOpen ? 'Close' : 'Add credits (Special Order)' }}</button> }
       </div>
 
       @if (soOpen && manage && o.canManage) {
@@ -66,7 +66,7 @@ import { IconComponent } from '../../shared/icon/icon.component';
             @if (soKind === 'cto') { <label>Date approved (good for one year)<input type="date" [(ngModel)]="soDate" /></label> }
             <label>Special Order (JPG, PNG or PDF, up to 4 MB)<input type="file" accept="image/jpeg,image/png,application/pdf" (change)="soFile = $any($event.target).files?.[0] ?? null" /></label>
           </div>
-          <button class="btn" type="button" (click)="addSo()" [disabled]="busy || !soNumber || !soAmount || !soFile || !soKind">{{ busy ? 'Saving…' : 'Add credits' }}</button>
+          <button class="btn" type="button" (click)="addSo()" [disabled]="busy || !soNumber || !soAmount || !soFile || !soKind"><app-icon name="plus" [size]="16" /> {{ busy ? 'Saving…' : 'Add credits' }}</button>
           <small class="muted"> Vacation, Sick, Force and Special Privilege Leave and Wellness are earned or renewed by themselves.</small>
         </section>
       }

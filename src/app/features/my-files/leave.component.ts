@@ -25,7 +25,7 @@ import { IconComponent } from '../../shared/icon/icon.component';
   standalone: true,
   imports: [IconComponent, LoadingComponent, CommonModule, FormsModule, DatePipe],
   template: `
-    @if (!hideBar) { <div class="bar"><button class="btn" type="button" (click)="startNew()">{{ person ? 'Apply leave for ' + firstName() : 'Apply for leave (Form 6)' }}</button></div> }
+    @if (!hideBar) { <div class="bar"><button class="btn" type="button" (click)="startNew()"><app-icon name="plus" [size]="16" /> {{ person ? 'Apply leave for ' + firstName() : 'Apply for leave (Form 6)' }}</button></div> }
     @if (error && !dlg) { <p class="error">{{ error }}</p> }
     @for (a of list; track a.id) {
       <div class="card item" [class.turn]="a.myTurn">
@@ -38,9 +38,9 @@ import { IconComponent } from '../../shared/icon/icon.component';
           @if (a.kindLabel) { <small class="muted">Deducts from {{ a.kindLabel }}{{ a.deducted ? ' · deducted' : '' }}</small> }
         </div>
         <div class="cb">
-          <button class="btn secondary" type="button" (click)="open(a.id)" [disabled]="!!openingId">@if (openingId === a.id) { <span class="spin"></span> } Open</button>
-          <button class="btn secondary" type="button" (click)="downloadCard(a)" [disabled]="busy">@if (busy && busyId === a.id) { <span class="spin"></span> } Download</button>
-          @if (a.applicant.id === me?.id || a.filedBy?.id === me?.id) { <button class="btn secondary danger" type="button" (click)="removeCard(a)" [disabled]="busy">Delete</button> }
+          <button class="btn secondary" type="button" (click)="open(a.id)" [disabled]="!!openingId">@if (openingId === a.id) { <span class="spin"></span> } @else { <app-icon name="eye" [size]="16" /> } Open</button>
+          <button class="btn secondary" type="button" (click)="downloadCard(a)" [disabled]="busy">@if (busy && busyId === a.id) { <span class="spin"></span> } @else { <app-icon name="download" [size]="16" /> } Download</button>
+          @if (a.applicant.id === me?.id || a.filedBy?.id === me?.id) { <button class="btn secondary danger" type="button" (click)="removeCard(a)" [disabled]="busy"><app-icon name="trash" [size]="16" /> Delete</button> }
         </div>
       </div>
     } @empty { @if (loaded) { <p class="muted">{{ pendingOnly ? 'No leave applications are waiting for your signature.' : 'No leave applications yet.' }}</p> } @else { <app-loading [compact]="true" label="Loading leave applications…" /> } }

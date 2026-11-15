@@ -1,3 +1,4 @@
+import { IconComponent } from '../../shared/icon/icon.component';
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -23,7 +24,7 @@ import { LoadingComponent } from '../../shared/loading/loading.component';
 @Component({
   selector: 'app-working-files',
   standalone: true,
-  imports: [LoadingComponent, CommonModule, FormsModule, DatePipe],
+  imports: [IconComponent, LoadingComponent, CommonModule, FormsModule, DatePipe],
   template: `
     <div class="card tip">
       <strong>Where these go</strong>
@@ -55,20 +56,20 @@ import { LoadingComponent } from '../../shared/loading/loading.component';
             <div class="info"><strong>{{ f.label }}</strong><small>Added {{ f.createdAt | date: 'MMM d, y' }}</small></div>
             <div class="acts">
               @if (t === 'PDS') {
-                <button class="btn secondary" type="button" (click)="editPds(f, true)">Preview</button>
+                <button class="btn secondary" type="button" (click)="editPds(f, true)"><app-icon name="eye" [size]="16" /> Preview</button>
                 <button class="btn" type="button" (click)="editPds(f)">Edit</button>
               }
               @else if (t === 'Service Record') {
-                <button class="btn secondary" type="button" (click)="editSr(f, true)">Preview</button>
+                <button class="btn secondary" type="button" (click)="editSr(f, true)"><app-icon name="eye" [size]="16" /> Preview</button>
                 <button class="btn" type="button" (click)="editSr(f)">Edit</button>
               }
               @else if (t === 'SALN') {
-                <button class="btn secondary" type="button" (click)="editSaln(f, true)">Preview</button>
+                <button class="btn secondary" type="button" (click)="editSaln(f, true)"><app-icon name="eye" [size]="16" /> Preview</button>
                 <button class="btn" type="button" (click)="editSaln(f)">Edit</button>
               }
-              @else { <button class="btn secondary" type="button" (click)="preview.open(f.link, f.label)">Preview</button> }
-              <button class="btn secondary" type="button" (click)="download(f, t)" [disabled]="saving">Download</button>
-              <button class="btn danger" type="button" (click)="remove(f)">Remove</button>
+              @else { <button class="btn secondary" type="button" (click)="preview.open(f.link, f.label)"><app-icon name="eye" [size]="16" /> Preview</button> }
+              <button class="btn secondary" type="button" (click)="download(f, t)" [disabled]="saving"><app-icon name="download" [size]="16" /> Download</button>
+              <button class="btn danger" type="button" (click)="remove(f)"><app-icon name="trash" [size]="16" /> Remove</button>
             </div>
           </div>
         } @empty { <p class="muted">No files yet.</p> }
